@@ -99,20 +99,14 @@ func FromProto(msg *accesslistv1.AccessList, opts ...AccessListOption) (*accessl
 		*memberCount = *msg.Status.MemberCount
 	}
 
-	var parentMemberAccessLists []accesslist.AccessListRef
-	for _, al := range msg.Spec.MemberAccessLists {
-		parentMemberAccessLists = append(parentMemberAccessLists, accesslist.AccessListRef{
-			Name:  al.Name,
-			Title: al.Title,
-		})
+	var dynamicMemberAccessLists accesslist.DynamicAccessListMembers
+	for _, al := range msg.Spec.DynamicMembers.AccessLists {
+		dynamicMemberAccessLists.AccessLists = append(dynamicMemberAccessLists.AccessLists, al)
 	}
 
-	var parentOwnerAccessLists []accesslist.AccessListRef
-	for _, al := range msg.Spec.OwnerAccessLists {
-		parentOwnerAccessLists = append(parentOwnerAccessLists, accesslist.AccessListRef{
-			Name:  al.Name,
-			Title: al.Title,
-		})
+	var dynamicOwnerAccessLists accesslist.DynamicAccessListMembers
+	for _, al := range msg.Spec.DynamicOwners.AccessLists {
+		dynamicOwnerAccessLists.AccessLists = append(dynamicOwnerAccessLists.AccessLists, al)
 	}
 
 	accessList, err := accesslist.NewAccessList(headerv1.FromMetadataProto(msg.Header.Metadata), accesslist.Spec{
@@ -136,9 +130,9 @@ func FromProto(msg *accesslistv1.AccessList, opts ...AccessListOption) (*accessl
 			Roles:  msg.Spec.Grants.Roles,
 			Traits: traitv1.FromProto(msg.Spec.Grants.Traits),
 		},
-		OwnerGrants:       ownerGrants,
-		OwnerAccessLists:  parentOwnerAccessLists,
-		MemberAccessLists: parentMemberAccessLists,
+		OwnerGrants:    ownerGrants,
+		DynamicOwners:  dynamicOwnerAccessLists,
+		DynamicMembers: dynamicMemberAccessLists,
 	})
 	if err != nil {
 		return nil, trace.Wrap(err)
@@ -195,19 +189,13 @@ func ToProto(accessList *accesslist.AccessList) *accesslistv1.AccessList {
 		memberCount = new(uint32)
 		*memberCount = *accessList.Status.MemberCount
 	}
-	var memberAccessListRefs []*accesslistv1.AccessListRef
-	for _, al := range accessList.Spec.MemberAccessLists {
-		memberAccessListRefs = append(memberAccessListRefs, &accesslistv1.AccessListRef{
-			Name:  al.Name,
-			Title: al.Title,
-		})
+	var memberAccessListRefs *accesslistv1.DynamicAccessListMembers
+	for _, al := range accessList.Spec.DynamicMembers.AccessLists {
+		memberAccessListRefs.AccessLists = append(memberAccessListRefs.AccessLists, al)
 	}
-	var ownerAccessListRefs []*accesslistv1.AccessListRef
-	for _, al := range accessList.Spec.OwnerAccessLists {
-		ownerAccessListRefs = append(ownerAccessListRefs, &accesslistv1.AccessListRef{
-			Name:  al.Name,
-			Title: al.Title,
-		})
+	var ownerAccessListRefs *accesslistv1.DynamicAccessListMembers
+	for _, al := range accessList.Spec.DynamicOwners.AccessLists {
+		ownerAccessListRefs.AccessLists = append(ownerAccessListRefs.AccessLists, al)
 	}
 
 	return &accesslistv1.AccessList{
@@ -238,9 +226,9 @@ func ToProto(accessList *accesslist.AccessList) *accesslistv1.AccessList {
 				Roles:  accessList.Spec.Grants.Roles,
 				Traits: traitv1.ToProto(accessList.Spec.Grants.Traits),
 			},
-			OwnerGrants:       ownerGrants,
-			MemberAccessLists: memberAccessListRefs,
-			OwnerAccessLists:  ownerAccessListRefs,
+			OwnerGrants:    ownerGrants,
+			DynamicOwners:  ownerAccessListRefs,
+			DynamicMembers: memberAccessListRefs,
 		},
 		Status: &accesslistv1.AccessListStatus{
 			MemberCount: memberCount,

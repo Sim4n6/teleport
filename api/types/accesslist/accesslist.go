@@ -158,11 +158,11 @@ type Spec struct {
 
 	// MemberAccessLists is a list of AccessList ids that user membership
 	// should be fetched from
-	MemberAccessLists []AccessListRef `json:"member_access_lists" yaml:"member_access_lists"`
+	DynamicMembers DynamicAccessListMembers `json:"dynamic_members" yaml:"dynamic_members"`
 
 	// OwnerAccessLists is a list of AccessLists that owner membership
 	// should be fetched from
-	OwnerAccessLists []AccessListRef `json:"owner_access_lists" yaml:"owner_access_lists"`
+	DynamicOwners DynamicAccessListMembers `json:"dynamic_owners" yaml:"dynamic_owners"`
 }
 
 // Owner is an owner of an access list.
@@ -235,9 +235,8 @@ type Status struct {
 	MemberCount *uint32
 }
 
-type AccessListRef struct {
-	Name  string `json:"name" yaml:"name"`
-	Title string `json:"title" yaml:"title"`
+type DynamicAccessListMembers struct {
+	AccessLists []string `json:"access_lists" yaml:"access_lists"`
 }
 
 // NewAccessList will create a new access list.
@@ -321,15 +320,6 @@ func (a *AccessList) CheckAndSetDefaults() error {
 		deduplicatedOwners = append(deduplicatedOwners, owner)
 	}
 	a.Spec.Owners = deduplicatedOwners
-
-	for _, memberACL := range append(a.Spec.MemberAccessLists, a.Spec.OwnerAccessLists...) {
-		if memberACL.Name == "" {
-			return trace.BadParameter("access list name is missing")
-		}
-		if memberACL.Title == "" {
-			return trace.BadParameter("access list title is missing")
-		}
-	}
 
 	return nil
 }

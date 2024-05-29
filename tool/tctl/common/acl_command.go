@@ -160,14 +160,7 @@ func (c *ACLCommand) UsersAdd(ctx context.Context, client *authclient.Client) er
 		if err != nil {
 			return trace.Wrap(err)
 		}
-		added, err := client.AccessListClient().GetAccessList(ctx, c.userName)
-		if err != nil {
-			return trace.Wrap(err)
-		}
-		acl.Spec.MemberAccessLists = append(acl.Spec.MemberAccessLists, accesslist.AccessListRef{
-			Name:  c.userName,
-			Title: added.Spec.Title,
-		})
+		acl.Spec.DynamicMembers.AccessLists = append(acl.Spec.DynamicMembers.AccessLists, c.userName)
 		if _, err := client.AccessListClient().UpsertAccessList(ctx, acl); err != nil {
 			return trace.Wrap(err)
 		}
@@ -208,8 +201,8 @@ func (c *ACLCommand) UsersRemove(ctx context.Context, client *authclient.Client)
 		if err != nil {
 			return trace.Wrap(err)
 		}
-		acl.Spec.MemberAccessLists = slices.DeleteFunc(acl.Spec.MemberAccessLists, func(e accesslist.AccessListRef) bool {
-			return e.Name == c.userName
+		acl.Spec.DynamicMembers.AccessLists = slices.DeleteFunc(acl.Spec.DynamicMembers.AccessLists, func(e string) bool {
+			return e == c.userName
 		})
 		if _, err := client.AccessListClient().UpsertAccessList(ctx, acl); err != nil {
 			return trace.Wrap(err)
@@ -259,12 +252,12 @@ func (c *ACLCommand) UsersList(ctx context.Context, client *authclient.Client) e
 	if err != nil {
 		return trace.Wrap(err)
 	}
-	if len(acl.Spec.MemberAccessLists) == 0 {
+	if len(acl.Spec.DynamicMembers.AccessLists) == 0 {
 		return nil
 	}
 	fmt.Printf("Including members in %s from:\n", c.accessListName)
-	for _, memberAcl := range acl.Spec.MemberAccessLists {
-		fmt.Printf("- %s (%s)\n", memberAcl.Title, memberAcl.Name)
+	for _, memberAcl := range acl.Spec.DynamicMembers.AccessLists {
+		fmt.Printf("- access list %s\n", memberAcl)
 	}
 
 	return nil
@@ -285,18 +278,6 @@ func displayAccessLists(format string, accessLists ...*accesslist.AccessList) er
 }
 
 func displayAccessListsText(accessLists ...*accesslist.AccessList) error {
-	joinAccessListRefs := func(acls []accesslist.AccessListRef) string {
-		accessLists := ""
-		for i, oacl := range acls {
-			if i == len(acls)-1 {
-				accessLists += oacl.Title
-				break
-			}
-			accessLists += oacl.Title + ", "
-		}
-		return accessLists
-	}
-
 	table := asciitable.MakeTable([]string{"ID", "Review Frequency", "Review Day Of Month", "Granted Roles", "Granted Traits", "Referenced Member Lists", "Referenced Owner Lists"})
 	for _, accessList := range accessLists {
 		grantedRoles := strings.Join(accessList.GetGrants().Roles, ",")
@@ -304,8 +285,8 @@ func displayAccessListsText(accessLists ...*accesslist.AccessList) error {
 		for k, values := range accessList.GetGrants().Traits {
 			traitStrings = append(traitStrings, fmt.Sprintf("%s:{%s}", k, strings.Join(values, ",")))
 		}
-		memberAccessLists := joinAccessListRefs(accessList.Spec.MemberAccessLists)
-		ownerAccessLists := joinAccessListRefs(accessList.Spec.OwnerAccessLists)
+		memberAccessLists := strings.Join(accessList.Spec.DynamicMembers.AccessLists, ", ")
+		ownerAccessLists := strings.Join(accessList.Spec.DynamicOwners.AccessLists, ", ")
 
 		grantedTraits := strings.Join(traitStrings, ",")
 		table.AddRow([]string{

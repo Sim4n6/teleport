@@ -118,6 +118,46 @@ export interface AccessListSpec {
      * @generated from protobuf field: teleport.accesslist.v1.AccessListGrants owner_grants = 11;
      */
     ownerGrants?: AccessListGrants;
+    /**
+     * member_access_lists is a list of access lists that user
+     * membership should be fetched from. Members included are pulled
+     * from the members of the referenced nested access lists.
+     * If a cycle between access lists is introduced it will result in
+     * an error.
+     * In order for a member of a nested access list to be included in
+     * the access list referencing it, they must pass the membership
+     * requirements of the list including it.
+     *
+     * @generated from protobuf field: teleport.accesslist.v1.DynamicAccessListMembers dynamic_members = 12;
+     */
+    dynamicMembers?: DynamicAccessListMembers;
+    /**
+     * owner_access_lists is a list of access lists that owner
+     * membership should be fetched from. Owners included are pulled
+     * from the members of the referenced access lists.
+     * If a cycle between access lists is introduced it will result in
+     * an error.
+     * In order for an owner of a nested access list to be included in
+     * the access list referencing it, they must pass the ownership
+     * requirements of the list including it.
+     *
+     * @generated from protobuf field: teleport.accesslist.v1.DynamicAccessListMembers dynamic_owners = 13;
+     */
+    dynamicOwners?: DynamicAccessListMembers;
+}
+/**
+ * AccessListRef contains information about access lists included
+ * as references in an access list
+ *
+ * @generated from protobuf message teleport.accesslist.v1.DynamicAccessListMembers
+ */
+export interface DynamicAccessListMembers {
+    /**
+     * name is the id of the parent access list
+     *
+     * @generated from protobuf field: repeated string access_lists = 1;
+     */
+    accessLists: string[];
 }
 /**
  * AccessListOwner is an owner of an access list.
@@ -586,7 +626,9 @@ class AccessListSpec$Type extends MessageType<AccessListSpec> {
             { no: 5, name: "ownership_requires", kind: "message", T: () => AccessListRequires },
             { no: 6, name: "grants", kind: "message", T: () => AccessListGrants },
             { no: 8, name: "title", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
-            { no: 11, name: "owner_grants", kind: "message", T: () => AccessListGrants }
+            { no: 11, name: "owner_grants", kind: "message", T: () => AccessListGrants },
+            { no: 12, name: "dynamic_members", kind: "message", T: () => DynamicAccessListMembers },
+            { no: 13, name: "dynamic_owners", kind: "message", T: () => DynamicAccessListMembers }
         ]);
     }
     create(value?: PartialMessage<AccessListSpec>): AccessListSpec {
@@ -627,6 +669,12 @@ class AccessListSpec$Type extends MessageType<AccessListSpec> {
                 case /* teleport.accesslist.v1.AccessListGrants owner_grants */ 11:
                     message.ownerGrants = AccessListGrants.internalBinaryRead(reader, reader.uint32(), options, message.ownerGrants);
                     break;
+                case /* teleport.accesslist.v1.DynamicAccessListMembers dynamic_members */ 12:
+                    message.dynamicMembers = DynamicAccessListMembers.internalBinaryRead(reader, reader.uint32(), options, message.dynamicMembers);
+                    break;
+                case /* teleport.accesslist.v1.DynamicAccessListMembers dynamic_owners */ 13:
+                    message.dynamicOwners = DynamicAccessListMembers.internalBinaryRead(reader, reader.uint32(), options, message.dynamicOwners);
+                    break;
                 default:
                     let u = options.readUnknownField;
                     if (u === "throw")
@@ -663,6 +711,12 @@ class AccessListSpec$Type extends MessageType<AccessListSpec> {
         /* teleport.accesslist.v1.AccessListGrants owner_grants = 11; */
         if (message.ownerGrants)
             AccessListGrants.internalBinaryWrite(message.ownerGrants, writer.tag(11, WireType.LengthDelimited).fork(), options).join();
+        /* teleport.accesslist.v1.DynamicAccessListMembers dynamic_members = 12; */
+        if (message.dynamicMembers)
+            DynamicAccessListMembers.internalBinaryWrite(message.dynamicMembers, writer.tag(12, WireType.LengthDelimited).fork(), options).join();
+        /* teleport.accesslist.v1.DynamicAccessListMembers dynamic_owners = 13; */
+        if (message.dynamicOwners)
+            DynamicAccessListMembers.internalBinaryWrite(message.dynamicOwners, writer.tag(13, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -673,6 +727,53 @@ class AccessListSpec$Type extends MessageType<AccessListSpec> {
  * @generated MessageType for protobuf message teleport.accesslist.v1.AccessListSpec
  */
 export const AccessListSpec = new AccessListSpec$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class DynamicAccessListMembers$Type extends MessageType<DynamicAccessListMembers> {
+    constructor() {
+        super("teleport.accesslist.v1.DynamicAccessListMembers", [
+            { no: 1, name: "access_lists", kind: "scalar", repeat: 2 /*RepeatType.UNPACKED*/, T: 9 /*ScalarType.STRING*/ }
+        ]);
+    }
+    create(value?: PartialMessage<DynamicAccessListMembers>): DynamicAccessListMembers {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.accessLists = [];
+        if (value !== undefined)
+            reflectionMergePartial<DynamicAccessListMembers>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: DynamicAccessListMembers): DynamicAccessListMembers {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* repeated string access_lists */ 1:
+                    message.accessLists.push(reader.string());
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: DynamicAccessListMembers, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* repeated string access_lists = 1; */
+        for (let i = 0; i < message.accessLists.length; i++)
+            writer.tag(1, WireType.LengthDelimited).string(message.accessLists[i]);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message teleport.accesslist.v1.DynamicAccessListMembers
+ */
+export const DynamicAccessListMembers = new DynamicAccessListMembers$Type();
 // @generated message type with reflection information, may provide speed optimized methods
 class AccessListOwner$Type extends MessageType<AccessListOwner> {
     constructor() {

@@ -270,25 +270,25 @@ func (a AccessListMembershipChecker) recursiveIsAccessListMemberCheck(ctx contex
 	seen := map[string]struct{}{}
 	seen[accessList.GetName()] = struct{}{}
 
-	queue := make([]accesslist.AccessListRef, len(accessList.Spec.MemberAccessLists))
-	copy(queue, accessList.Spec.MemberAccessLists)
+	queue := make([]string, len(accessList.Spec.DynamicMembers.AccessLists))
+	copy(queue, accessList.Spec.DynamicMembers.AccessLists)
 	for len(queue) > 0 {
 		size := len(queue)
 		for i := 0; i < size; i++ {
 			pal := queue[0]
 			queue = queue[1:]
 
-			member, err := a.members.GetAccessListMember(ctx, pal.Name, username)
+			member, err := a.members.GetAccessListMember(ctx, pal, username)
 			if trace.IsNotFound(err) {
-				subAccessList, err := a.accessList.GetAccessList(ctx, pal.Name)
+				subAccessList, err := a.accessList.GetAccessList(ctx, pal)
 				if err != nil {
 					return trace.Wrap(err)
 				}
-				for _, next := range subAccessList.Spec.MemberAccessLists {
-					if _, ok := seen[next.Name]; ok {
+				for _, next := range subAccessList.Spec.DynamicMembers.AccessLists {
+					if _, ok := seen[next]; ok {
 						continue
 					}
-					seen[next.Name] = struct{}{}
+					seen[next] = struct{}{}
 					queue = append(queue, next)
 				}
 			} else if err != nil {
@@ -304,7 +304,7 @@ func (a AccessListMembershipChecker) recursiveIsAccessListMemberCheck(ctx contex
 				return trace.AccessDenied("user %s's membership has expired in the access list", username)
 			}
 
-			subAccessList, err := a.accessList.GetAccessList(ctx, pal.Name)
+			subAccessList, err := a.accessList.GetAccessList(ctx, pal)
 			if err != nil {
 				return trace.Wrap(err)
 			}

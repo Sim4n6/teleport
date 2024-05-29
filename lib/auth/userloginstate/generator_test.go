@@ -404,7 +404,7 @@ func TestAccessLists(t *testing.T) {
 						"trait1": {"value"},
 					}),
 					emptyGrants,
-					[]accesslist.AccessListRef{{Name: "2", Title: "title"}}),
+					[]string{"2"}),
 				newAccessListsWithMemberRefs(t, clock, "2", grants([]string{"role1"}, trait.Traits{}),
 					emptyGrants,
 					[]string{"3"}),
@@ -534,9 +534,9 @@ func grants(roles []string, traits trait.Traits) accesslist.Grants {
 	}
 }
 
-func newAccessListsWithMemberRefs(t *testing.T, clock clockwork.Clock, name string, grants accesslist.Grants, ownerGrants accesslist.Grants, memberlists []accesslist.AccessListRef) *accesslist.AccessList {
+func newAccessListsWithMemberRefs(t *testing.T, clock clockwork.Clock, name string, grants accesslist.Grants, ownerGrants accesslist.Grants, memberlists []string) *accesslist.AccessList {
 	acl := newAccessList(t, clock, name, grants, ownerGrants)
-	acl.Spec.MemberAccessLists = memberlists
+	acl.Spec.DynamicMembers.AccessLists = memberlists
 	return acl
 }
 
