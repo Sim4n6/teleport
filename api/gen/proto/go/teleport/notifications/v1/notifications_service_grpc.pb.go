@@ -37,13 +37,15 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	NotificationService_CreateUserNotification_FullMethodName         = "/teleport.notifications.v1.NotificationService/CreateUserNotification"
-	NotificationService_DeleteUserNotification_FullMethodName         = "/teleport.notifications.v1.NotificationService/DeleteUserNotification"
-	NotificationService_CreateGlobalNotification_FullMethodName       = "/teleport.notifications.v1.NotificationService/CreateGlobalNotification"
-	NotificationService_DeleteGlobalNotification_FullMethodName       = "/teleport.notifications.v1.NotificationService/DeleteGlobalNotification"
-	NotificationService_ListNotifications_FullMethodName              = "/teleport.notifications.v1.NotificationService/ListNotifications"
-	NotificationService_UpsertUserNotificationState_FullMethodName    = "/teleport.notifications.v1.NotificationService/UpsertUserNotificationState"
-	NotificationService_UpsertUserLastSeenNotification_FullMethodName = "/teleport.notifications.v1.NotificationService/UpsertUserLastSeenNotification"
+	NotificationService_CreateUserNotification_FullMethodName                 = "/teleport.notifications.v1.NotificationService/CreateUserNotification"
+	NotificationService_DeleteUserNotification_FullMethodName                 = "/teleport.notifications.v1.NotificationService/DeleteUserNotification"
+	NotificationService_CreateGlobalNotification_FullMethodName               = "/teleport.notifications.v1.NotificationService/CreateGlobalNotification"
+	NotificationService_DeleteGlobalNotification_FullMethodName               = "/teleport.notifications.v1.NotificationService/DeleteGlobalNotification"
+	NotificationService_ListNotifications_FullMethodName                      = "/teleport.notifications.v1.NotificationService/ListNotifications"
+	NotificationService_ListAllUserCreatedNotificationsForUser_FullMethodName = "/teleport.notifications.v1.NotificationService/ListAllUserCreatedNotificationsForUser"
+	NotificationService_ListAllUserCreatedGlobalNotifications_FullMethodName  = "/teleport.notifications.v1.NotificationService/ListAllUserCreatedGlobalNotifications"
+	NotificationService_UpsertUserNotificationState_FullMethodName            = "/teleport.notifications.v1.NotificationService/UpsertUserNotificationState"
+	NotificationService_UpsertUserLastSeenNotification_FullMethodName         = "/teleport.notifications.v1.NotificationService/UpsertUserLastSeenNotification"
 )
 
 // NotificationServiceClient is the client API for NotificationService service.
@@ -62,6 +64,10 @@ type NotificationServiceClient interface {
 	DeleteGlobalNotification(ctx context.Context, in *DeleteGlobalNotificationRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// ListNotifications returns a paginated list of a user's notifications.
 	ListNotifications(ctx context.Context, in *ListNotificationsRequest, opts ...grpc.CallOption) (*ListNotificationsResponse, error)
+	// ListAllUserCreatedNotificationsForUser returns a paginated list of all user-created user-specific notifications for a user. This should only be used by admins.
+	ListAllUserCreatedNotificationsForUser(ctx context.Context, in *ListAllUserCreatedNotificationsForUserRequest, opts ...grpc.CallOption) (*ListNotificationsResponse, error)
+	// ListAllUserCreatedGlobalNotifications returns a paginated list of all user-created global notifications. This should only be used by admins.
+	ListAllUserCreatedGlobalNotifications(ctx context.Context, in *ListAllUserCreatedGlobalNotificationsRequest, opts ...grpc.CallOption) (*ListNotificationsResponse, error)
 	// UpsertUserNotificationState creates or updates a user notification state which records whether the user has clicked on or dismissed a notification.
 	UpsertUserNotificationState(ctx context.Context, in *UpsertUserNotificationStateRequest, opts ...grpc.CallOption) (*UserNotificationState, error)
 	// UpsertUserLastSeenNotification creates or updates a user's last seen notification item.
@@ -126,6 +132,26 @@ func (c *notificationServiceClient) ListNotifications(ctx context.Context, in *L
 	return out, nil
 }
 
+func (c *notificationServiceClient) ListAllUserCreatedNotificationsForUser(ctx context.Context, in *ListAllUserCreatedNotificationsForUserRequest, opts ...grpc.CallOption) (*ListNotificationsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListNotificationsResponse)
+	err := c.cc.Invoke(ctx, NotificationService_ListAllUserCreatedNotificationsForUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *notificationServiceClient) ListAllUserCreatedGlobalNotifications(ctx context.Context, in *ListAllUserCreatedGlobalNotificationsRequest, opts ...grpc.CallOption) (*ListNotificationsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListNotificationsResponse)
+	err := c.cc.Invoke(ctx, NotificationService_ListAllUserCreatedGlobalNotifications_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *notificationServiceClient) UpsertUserNotificationState(ctx context.Context, in *UpsertUserNotificationStateRequest, opts ...grpc.CallOption) (*UserNotificationState, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UserNotificationState)
@@ -162,6 +188,10 @@ type NotificationServiceServer interface {
 	DeleteGlobalNotification(context.Context, *DeleteGlobalNotificationRequest) (*emptypb.Empty, error)
 	// ListNotifications returns a paginated list of a user's notifications.
 	ListNotifications(context.Context, *ListNotificationsRequest) (*ListNotificationsResponse, error)
+	// ListAllUserCreatedNotificationsForUser returns a paginated list of all user-created user-specific notifications for a user. This should only be used by admins.
+	ListAllUserCreatedNotificationsForUser(context.Context, *ListAllUserCreatedNotificationsForUserRequest) (*ListNotificationsResponse, error)
+	// ListAllUserCreatedGlobalNotifications returns a paginated list of all user-created global notifications. This should only be used by admins.
+	ListAllUserCreatedGlobalNotifications(context.Context, *ListAllUserCreatedGlobalNotificationsRequest) (*ListNotificationsResponse, error)
 	// UpsertUserNotificationState creates or updates a user notification state which records whether the user has clicked on or dismissed a notification.
 	UpsertUserNotificationState(context.Context, *UpsertUserNotificationStateRequest) (*UserNotificationState, error)
 	// UpsertUserLastSeenNotification creates or updates a user's last seen notification item.
@@ -187,6 +217,12 @@ func (UnimplementedNotificationServiceServer) DeleteGlobalNotification(context.C
 }
 func (UnimplementedNotificationServiceServer) ListNotifications(context.Context, *ListNotificationsRequest) (*ListNotificationsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListNotifications not implemented")
+}
+func (UnimplementedNotificationServiceServer) ListAllUserCreatedNotificationsForUser(context.Context, *ListAllUserCreatedNotificationsForUserRequest) (*ListNotificationsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListAllUserCreatedNotificationsForUser not implemented")
+}
+func (UnimplementedNotificationServiceServer) ListAllUserCreatedGlobalNotifications(context.Context, *ListAllUserCreatedGlobalNotificationsRequest) (*ListNotificationsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListAllUserCreatedGlobalNotifications not implemented")
 }
 func (UnimplementedNotificationServiceServer) UpsertUserNotificationState(context.Context, *UpsertUserNotificationStateRequest) (*UserNotificationState, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpsertUserNotificationState not implemented")
@@ -297,6 +333,42 @@ func _NotificationService_ListNotifications_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _NotificationService_ListAllUserCreatedNotificationsForUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAllUserCreatedNotificationsForUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NotificationServiceServer).ListAllUserCreatedNotificationsForUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NotificationService_ListAllUserCreatedNotificationsForUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NotificationServiceServer).ListAllUserCreatedNotificationsForUser(ctx, req.(*ListAllUserCreatedNotificationsForUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NotificationService_ListAllUserCreatedGlobalNotifications_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAllUserCreatedGlobalNotificationsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NotificationServiceServer).ListAllUserCreatedGlobalNotifications(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NotificationService_ListAllUserCreatedGlobalNotifications_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NotificationServiceServer).ListAllUserCreatedGlobalNotifications(ctx, req.(*ListAllUserCreatedGlobalNotificationsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _NotificationService_UpsertUserNotificationState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpsertUserNotificationStateRequest)
 	if err := dec(in); err != nil {
@@ -359,6 +431,14 @@ var NotificationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListNotifications",
 			Handler:    _NotificationService_ListNotifications_Handler,
+		},
+		{
+			MethodName: "ListAllUserCreatedNotificationsForUser",
+			Handler:    _NotificationService_ListAllUserCreatedNotificationsForUser_Handler,
+		},
+		{
+			MethodName: "ListAllUserCreatedGlobalNotifications",
+			Handler:    _NotificationService_ListAllUserCreatedGlobalNotifications_Handler,
 		},
 		{
 			MethodName: "UpsertUserNotificationState",
