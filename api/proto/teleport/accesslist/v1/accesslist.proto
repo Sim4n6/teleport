@@ -80,7 +80,7 @@ message AccessListSpec {
   // In order for a member of a nested access list to be included in
   // the access list referencing it, they must pass the membership
   // requirements of the list including it.
-  repeated AccessListRef member_access_lists = 12;
+  repeated DynamicAccessListMembers dynamic_members = 12;
 
   // owner_access_lists is a list of access lists that owner
   // membership should be fetched from. Owners included are pulled
@@ -90,14 +90,14 @@ message AccessListSpec {
   // In order for an owner of a nested access list to be included in
   // the access list referencing it, they must pass the ownership
   // requirements of the list including it.
-  repeated AccessListRef owner_access_lists = 13;
+  repeated DynamicAccessListMembers dynamic_owners = 13;
 }
 
 // AccessListRef contains information about access lists included
 // as references in an access list
-message AccessListRef {
+message DynamicAccessListMembers {
   // name is the id of the parent access list
-  string name = 1;
+  repeated string name = 1;
 }
 
 // AccessListOwner is an owner of an access list.
