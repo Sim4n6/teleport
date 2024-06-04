@@ -257,10 +257,11 @@ func TestIsAccessListOwner(t *testing.T) {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
+			ctx := context.Background()
 
 			accessList := newAccessList(t)
 
-			test.errAssertionFunc(t, IsAccessListOwner(test.identity, accessList))
+			test.errAssertionFunc(t, IsAccessListOwner(ctx, &testMembersAndLockGetter{}, test.identity, accessList))
 		})
 	}
 }
@@ -273,7 +274,12 @@ type testMembersAndLockGetter struct {
 
 // GetAccessList implements AccessListGetter.
 func (t *testMembersAndLockGetter) GetAccessList(context.Context, string) (*accesslist.AccessList, error) {
-	return nil, trace.NotImplemented("not implemented")
+	return nil, trace.NotFound("not implemented")
+}
+
+// GetAccessList implements AccessListGetter.
+func (t *testMembersAndLockGetter) GetAccessLists(context.Context) ([]*accesslist.AccessList, error) {
+	return nil, trace.NotFound("not implemented")
 }
 
 // ListAccessListMembers returns a paginated list of all access list members.
@@ -494,7 +500,7 @@ func TestIsAccessListMemberChecker(t *testing.T) {
 			}
 			getter := &testMembersAndLockGetter{members: memberMap, locks: test.locks}
 
-			checker := NewAccessListMembershipChecker(clockwork.NewFakeClockAt(test.currentTime), getter, getter, getter)
+			checker := NewAccessListMembershipChecker(clockwork.NewFakeClockAt(test.currentTime), getter, getter)
 			test.errAssertionFunc(t, checker.IsAccessListMember(ctx, test.identity, accessList))
 		})
 	}
