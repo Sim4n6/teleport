@@ -1,0 +1,27 @@
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "RedshiftServerlessConnect",
+            "Effect": "Allow",
+            "Action": "redshift-serverless:GetCredentials",
+            "Resource": "arn:aws:redshift-serverless:<Var name="us-east-2"/>:<Var name="aws-account-id"/>:workgroup/<Var name="workgroup-id"/>"
+        }
+    ]
+}
+```
+
+| Statement | Purpose |
+| --------- | ------- |
+|`RedshiftServerlessConnect` (required) | Get credentials to connect to a database. |
+
+The resource ARN string has the following format:
+
+```
+arn:aws:redshift-serverless:{Region}:{AccountID}:workgroup/{WorkgroupID}
+```
+
+See
+[Defining database roles to grant to federated users in Amazon Redshift Serverless](https://docs.aws.amazon.com/redshift/latest/mgmt/redshift-iam-access-federated-db-roles.html)
+for more information about configuring Redshift Serverless permissions.

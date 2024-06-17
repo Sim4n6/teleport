@@ -987,10 +987,24 @@
             {
               "title": "Architecture",
               "slug": "/auto-discovery/kubernetes-applications/architecture/"
+            }
+          ]
+        },
+        {
+          "title": "Reference",
+          "slug": "/auto-discovery/reference/",
+          "entries": [
+            {
+              "title": "AWS IAM",
+              "slug": "/auto-discovery/reference/aws-iam/"
             },
             {
-              "title": "Reference",
-              "slug": "/auto-discovery/kubernetes-applications/reference/"
+              "title": "Configuration",
+              "slug": "/auto-discovery/reference/configuration/"
+            },
+            {
+              "title": "Kubernetes Applications",
+              "slug": "/auto-discovery/reference/kubernetes-applications/"
             }
           ]
         }
@@ -2940,7 +2954,7 @@
     },
     {
       "source": "/application-access/enroll-kubernetes-applications/reference/",
-      "destination": "/auto-discovery/kubernetes-applications/reference/",
+      "destination": "/auto-discovery/reference/kubernetes-applications/",
       "permanent": true
     },
     {

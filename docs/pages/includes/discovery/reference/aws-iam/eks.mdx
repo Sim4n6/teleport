@@ -1,0 +1,47 @@
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "EKSDiscovery",
+            "Effect": "Allow",
+            "Action": [
+              "eks:DescribeCluster",
+              "eks:ListClusters"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "EKSManageAccess",
+            "Effect": "Allow",
+            "Action": [
+              "eks:AssociateAccessPolicy",
+              "eks:CreateAccessEntry",
+              "eks:DeleteAccessEntry",
+              "eks:DescribeAccessEntry"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+| Statement | Purpose |
+| --------- | ------- |
+|`EKSDiscovery` (required) | Discover EKS clusters and fetch additional details about them. |
+|`EKSManageAccess` (optional) | Automatically set up Teleport access for discovered EKS clusters. |
+
+<Details title="why are the access permissions optional?">
+The permissions in the `EKSManageAccess` statement are optional because the
+Discovery Service will discover EKS clusters even when it cannot ensure that the
+Teleport Kubernetes Service has access to the clusters it discovers.
+If you omit any of these optional permissions, then it is your responsibility to
+ensure that the Teleport Kubernetes Service can access each EKS cluster.
+</Details>
+
+You can use a list of ARNs and narrow the scope of the permissions to specific
+regions or EKS clusters instead of using a wildcard.
+The resource ARN has the following format: 
+```code
+arn:{Partition}:eks:{Region}:{Account}:cluster/{ClusterName}
+```
