@@ -251,13 +251,13 @@ func IsAccessListOwner(ctx context.Context, members AccessListMemberGetter, iden
 // AccessListMembershipChecker will check if users are members of an access list and
 // makes sure the user is not locked and meets membership requirements.
 type AccessListMembershipChecker struct {
-	members AccessListMemberGetter
+	members AccessListsGetter
 	locks   LockGetter
 	clock   clockwork.Clock
 }
 
 // NewAccessListMembershipChecker will create a new access list membership checker.
-func NewAccessListMembershipChecker(clock clockwork.Clock, members AccessListMemberGetter, locks LockGetter) *AccessListMembershipChecker {
+func NewAccessListMembershipChecker(clock clockwork.Clock, members AccessListsGetter, locks LockGetter) *AccessListMembershipChecker {
 	return &AccessListMembershipChecker{
 		members: members,
 		locks:   locks,
@@ -265,9 +265,10 @@ func NewAccessListMembershipChecker(clock clockwork.Clock, members AccessListMem
 	}
 }
 
-func recurseAccessLists(username string, initialList string, lists map[string][]string,
+func recurseAccessLists(username string, initialList string,
+	lists func(string) ([]string, error),
 	listMember func(username, list string) error,
-	onAcl func(lists map[string][]string, current string) error) error {
+	onAcl func(current string) error) error {
 	seen := map[string]struct{}{}
 	queue := []string{initialList}
 
@@ -283,9 +284,9 @@ func recurseAccessLists(username string, initialList string, lists map[string][]
 				return trace.Wrap(err)
 			}
 			if trace.IsNotFound(err) {
-				subAccessListMembers, ok := lists[pal]
-				if !ok {
-					return trace.NotFound("couldnt find access list %s", pal)
+				subAccessListMembers, err := lists(pal)
+				if err != nil {
+					return trace.NotFound("error find access list %s", pal)
 				}
 				for _, next := range subAccessListMembers {
 					if _, ok := seen[next]; ok {
@@ -296,7 +297,7 @@ func recurseAccessLists(username string, initialList string, lists map[string][]
 				}
 			}
 
-			if err := onAcl(lists, pal); err == nil {
+			if err := onAcl(pal); err == nil {
 				return nil
 			}
 		}
@@ -304,16 +305,38 @@ func recurseAccessLists(username string, initialList string, lists map[string][]
 	return trace.NotFound("user %s is not a member of the access list or its parents", username)
 }
 
+func (a AccessListMembershipChecker) getAccessListDynamicMembers(ctx context.Context, entry string) ([]string, error) {
+	var pageToken string
+	var dynamicMembers []string
+
+	for {
+		var members []*accesslist.AccessListMember
+		var err error
+
+		members, pageToken, err = a.members.ListAccessListMembers(ctx, entry, 0 /* default page size */, pageToken)
+		if err != nil {
+			return nil, trace.Wrap(err)
+		}
+
+		for _, member := range members {
+			if member.Spec.Origin == accesslist.MemberOriginDynamic {
+				dynamicMembers = append(dynamicMembers)
+			}
+		}
+
+		if pageToken == "" {
+			break
+		}
+	}
+
+	return dynamicMembers, nil
+}
+
 func (a AccessListMembershipChecker) recursiveIsAccessListMemberCheck(ctx context.Context, identity tlsca.Identity, accessList *accesslist.AccessList) error {
-	acls, err := a.members.GetAccessLists(ctx)
-	if err != nil {
-		return trace.Wrap(err)
-	}
-	lists := make(map[string][]string)
-	for _, acl := range acls {
-		lists[acl.GetName()] = acl.Spec.DynamicMembers.AccessLists
-	}
-	err = recurseAccessLists(identity.Username, accessList.GetName(), lists,
+	err := recurseAccessLists(identity.Username, accessList.GetName(),
+		func(s string) ([]string, error) {
+			return a.getAccessListDynamicMembers(ctx, s)
+		},
 		func(username, list string) error {
 			_, err := a.members.GetAccessListMember(ctx, list, username)
 			if err != nil {
@@ -321,7 +344,7 @@ func (a AccessListMembershipChecker) recursiveIsAccessListMemberCheck(ctx contex
 			}
 			return nil
 		},
-		func(lists map[string][]string, current string) error {
+		func(current string) error {
 			member, err := a.members.GetAccessListMember(ctx, current, identity.Username)
 			if err != nil {
 				return trace.Wrap(err)
@@ -352,7 +375,13 @@ func recursiveIsAccessListOwnerCheck(ctx context.Context, members AccessListMemb
 	for _, acl := range acls {
 		lists[acl.GetName()] = acl.Spec.DynamicOwners.AccessLists
 	}
-	err = recurseAccessLists(identity.Username, accessList.GetName(), lists,
+	err = recurseAccessLists(identity.Username, accessList.GetName(), func(s string) ([]string, error) {
+		dynLists, ok := lists[s]
+		if !ok {
+			return nil, trace.NotFound("access list %q not found", s)
+		}
+		return dynLists, nil
+	},
 		func(username, list string) error {
 			_, err := members.GetAccessListMember(ctx, list, username)
 			if err != nil {
@@ -360,7 +389,7 @@ func recursiveIsAccessListOwnerCheck(ctx context.Context, members AccessListMemb
 			}
 			return nil
 		},
-		func(lists map[string][]string, current string) error {
+		func(current string) error {
 			member, err := members.GetAccessListMember(ctx, current, identity.Username)
 			if err != nil {
 				return trace.Wrap(err)
@@ -434,7 +463,7 @@ func (a AccessListMembershipChecker) IsAccessListMember(ctx context.Context, ide
 }
 
 // TODO(mdwn): Remove this in favor of using the access list membership checker.
-func IsAccessListMember(ctx context.Context, identity tlsca.Identity, clock clockwork.Clock, accessList *accesslist.AccessList, members AccessListMemberGetter) error {
+func IsAccessListMember(ctx context.Context, identity tlsca.Identity, clock clockwork.Clock, accessList *accesslist.AccessList, members AccessListsGetter) error {
 	// See if the member getter also implements lock getter. If so, use it. Otherwise, nil is fine.
 	lockGetter, _ := members.(LockGetter)
 	return AccessListMembershipChecker{

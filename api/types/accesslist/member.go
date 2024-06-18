@@ -61,6 +61,9 @@ type AccessListMemberSpec struct {
 
 	// IneligibleStatus describes the reason why this member is not eligible.
 	IneligibleStatus string `json:"ineligible_status" yaml:"ineligible_status"`
+
+	// origin of the member, either "member", or "dynamic"
+	Origin string `json:"origin" yaml:"origin"`
 }
 
 // NewAccessListMember will create a new access listm member.
@@ -77,6 +80,11 @@ func NewAccessListMember(metadata header.Metadata, spec AccessListMemberSpec) (*
 	return member, nil
 }
 
+const (
+	MemberOriginMember  = "member"
+	MemberOriginDynamic = "dynamic"
+)
+
 // CheckAndSetDefaults validates fields and populates empty fields with default values.
 func (a *AccessListMember) CheckAndSetDefaults() error {
 	a.SetKind(types.KindAccessListMember)
@@ -84,6 +92,10 @@ func (a *AccessListMember) CheckAndSetDefaults() error {
 
 	if err := a.ResourceHeader.CheckAndSetDefaults(); err != nil {
 		return trace.Wrap(err)
+	}
+
+	if a.Spec.Origin == "" {
+		a.Spec.Origin = MemberOriginMember
 	}
 
 	if a.Spec.AccessList == "" {

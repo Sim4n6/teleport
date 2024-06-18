@@ -119,19 +119,6 @@ export interface AccessListSpec {
      */
     ownerGrants?: AccessListGrants;
     /**
-     * member_access_lists is a list of access lists that user
-     * membership should be fetched from. Members included are pulled
-     * from the members of the referenced nested access lists.
-     * If a cycle between access lists is introduced it will result in
-     * an error.
-     * In order for a member of a nested access list to be included in
-     * the access list referencing it, they must pass the membership
-     * requirements of the list including it.
-     *
-     * @generated from protobuf field: teleport.accesslist.v1.DynamicAccessListMembers dynamic_members = 12;
-     */
-    dynamicMembers?: DynamicAccessListMembers;
-    /**
      * owner_access_lists is a list of access lists that owner
      * membership should be fetched from. Owners included are pulled
      * from the members of the referenced access lists.
@@ -141,7 +128,7 @@ export interface AccessListSpec {
      * the access list referencing it, they must pass the ownership
      * requirements of the list including it.
      *
-     * @generated from protobuf field: teleport.accesslist.v1.DynamicAccessListMembers dynamic_owners = 13;
+     * @generated from protobuf field: teleport.accesslist.v1.DynamicAccessListMembers dynamic_owners = 12;
      */
     dynamicOwners?: DynamicAccessListMembers;
 }
@@ -359,6 +346,10 @@ export interface MemberSpec {
      * @generated from protobuf field: teleport.accesslist.v1.IneligibleStatus ineligible_status = 7;
      */
     ineligibleStatus: IneligibleStatus;
+    /**
+     * @generated from protobuf field: string origin = 9;
+     */
+    origin: string;
 }
 /**
  * Review is a review of an access list.
@@ -627,8 +618,7 @@ class AccessListSpec$Type extends MessageType<AccessListSpec> {
             { no: 6, name: "grants", kind: "message", T: () => AccessListGrants },
             { no: 8, name: "title", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
             { no: 11, name: "owner_grants", kind: "message", T: () => AccessListGrants },
-            { no: 12, name: "dynamic_members", kind: "message", T: () => DynamicAccessListMembers },
-            { no: 13, name: "dynamic_owners", kind: "message", T: () => DynamicAccessListMembers }
+            { no: 12, name: "dynamic_owners", kind: "message", T: () => DynamicAccessListMembers }
         ]);
     }
     create(value?: PartialMessage<AccessListSpec>): AccessListSpec {
@@ -669,10 +659,7 @@ class AccessListSpec$Type extends MessageType<AccessListSpec> {
                 case /* teleport.accesslist.v1.AccessListGrants owner_grants */ 11:
                     message.ownerGrants = AccessListGrants.internalBinaryRead(reader, reader.uint32(), options, message.ownerGrants);
                     break;
-                case /* teleport.accesslist.v1.DynamicAccessListMembers dynamic_members */ 12:
-                    message.dynamicMembers = DynamicAccessListMembers.internalBinaryRead(reader, reader.uint32(), options, message.dynamicMembers);
-                    break;
-                case /* teleport.accesslist.v1.DynamicAccessListMembers dynamic_owners */ 13:
+                case /* teleport.accesslist.v1.DynamicAccessListMembers dynamic_owners */ 12:
                     message.dynamicOwners = DynamicAccessListMembers.internalBinaryRead(reader, reader.uint32(), options, message.dynamicOwners);
                     break;
                 default:
@@ -711,12 +698,9 @@ class AccessListSpec$Type extends MessageType<AccessListSpec> {
         /* teleport.accesslist.v1.AccessListGrants owner_grants = 11; */
         if (message.ownerGrants)
             AccessListGrants.internalBinaryWrite(message.ownerGrants, writer.tag(11, WireType.LengthDelimited).fork(), options).join();
-        /* teleport.accesslist.v1.DynamicAccessListMembers dynamic_members = 12; */
-        if (message.dynamicMembers)
-            DynamicAccessListMembers.internalBinaryWrite(message.dynamicMembers, writer.tag(12, WireType.LengthDelimited).fork(), options).join();
-        /* teleport.accesslist.v1.DynamicAccessListMembers dynamic_owners = 13; */
+        /* teleport.accesslist.v1.DynamicAccessListMembers dynamic_owners = 12; */
         if (message.dynamicOwners)
-            DynamicAccessListMembers.internalBinaryWrite(message.dynamicOwners, writer.tag(13, WireType.LengthDelimited).fork(), options).join();
+            DynamicAccessListMembers.internalBinaryWrite(message.dynamicOwners, writer.tag(12, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -1171,7 +1155,8 @@ class MemberSpec$Type extends MessageType<MemberSpec> {
             { no: 4, name: "expires", kind: "message", T: () => Timestamp },
             { no: 5, name: "reason", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
             { no: 6, name: "added_by", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
-            { no: 7, name: "ineligible_status", kind: "enum", T: () => ["teleport.accesslist.v1.IneligibleStatus", IneligibleStatus, "INELIGIBLE_STATUS_"] }
+            { no: 7, name: "ineligible_status", kind: "enum", T: () => ["teleport.accesslist.v1.IneligibleStatus", IneligibleStatus, "INELIGIBLE_STATUS_"] },
+            { no: 9, name: "origin", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
         ]);
     }
     create(value?: PartialMessage<MemberSpec>): MemberSpec {
@@ -1181,6 +1166,7 @@ class MemberSpec$Type extends MessageType<MemberSpec> {
         message.reason = "";
         message.addedBy = "";
         message.ineligibleStatus = 0;
+        message.origin = "";
         if (value !== undefined)
             reflectionMergePartial<MemberSpec>(this, message, value);
         return message;
@@ -1210,6 +1196,9 @@ class MemberSpec$Type extends MessageType<MemberSpec> {
                     break;
                 case /* teleport.accesslist.v1.IneligibleStatus ineligible_status */ 7:
                     message.ineligibleStatus = reader.int32();
+                    break;
+                case /* string origin */ 9:
+                    message.origin = reader.string();
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -1244,6 +1233,9 @@ class MemberSpec$Type extends MessageType<MemberSpec> {
         /* teleport.accesslist.v1.IneligibleStatus ineligible_status = 7; */
         if (message.ineligibleStatus !== 0)
             writer.tag(7, WireType.Varint).int32(message.ineligibleStatus);
+        /* string origin = 9; */
+        if (message.origin !== "")
+            writer.tag(9, WireType.LengthDelimited).string(message.origin);
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
