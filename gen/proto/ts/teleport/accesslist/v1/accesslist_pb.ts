@@ -347,9 +347,17 @@ export interface MemberSpec {
      */
     ineligibleStatus: IneligibleStatus;
     /**
+     * origin of the member, either "member", or "dynamic"
+     *
      * @generated from protobuf field: string origin = 9;
      */
     origin: string;
+    /**
+     * access_list_title is the title of the access list being nested, used if origin is "dynamic"
+     *
+     * @generated from protobuf field: string access_list_title = 10;
+     */
+    accessListTitle: string;
 }
 /**
  * Review is a review of an access list.
@@ -1156,7 +1164,8 @@ class MemberSpec$Type extends MessageType<MemberSpec> {
             { no: 5, name: "reason", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
             { no: 6, name: "added_by", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
             { no: 7, name: "ineligible_status", kind: "enum", T: () => ["teleport.accesslist.v1.IneligibleStatus", IneligibleStatus, "INELIGIBLE_STATUS_"] },
-            { no: 9, name: "origin", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
+            { no: 9, name: "origin", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 10, name: "access_list_title", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
         ]);
     }
     create(value?: PartialMessage<MemberSpec>): MemberSpec {
@@ -1167,6 +1176,7 @@ class MemberSpec$Type extends MessageType<MemberSpec> {
         message.addedBy = "";
         message.ineligibleStatus = 0;
         message.origin = "";
+        message.accessListTitle = "";
         if (value !== undefined)
             reflectionMergePartial<MemberSpec>(this, message, value);
         return message;
@@ -1199,6 +1209,9 @@ class MemberSpec$Type extends MessageType<MemberSpec> {
                     break;
                 case /* string origin */ 9:
                     message.origin = reader.string();
+                    break;
+                case /* string access_list_title */ 10:
+                    message.accessListTitle = reader.string();
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -1236,6 +1249,9 @@ class MemberSpec$Type extends MessageType<MemberSpec> {
         /* string origin = 9; */
         if (message.origin !== "")
             writer.tag(9, WireType.LengthDelimited).string(message.origin);
+        /* string access_list_title = 10; */
+        if (message.accessListTitle !== "")
+            writer.tag(10, WireType.LengthDelimited).string(message.accessListTitle);
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);

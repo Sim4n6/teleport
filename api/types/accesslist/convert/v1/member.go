@@ -48,6 +48,7 @@ func FromMemberProto(msg *accesslistv1.Member, opts ...MemberOption) (*accesslis
 		// Must provide as options to set it with the provided value.
 		IneligibleStatus: "",
 		Origin:           msg.Spec.Origin,
+		AccessListTitle:  msg.Spec.AccessListTitle,
 	})
 	if err != nil {
 		return nil, trace.Wrap(err)

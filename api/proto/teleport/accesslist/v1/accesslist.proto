@@ -215,7 +215,11 @@ message MemberSpec {
   // and if not, describes how they're lacking eligibility.
   IneligibleStatus ineligible_status = 7;
 
+  // origin of the member, either "member", or "dynamic"
   string origin = 9;
+
+  // access_list_title is the title of the access list being nested, used if origin is "dynamic"
+  string access_list_title = 10;
 }
 
 // IneligibleStatus describes how the user is ineligible.

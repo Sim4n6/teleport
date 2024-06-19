@@ -64,6 +64,8 @@ type AccessListMemberSpec struct {
 
 	// origin of the member, either "member", or "dynamic"
 	Origin string `json:"origin" yaml:"origin"`
+	// AccessListTitle is the title of the access list being nested, used if origin is "dynamic"
+	AccessListTitle string `json:"access_list_title" yaml:"access_list_title"`
 }
 
 // NewAccessListMember will create a new access listm member.

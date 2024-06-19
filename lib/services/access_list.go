@@ -178,6 +178,12 @@ type AccessListMembers interface {
 	DeleteAllAccessListMembers(ctx context.Context) error
 }
 
+type AccessListRecursiveMembersGetter interface {
+	ListAccessListMembers(ctx context.Context, accessListName string, pageSize int, pageToken string) (members []*accesslist.AccessListMember, nextToken string, err error)
+	GetAccessListMember(ctx context.Context, accessList string, memberName string) (*accesslist.AccessListMember, error)
+	GetAccessList(context.Context, string) (*accesslist.AccessList, error)
+}
+
 // MarshalAccessListMember marshals the access list member resource to JSON.
 func MarshalAccessListMember(member *accesslist.AccessListMember, opts ...MarshalOption) ([]byte, error) {
 	if err := member.CheckAndSetDefaults(); err != nil {
@@ -251,13 +257,13 @@ func IsAccessListOwner(ctx context.Context, members AccessListMemberGetter, iden
 // AccessListMembershipChecker will check if users are members of an access list and
 // makes sure the user is not locked and meets membership requirements.
 type AccessListMembershipChecker struct {
-	members AccessListsGetter
+	members AccessListRecursiveMembersGetter
 	locks   LockGetter
 	clock   clockwork.Clock
 }
 
 // NewAccessListMembershipChecker will create a new access list membership checker.
-func NewAccessListMembershipChecker(clock clockwork.Clock, members AccessListsGetter, locks LockGetter) *AccessListMembershipChecker {
+func NewAccessListMembershipChecker(clock clockwork.Clock, members AccessListRecursiveMembersGetter, locks LockGetter) *AccessListMembershipChecker {
 	return &AccessListMembershipChecker{
 		members: members,
 		locks:   locks,
@@ -463,7 +469,7 @@ func (a AccessListMembershipChecker) IsAccessListMember(ctx context.Context, ide
 }
 
 // TODO(mdwn): Remove this in favor of using the access list membership checker.
-func IsAccessListMember(ctx context.Context, identity tlsca.Identity, clock clockwork.Clock, accessList *accesslist.AccessList, members AccessListsGetter) error {
+func IsAccessListMember(ctx context.Context, identity tlsca.Identity, clock clockwork.Clock, accessList *accesslist.AccessList, members AccessListRecursiveMembersGetter) error {
 	// See if the member getter also implements lock getter. If so, use it. Otherwise, nil is fine.
 	lockGetter, _ := members.(LockGetter)
 	return AccessListMembershipChecker{

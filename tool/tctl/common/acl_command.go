@@ -22,7 +22,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"slices"
 	"strings"
 	"time"
 
@@ -155,17 +154,9 @@ func (c *ACLCommand) UsersAdd(ctx context.Context, client *authclient.Client) er
 		}
 	}
 
+	var origin string
 	if c.isRefAcl {
-		acl, err := client.AccessListClient().GetAccessList(ctx, c.accessListName)
-		if err != nil {
-			return trace.Wrap(err)
-		}
-		acl.Spec.DynamicMembers.AccessLists = append(acl.Spec.DynamicMembers.AccessLists, c.userName)
-		if _, err := client.AccessListClient().UpsertAccessList(ctx, acl); err != nil {
-			return trace.Wrap(err)
-		}
-		fmt.Printf("successfully added user list %s to access list %s", c.userName, c.accessListName)
-		return nil
+		origin = accesslist.MemberOriginDynamic
 	}
 
 	member, err := accesslist.NewAccessListMember(header.Metadata{
@@ -179,6 +170,7 @@ func (c *ACLCommand) UsersAdd(ctx context.Context, client *authclient.Client) er
 		// The following fields will be updated in the backend, so their values here don't matter.
 		Joined:  time.Now(),
 		AddedBy: "dummy",
+		Origin:  origin,
 	})
 	if err != nil {
 		return trace.Wrap(err)
@@ -196,21 +188,6 @@ func (c *ACLCommand) UsersAdd(ctx context.Context, client *authclient.Client) er
 
 // UsersRemove will remove a user to an access list.
 func (c *ACLCommand) UsersRemove(ctx context.Context, client *authclient.Client) error {
-	if c.isRefAcl {
-		acl, err := client.AccessListClient().GetAccessList(ctx, c.accessListName)
-		if err != nil {
-			return trace.Wrap(err)
-		}
-		acl.Spec.DynamicMembers.AccessLists = slices.DeleteFunc(acl.Spec.DynamicMembers.AccessLists, func(e string) bool {
-			return e == c.userName
-		})
-		if _, err := client.AccessListClient().UpsertAccessList(ctx, acl); err != nil {
-			return trace.Wrap(err)
-		}
-		fmt.Printf("successfully removed user access list %s from access list %s", c.userName, c.accessListName)
-		return nil
-	}
-
 	err := client.AccessListClient().DeleteAccessListMember(ctx, c.accessListName, c.userName)
 	if err != nil {
 		return trace.Wrap(err)
@@ -234,7 +211,11 @@ func (c *ACLCommand) UsersList(ctx context.Context, client *authclient.Client) e
 		fmt.Printf("Members of %s:\n", c.accessListName)
 		for {
 			for _, member := range members {
-				fmt.Printf("- %s\n", member.Spec.Name)
+				if member.Spec.Origin == accesslist.MemberOriginDynamic {
+					fmt.Printf("- (Access List) %s (%s)\n", member.Spec.AccessListTitle, member.Spec.Name)
+				} else {
+					fmt.Printf("- %s\n", member.Spec.Name)
+				}
 			}
 
 			if nextToken == "" {
@@ -246,18 +227,6 @@ func (c *ACLCommand) UsersList(ctx context.Context, client *authclient.Client) e
 				return trace.Wrap(err)
 			}
 		}
-	}
-
-	acl, err := client.AccessListClient().GetAccessList(ctx, c.accessListName)
-	if err != nil {
-		return trace.Wrap(err)
-	}
-	if len(acl.Spec.DynamicMembers.AccessLists) == 0 {
-		return nil
-	}
-	fmt.Printf("Including members in %s from:\n", c.accessListName)
-	for _, memberAcl := range acl.Spec.DynamicMembers.AccessLists {
-		fmt.Printf("- access list %s\n", memberAcl)
 	}
 
 	return nil
@@ -278,14 +247,13 @@ func displayAccessLists(format string, accessLists ...*accesslist.AccessList) er
 }
 
 func displayAccessListsText(accessLists ...*accesslist.AccessList) error {
-	table := asciitable.MakeTable([]string{"ID", "Review Frequency", "Review Day Of Month", "Granted Roles", "Granted Traits", "Referenced Member Lists", "Referenced Owner Lists"})
+	table := asciitable.MakeTable([]string{"ID", "Review Frequency", "Review Day Of Month", "Granted Roles", "Granted Traits", "Nested Owner Lists"})
 	for _, accessList := range accessLists {
 		grantedRoles := strings.Join(accessList.GetGrants().Roles, ",")
 		traitStrings := make([]string, 0, len(accessList.GetGrants().Traits))
 		for k, values := range accessList.GetGrants().Traits {
 			traitStrings = append(traitStrings, fmt.Sprintf("%s:{%s}", k, strings.Join(values, ",")))
 		}
-		memberAccessLists := strings.Join(accessList.Spec.DynamicMembers.AccessLists, ", ")
 		ownerAccessLists := strings.Join(accessList.Spec.DynamicOwners.AccessLists, ", ")
 
 		grantedTraits := strings.Join(traitStrings, ",")
@@ -295,8 +263,7 @@ func displayAccessListsText(accessLists ...*accesslist.AccessList) error {
 			accessList.Spec.Audit.Recurrence.DayOfMonth.String(),
 			grantedRoles,
 			grantedTraits,
-			// todo(amk): include inherited granted roles/traits
-			memberAccessLists,
+			// todo(amk): include inherited granted roles/traits andmemberAccessLists,
 			ownerAccessLists,
 		})
 	}
