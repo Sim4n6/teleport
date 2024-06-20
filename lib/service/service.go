@@ -86,7 +86,6 @@ import (
 	"github.com/gravitational/teleport/lib/auth/accesspoint"
 	"github.com/gravitational/teleport/lib/auth/authclient"
 	"github.com/gravitational/teleport/lib/auth/keygen"
-	"github.com/gravitational/teleport/lib/auth/keystore"
 	"github.com/gravitational/teleport/lib/auth/native"
 	"github.com/gravitational/teleport/lib/auth/state"
 	"github.com/gravitational/teleport/lib/authz"
@@ -101,6 +100,11 @@ import (
 	"github.com/gravitational/teleport/lib/bpf"
 	"github.com/gravitational/teleport/lib/cache"
 	"github.com/gravitational/teleport/lib/cloud"
+	"github.com/gravitational/teleport/lib/cloud/gcp"
+	"github.com/gravitational/teleport/lib/cloud/imds"
+	awsimds "github.com/gravitational/teleport/lib/cloud/imds/aws"
+	"github.com/gravitational/teleport/lib/cloud/imds/azure"
+	gcpimds "github.com/gravitational/teleport/lib/cloud/imds/gcp"
 	"github.com/gravitational/teleport/lib/defaults"
 	"github.com/gravitational/teleport/lib/events"
 	"github.com/gravitational/teleport/lib/events/athena"
@@ -954,9 +958,34 @@ func NewTeleport(cfg *servicecfg.Config) (*TeleportProcess, error) {
 	// Check if we're on a cloud instance, and if we should override the node's hostname.
 	imClient := cfg.InstanceMetadataClient
 	if imClient == nil {
-		imClient, err = cloud.DiscoverInstanceMetadata(supervisor.ExitContext())
-		if err != nil && !trace.IsNotFound(err) {
-			return nil, trace.Wrap(err)
+		providers := []func(ctx context.Context) (imds.Client, error){
+			func(ctx context.Context) (imds.Client, error) {
+				clt, err := awsimds.NewInstanceMetadataClient(ctx)
+				return clt, trace.Wrap(err)
+			},
+			func(ctx context.Context) (imds.Client, error) {
+				return azure.NewInstanceMetadataClient(), nil
+			},
+			func(ctx context.Context) (imds.Client, error) {
+				instancesClient, err := gcp.NewInstancesClient(ctx)
+				if err != nil {
+					return nil, trace.Wrap(err)
+				}
+
+				clt, err := gcpimds.NewInstanceMetadataClient(instancesClient)
+				return clt, trace.Wrap(err)
+			},
+		}
+
+		imClient, err = cloud.DiscoverInstanceMetadata(supervisor.ExitContext(), providers)
+		if err == nil {
+			cfg.Logger.InfoContext(supervisor.ExitContext(),
+				"Found an instance metadata service. Teleport will import labels from this cloud instance.",
+				"type", imClient.GetType())
+		} else if !trace.IsNotFound(err) {
+			cfg.Logger.ErrorContext(supervisor.ExitContext(), "Error looking for cloud instance metadata", "error", err)
+			// Keep going. Not being able to fetch labels isn't necessarily an error (e.g. the user doesn't need imported
+			// labels and hasn't configured their cloud instance for it).
 		}
 	}
 
@@ -965,15 +994,16 @@ func NewTeleport(cfg *servicecfg.Config) (*TeleportProcess, error) {
 		if err == nil {
 			cloudHostname = strings.ReplaceAll(cloudHostname, " ", "_")
 			if utils.IsValidHostname(cloudHostname) {
-				cfg.Logger.InfoContext(supervisor.ExitContext(), "Overriding hostname with value from cloud tag TeleportHostname.", "hostname", cloudHostname)
+				cfg.Logger.InfoContext(supervisor.ExitContext(), "Overriding hostname with value from cloud tag TeleportHostname", "hostname", cloudHostname)
 				cfg.Hostname = cloudHostname
 
 				// cloudHostname exists but is not a valid hostname.
 			} else if cloudHostname != "" {
-				cfg.Logger.InfoContext(supervisor.ExitContext(), "Found invalid hostname in cloud tag TeleportHostname.", "hostname", cloudHostname)
+				cfg.Logger.InfoContext(supervisor.ExitContext(), "Found invalid hostname in cloud tag TeleportHostname", "hostname", cloudHostname)
 			}
 		} else if !trace.IsNotFound(err) {
-			return nil, trace.Wrap(err)
+			cfg.Logger.ErrorContext(supervisor.ExitContext(), "Error looking for hostname tag", "error", err)
+			// Keep going.
 		}
 
 		cloudLabels, err = labels.NewCloudImporter(supervisor.ExitContext(), &labels.CloudConfig{
@@ -981,7 +1011,8 @@ func NewTeleport(cfg *servicecfg.Config) (*TeleportProcess, error) {
 			Clock:  cfg.Clock,
 		})
 		if err != nil {
-			return nil, trace.Wrap(err)
+			cfg.Logger.ErrorContext(supervisor.ExitContext(), "Cloud labels will not be imported", "error", err)
+			// Keep going.
 		}
 	}
 
@@ -1870,31 +1901,6 @@ func (process *TeleportProcess) initAuthService() error {
 		return trace.Wrap(err)
 	}
 
-	keystoreConfig := keystore.Config{
-		PKCS11: keystore.PKCS11Config{
-			Path:       cfg.Auth.KeyStore.PKCS11.Path,
-			SlotNumber: cfg.Auth.KeyStore.PKCS11.SlotNumber,
-			TokenLabel: cfg.Auth.KeyStore.PKCS11.TokenLabel,
-			Pin:        cfg.Auth.KeyStore.PKCS11.Pin,
-			HostUUID:   cfg.Auth.KeyStore.PKCS11.HostUUID,
-		},
-		GCPKMS: keystore.GCPKMSConfig{
-			KeyRing:         cfg.Auth.KeyStore.GCPKMS.KeyRing,
-			ProtectionLevel: cfg.Auth.KeyStore.GCPKMS.ProtectionLevel,
-			HostUUID:        cfg.Auth.KeyStore.GCPKMS.HostUUID,
-		},
-		AWSKMS: keystore.AWSKMSConfig{
-			Cluster:    cfg.Auth.KeyStore.AWSKMS.Cluster,
-			AWSAccount: cfg.Auth.KeyStore.AWSKMS.AWSAccount,
-			AWSRegion:  cfg.Auth.KeyStore.AWSKMS.AWSRegion,
-		},
-		Logger: process.log,
-	}
-
-	if (keystoreConfig.AWSKMS != keystore.AWSKMSConfig{}) {
-		keystoreConfig.AWSKMS.CloudClients = cloudClients
-	}
-
 	// first, create the AuthServer
 	authServer, err := auth.Init(
 		process.ExitContext(),
@@ -1927,7 +1933,7 @@ func (process *TeleportProcess) initAuthService() error {
 			OIDCConnectors:          cfg.OIDCConnectors,
 			AuditLog:                process.auditLog,
 			CipherSuites:            cfg.CipherSuites,
-			KeyStoreConfig:          keystoreConfig,
+			KeyStoreConfig:          cfg.Auth.KeyStore,
 			Emitter:                 checkingEmitter,
 			Streamer:                events.NewReportingStreamer(streamer, process.Config.Testing.UploadEventsC),
 			TraceClient:             traceClt,
