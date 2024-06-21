@@ -1,6 +1,7 @@
 package common
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"errors"
@@ -17,9 +18,9 @@ import (
 	"github.com/gravitational/teleport/lib/service/servicecfg"
 	"github.com/gravitational/teleport/lib/tbot"
 	"github.com/gravitational/teleport/lib/tbot/config"
+	"github.com/gravitational/teleport/lib/tbot/identity"
 	"github.com/gravitational/teleport/lib/tlsca"
 	"github.com/gravitational/teleport/lib/utils"
-	logutils "github.com/gravitational/teleport/lib/utils/log"
 	"github.com/gravitational/trace"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"log/slog"
@@ -32,6 +33,7 @@ type TerraformCommand struct {
 
 	resourcePrefix string
 	existingRole   string
+	connectVia     string
 	botTTL         time.Duration
 
 	cfg *servicecfg.Config
@@ -59,6 +61,14 @@ var terraformRoleSpec = types.RoleSpecV6{
 	},
 }
 
+type connectionMode string
+
+const (
+	connectionModeAuto  connectionMode = "auto"
+	connectionModeAuth  connectionMode = "auth"
+	connectionModeProxy connectionMode = "proxy"
+)
+
 // Initialize sets up the "tctl bots" command.
 func (c *TerraformCommand) Initialize(app *kingpin.Application, cfg *servicecfg.Config) {
 	c.cmd = app.Command("terraform-helper", "Bootstrap resources and obtain certificates to run the Teleport Terraform provider locally.")
@@ -83,10 +93,13 @@ func (c *TerraformCommand) TryRun(ctx context.Context, cmd string, client *authc
 }
 
 func (c *TerraformCommand) Bootstrap(ctx context.Context, client *authclient.Client) error {
-	// TODO: check parameters (bot TTL != 0)
-	log := slog.Default()
-	log.InfoContext(ctx, "Detecting if MFA is required")
+	// If we're not actively debugging, neutralize any kind of logging from other teleport components
+	if !c.cfg.Debug {
+		utils.InitLogger(utils.LoggingForCLI, slog.LevelError)
+	}
 
+	showProgress("Detecting if MFA is required")
+	// TODO: check parameters (bot TTL != 0)
 	// Prompt for admin action MFA if required, allowing reuse for UpsertRole, UpsertToken and CreateBot.
 	mfaResponse, err := mfa.PerformAdminActionMFACeremony(ctx, client.PerformMFACeremony, true /*allowReuse*/)
 	if err == nil {
@@ -106,28 +119,29 @@ func (c *TerraformCommand) Bootstrap(ctx context.Context, client *authclient.Cli
 	}
 
 	// Now run tbot
-	id, err := c.getCertsForBot(ctx, tokenName, client)
+	showProgress("Using the temporary bot to obtain certificates 🤖")
+	envVars, err := c.getCertsAndEnvVars(ctx, tokenName, client)
 	if err != nil {
 		return trace.Wrap(err)
 	}
 
-	log.InfoContext(ctx, "Certificates obtained")
+	showProgress("Certificates obtained, you can now use Terraform in this terminal 🚀")
+	for env, value := range envVars {
+		fmt.Printf("export %s=%q\n", env, value)
+	}
 	fmt.Println("# invoke this command in an eval: eval $(tctl terraform-helper)")
-	fmt.Printf("export TF_TELEPORT_IDENTITY_FILE_BASE64='%s'\n", id)
-	fmt.Fprintf(os.Stderr, "Lets gooooo, cert valid for %s 🚀", c.botTTL.String())
 	return nil
 }
 
 func (c *TerraformCommand) createTransientBotAndToken(ctx context.Context, client *authclient.Client, roleName string) (string, error) {
-	log := slog.Default()
 	// Create token and bot name
-	suffix, err := utils.CryptoRandomHex(10)
+	suffix, err := utils.CryptoRandomHex(4)
 	if err != nil {
 		return "", trace.Wrap(err)
 	}
 
 	botName := c.resourcePrefix + "-" + suffix
-	log.InfoContext(ctx, "Creating temporary bot and token", "bot", botName, "ttl", c.botTTL.String())
+	showProgress(fmt.Sprintf("Creating temporary bot %q and its token", botName))
 
 	roles := []string{roleName}
 	var token types.ProvisionToken
@@ -173,7 +187,6 @@ func (c *TerraformCommand) createTransientBotAndToken(ctx context.Context, clien
 
 func (c *TerraformCommand) createRoleIfNeeded(ctx context.Context, client *authclient.Client) (string, error) {
 	log := slog.Default()
-
 	roleName := c.existingRole
 	// Create role if --use-existing-role is not set
 	if roleName == "" {
@@ -195,9 +208,8 @@ func (c *TerraformCommand) createRoleIfNeeded(ctx context.Context, client *authc
 	return roleName, nil
 }
 
-func (c *TerraformCommand) getCertsForBot(ctx context.Context, token string, clt *authclient.Client) (string, error) {
+func (c *TerraformCommand) getCertsAndEnvVars(ctx context.Context, token string, clt *authclient.Client) (map[string]string, error) {
 	log := slog.Default()
-	log.InfoContext(ctx, "Using the temporary bot to obtain certificates")
 
 	credential := &config.UnstableClientCredentialOutput{}
 	cfg := &config.BotConfig{
@@ -212,42 +224,71 @@ func (c *TerraformCommand) getCertsForBot(ctx context.Context, token string, clt
 		Oneshot:        true,
 	}
 
+	var generateEnvVars identityToEnv
+	var addr string
+
 	if addrs := c.cfg.AuthServerAddresses(); len(addrs) > 0 {
 		cfg.AuthServer = addrs[0].String()
+		addr = addrs[0].String()
+
 		localCAResponse, err := clt.GetClusterCACert(ctx)
 		if err != nil {
-			return "", trace.Wrap(err)
+			return nil, trace.Wrap(err)
 		}
 		caPins, err := tlsca.CalculatePins(localCAResponse.TLSCA)
 		if err != nil {
-			return "", trace.Wrap(err)
+			return nil, trace.Wrap(err)
 		}
 		cfg.Onboarding.CAPins = caPins
 		log.DebugContext(ctx, "Using auth address", "addr", cfg.AuthServer)
+		generateEnvVars = authEnv
 	} else {
 		cfg.ProxyServer = c.cfg.ProxyServer.String()
+		addr = c.cfg.ProxyServer.String()
 		log.DebugContext(ctx, "Using proxy address", "addr", cfg.ProxyServer)
+		generateEnvVars = proxyEnv
 	}
 	err := cfg.CheckAndSetDefaults()
 	if err != nil {
-		return "", trace.Wrap(err)
+		return nil, trace.Wrap(err)
 	}
 
-	bot := tbot.New(cfg, log)
+	bot := tbot.New(cfg, slog.Default())
 	err = bot.Run(ctx)
 	if err != nil {
-		return "", trace.Wrap(err)
+		return nil, trace.Wrap(err)
 	}
 
-	return c.b64IdFromCredential(credential)
-}
-
-func (c *TerraformCommand) b64IdFromCredential(credential *config.UnstableClientCredentialOutput) (string, error) {
 	facade, err := credential.Facade()
 	if err != nil {
-		return "", trace.Wrap(err)
+		return nil, trace.Wrap(err)
 	}
+
 	id := facade.Get()
+	return generateEnvVars(addr, id)
+}
+
+func showProgress(update string) {
+	_, _ = fmt.Fprintln(os.Stderr, update)
+}
+
+type identityToEnv func(string, *identity.Identity) (map[string]string, error)
+
+func authEnv(addr string, id *identity.Identity) (map[string]string, error) {
+	keyBase64 := base64.StdEncoding.EncodeToString(id.PrivateKeyBytes)
+	certBase64 := base64.StdEncoding.EncodeToString(id.TLSCertBytes)
+	caBundle := bytes.Join(id.TLSCACertsBytes, []byte("\n"))
+	caCertsBase64 := base64.StdEncoding.EncodeToString(caBundle)
+	return map[string]string{
+		EnvVarTerraformAddress: addr,
+		EnvVarTerraformCert:    certBase64,
+		EnvVarTerraformKey:     keyBase64,
+		EnvVarTerraformCACert:  caCertsBase64,
+	}, nil
+
+}
+
+func proxyEnv(addr string, id *identity.Identity) (map[string]string, error) {
 	idFile := &identityfile.IdentityFile{
 		PrivateKey: id.PrivateKeyBytes,
 		Certs: identityfile.Certs{
@@ -261,25 +302,20 @@ func (c *TerraformCommand) b64IdFromCredential(credential *config.UnstableClient
 	}
 	idBytes, err := identityfile.Encode(idFile)
 	if err != nil {
-		return "", trace.Wrap(err)
+		return nil, trace.Wrap(err)
 	}
 	idBase64 := base64.StdEncoding.EncodeToString(idBytes)
-	return idBase64, nil
+	return map[string]string{
+		EnvVarTerraformAddress:  addr,
+		EnvVarTerraformIdentity: idBase64,
+	}, nil
+
 }
 
-func (c *TerraformCommand) loggerForTBot() *slog.Logger {
-	// We don't want to spam the user with tbot's INFO logs so we use Warn by default
-	tbotLogLevel := slog.LevelError
-	if c.cfg.Debug {
-		// Unless we are debugging something, in this case the user do want to get spammed
-		tbotLogLevel = slog.LevelDebug
-	}
-
-	enableColors := utils.IsTerminal(os.Stderr)
-	w := logutils.NewSharedWriter(os.Stderr)
-	handler := logutils.NewSlogTextHandler(w, logutils.SlogTextHandlerConfig{
-		Level:        tbotLogLevel,
-		EnableColors: enableColors,
-	})
-	return slog.New(handler)
-}
+const (
+	EnvVarTerraformAddress  = "TF_TELEPORT_ADDR"
+	EnvVarTerraformIdentity = "TF_TELEPORT_IDENTITY_FILE_BASE64"
+	EnvVarTerraformCert     = "TF_TELEPORT_CERT_BASE64"
+	EnvVarTerraformKey      = "TF_TELEPORT_KEY_BASE64"
+	EnvVarTerraformCACert   = "TF_TELEPORT_CA_BASE64"
+)
