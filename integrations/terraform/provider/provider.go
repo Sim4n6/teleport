@@ -21,15 +21,9 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
-	"errors"
 	"fmt"
-	headerv1 "github.com/gravitational/teleport/api/gen/proto/go/teleport/header/v1"
-	machineidv1 "github.com/gravitational/teleport/api/gen/proto/go/teleport/machineid/v1"
-	"github.com/gravitational/teleport/api/mfa"
-	libmfa "github.com/gravitational/teleport/lib/client/mfa"
 	"net"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -227,17 +221,17 @@ func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 	}
 
 	addr := p.stringFromConfigOrEnv(config.Addr, "TF_TELEPORT_ADDR", "")
-	// certPath := p.stringFromConfigOrEnv(config.CertPath, "TF_TELEPORT_CERT", "")
-	// certBase64 := p.stringFromConfigOrEnv(config.CertBase64, "TF_TELEPORT_CERT_BASE64", "")
-	// keyPath := p.stringFromConfigOrEnv(config.KeyPath, "TF_TELEPORT_KEY", "")
-	// keyBase64 := p.stringFromConfigOrEnv(config.KeyBase64, "TF_TELEPORT_KEY_BASE64", "")
-	// caPath := p.stringFromConfigOrEnv(config.RootCaPath, "TF_TELEPORT_ROOT_CA", "")
-	// caBase64 := p.stringFromConfigOrEnv(config.RootCaBase64, "TF_TELEPORT_CA_BASE64", "")
-	// profileName := p.stringFromConfigOrEnv(config.ProfileName, "TF_TELEPORT_PROFILE_NAME", "")
-	// profileDir := p.stringFromConfigOrEnv(config.ProfileDir, "TF_TELEPORT_PROFILE_PATH", "")
-	// identityFilePath := p.stringFromConfigOrEnv(config.IdentityFilePath, "TF_TELEPORT_IDENTITY_FILE_PATH", "")
-	// identityFile := p.stringFromConfigOrEnv(config.IdentityFile, "TF_TELEPORT_IDENTITY_FILE", "")
-	// identityFileBase64 := p.stringFromConfigOrEnv(config.IdentityFileBase64, "TF_TELEPORT_IDENTITY_FILE_BASE64", "")
+	certPath := p.stringFromConfigOrEnv(config.CertPath, "TF_TELEPORT_CERT", "")
+	certBase64 := p.stringFromConfigOrEnv(config.CertBase64, "TF_TELEPORT_CERT_BASE64", "")
+	keyPath := p.stringFromConfigOrEnv(config.KeyPath, "TF_TELEPORT_KEY", "")
+	keyBase64 := p.stringFromConfigOrEnv(config.KeyBase64, "TF_TELEPORT_KEY_BASE64", "")
+	caPath := p.stringFromConfigOrEnv(config.RootCaPath, "TF_TELEPORT_ROOT_CA", "")
+	caBase64 := p.stringFromConfigOrEnv(config.RootCaBase64, "TF_TELEPORT_CA_BASE64", "")
+	profileName := p.stringFromConfigOrEnv(config.ProfileName, "TF_TELEPORT_PROFILE_NAME", "")
+	profileDir := p.stringFromConfigOrEnv(config.ProfileDir, "TF_TELEPORT_PROFILE_PATH", "")
+	identityFilePath := p.stringFromConfigOrEnv(config.IdentityFilePath, "TF_TELEPORT_IDENTITY_FILE_PATH", "")
+	identityFile := p.stringFromConfigOrEnv(config.IdentityFile, "TF_TELEPORT_IDENTITY_FILE", "")
+	identityFileBase64 := p.stringFromConfigOrEnv(config.IdentityFileBase64, "TF_TELEPORT_IDENTITY_FILE_BASE64", "")
 	retryBaseDurationStr := p.stringFromConfigOrEnv(config.RetryBaseDuration, "TF_TELEPORT_RETRY_BASE_DURATION", "1s")
 	retryCapDurationStr := p.stringFromConfigOrEnv(config.RetryCapDuration, "TF_TELEPORT_RETRY_CAP_DURATION", "5s")
 	maxTriesStr := p.stringFromConfigOrEnv(config.RetryMaxTries, "TF_TELEPORT_RETRY_MAX_TRIES", "10")
@@ -249,72 +243,70 @@ func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 
 	log.WithFields(log.Fields{"addr": addr}).Debug("Using Teleport address")
 
-	/*
-		if certPath != "" && keyPath != "" {
-			l := log.WithField("cert_path", certPath).WithField("key_path", keyPath).WithField("root_ca_path", caPath)
-			l.Debug("Using auth with certificate, private key and (optionally) CA read from files")
+	if certPath != "" && keyPath != "" {
+		l := log.WithField("cert_path", certPath).WithField("key_path", keyPath).WithField("root_ca_path", caPath)
+		l.Debug("Using auth with certificate, private key and (optionally) CA read from files")
 
-			cred, ok := p.getCredentialsFromKeyPair(certPath, keyPath, caPath, resp)
-			if !ok {
-				return
-			}
-			creds = append(creds, cred)
+		cred, ok := p.getCredentialsFromKeyPair(certPath, keyPath, caPath, resp)
+		if !ok {
+			return
+		}
+		creds = append(creds, cred)
+	}
+
+	if certBase64 != "" && keyBase64 != "" {
+		log.Debug("Using auth with certificate, private key and (optionally) CA read from base64 encoded vars")
+		cred, ok := p.getCredentialsFromBase64(certBase64, keyBase64, caBase64, resp)
+		if !ok {
+			return
+		}
+		creds = append(creds, cred)
+	}
+
+	if identityFilePath != "" {
+		log.WithField("identity_file_path", identityFilePath).Debug("Using auth with identity file")
+
+		if !p.fileExists(identityFilePath) {
+			resp.Diagnostics.AddError(
+				"Identity file not found",
+				fmt.Sprintf(
+					"File %v not found! Use `tctl auth sign --user=example@example.com --format=file --out=%v` to generate identity file",
+					identityFilePath,
+					identityFilePath,
+				),
+			)
+			return
 		}
 
-		if certBase64 != "" && keyBase64 != "" {
-			log.Debug("Using auth with certificate, private key and (optionally) CA read from base64 encoded vars")
-			cred, ok := p.getCredentialsFromBase64(certBase64, keyBase64, caBase64, resp)
-			if !ok {
-				return
-			}
-			creds = append(creds, cred)
+		creds = append(creds, client.LoadIdentityFile(identityFilePath))
+	}
+
+	if identityFile != "" {
+		log.Debug("Using auth from identity file provided with environment variable TF_TELEPORT_IDENTITY_FILE")
+		creds = append(creds, client.LoadIdentityFileFromString(identityFile))
+	}
+
+	if identityFileBase64 != "" {
+		log.Debug("Using auth from base64 encoded identity file provided with environment variable TF_TELEPORT_IDENTITY_FILE_BASE64")
+		decoded, err := base64.StdEncoding.DecodeString(identityFileBase64)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Failed to decode Identity file using base 64",
+				fmt.Sprintf("Error when trying to decode: %v", err),
+			)
+			return
 		}
 
-		if identityFilePath != "" {
-			log.WithField("identity_file_path", identityFilePath).Debug("Using auth with identity file")
+		creds = append(creds, client.LoadIdentityFileFromString(string(decoded)))
+	}
 
-			if !p.fileExists(identityFilePath) {
-				resp.Diagnostics.AddError(
-					"Identity file not found",
-					fmt.Sprintf(
-						"File %v not found! Use `tctl auth sign --user=example@example.com --format=file --out=%v` to generate identity file",
-						identityFilePath,
-						identityFilePath,
-					),
-				)
-				return
-			}
-
-			creds = append(creds, client.LoadIdentityFile(identityFilePath))
-		}
-
-		if identityFile != "" {
-			log.Debug("Using auth from identity file provided with environment variable TF_TELEPORT_IDENTITY_FILE")
-			creds = append(creds, client.LoadIdentityFileFromString(identityFile))
-		}
-
-		if identityFileBase64 != "" {
-			log.Debug("Using auth from base64 encoded identity file provided with environment variable TF_TELEPORT_IDENTITY_FILE_BASE64")
-			decoded, err := base64.StdEncoding.DecodeString(identityFileBase64)
-			if err != nil {
-				resp.Diagnostics.AddError(
-					"Failed to decode Identity file using base 64",
-					fmt.Sprintf("Error when trying to decode: %v", err),
-				)
-				return
-			}
-
-			creds = append(creds, client.LoadIdentityFileFromString(string(decoded)))
-		}
-
-		if profileDir != "" || len(creds) == 0 {
-			log.WithFields(log.Fields{
-				"dir":  profileDir,
-				"name": profileName,
-			}).Debug("Using profile as the default auth method")
-			creds = append(creds, client.LoadProfile(profileDir, profileName))
-		}
-	*/
+	if profileDir != "" || len(creds) == 0 {
+		log.WithFields(log.Fields{
+			"dir":  profileDir,
+			"name": profileName,
+		}).Debug("Using profile as the default auth method")
+		creds = append(creds, client.LoadProfile(profileDir, profileName))
+	}
 
 	dialTimeoutDuration, err := time.ParseDuration(dialTimeoutDurationStr)
 	if err != nil {
@@ -324,22 +316,6 @@ func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 		)
 		return
 	}
-
-	subProcess := exec.Command("./tctl", "bots", "add", "jason3", "--format=json")
-
-	subProcess.Stdin = os.Stdin
-	subProcess.Stdout = os.Stdout
-	subProcess.Stderr = os.Stderr
-
-	fmt.Println("START")                      //for debug
-	if err = subProcess.Start(); err != nil { //Use start, not run
-		fmt.Println("An error occured: ", err) //replace with logger, or anything you want
-	}
-
-	subProcess.Wait()
-	fmt.Println("END") //for debug
-
-	creds = append(creds, client.LoadProfile("", ""))
 
 	client, err := client.New(ctx, client.Config{
 		Addrs:       []string{addr},
@@ -362,52 +338,6 @@ func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 	if !p.checkTeleportVersion(ctx, client, resp) {
 		return
 	}
-
-	resp.Diagnostics.AddError("STOP", "ending execution")
-	return
-
-	// TODO: merge this with the version check earlier so we don't do 2 pings
-	pong, err := client.Ping(ctx)
-	if err != nil {
-		resp.Diagnostics.AddError("Unable to ping", fmt.Sprintf("Unable to ping. Error: %s", err))
-		return
-	}
-
-	proxyAddr := pong.ProxyPublicAddr
-	client.SetMFAPromptConstructor(func(opts ...mfa.PromptOpt) mfa.Prompt {
-		promptCfg := libmfa.NewPromptConfig(proxyAddr, opts...)
-		return libmfa.NewCLIPrompt(promptCfg, os.Stderr)
-	})
-
-	resp.Diagnostics.AddWarning("CHECKING IF MFA IS REQUIRED", "Doing the dance")
-	// Prompt for admin action MFA if required, allowing reuse for UpsertToken and CreateBot.
-	mfaResponse, err := mfa.PerformAdminActionMFACeremony(ctx, client.PerformMFACeremony, true /*allowReuse*/)
-	if err == nil {
-		resp.Diagnostics.AddWarning("MFA REQUIRED", "Setting the MFA challenge in the context")
-		ctx = mfa.ContextWithMFAResponse(ctx, mfaResponse)
-	} else if !errors.Is(err, &mfa.ErrMFANotRequired) {
-		resp.Diagnostics.AddError(
-			"Failed to detect if MFA is required",
-			fmt.Sprintf("Error: %s", err),
-		)
-		return
-	}
-
-	_, err = client.BotServiceClient().CreateBot(ctx, &machineidv1.CreateBotRequest{Bot: &machineidv1.Bot{
-		Metadata: &headerv1.Metadata{
-			Name: "hugo-test-1",
-		},
-		Spec: &machineidv1.BotSpec{
-			Roles:  []string{"editor", "access"},
-			Traits: nil,
-		},
-	}})
-	if err != nil {
-		resp.Diagnostics.Append(diagFromWrappedErr("Error creating Bot", trace.Wrap(err), "bot"))
-		return
-	}
-
-	resp.Diagnostics.AddWarning("SUCCESS !?", "survived the ")
 
 	retryBaseDuration, err := time.ParseDuration(retryBaseDurationStr)
 	if err != nil {

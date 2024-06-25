@@ -1,7 +1,6 @@
 package common
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"errors"
@@ -19,6 +18,7 @@ import (
 	"github.com/gravitational/teleport/lib/tbot"
 	"github.com/gravitational/teleport/lib/tbot/config"
 	"github.com/gravitational/teleport/lib/tbot/identity"
+	"github.com/gravitational/teleport/lib/tbot/ssh"
 	"github.com/gravitational/teleport/lib/tlsca"
 	"github.com/gravitational/teleport/lib/utils"
 	"github.com/gravitational/trace"
@@ -33,7 +33,6 @@ type TerraformCommand struct {
 
 	resourcePrefix string
 	existingRole   string
-	connectVia     string
 	botTTL         time.Duration
 
 	cfg *servicecfg.Config
@@ -60,14 +59,6 @@ var terraformRoleSpec = types.RoleSpecV6{
 		},
 	},
 }
-
-type connectionMode string
-
-const (
-	connectionModeAuto  connectionMode = "auto"
-	connectionModeAuth  connectionMode = "auth"
-	connectionModeProxy connectionMode = "proxy"
-)
 
 // Initialize sets up the "tctl bots" command.
 func (c *TerraformCommand) Initialize(app *kingpin.Application, cfg *servicecfg.Config) {
@@ -224,31 +215,27 @@ func (c *TerraformCommand) getCertsAndEnvVars(ctx context.Context, token string,
 		Oneshot:        true,
 	}
 
-	var generateEnvVars identityToEnv
-	var addr string
-
-	if addrs := c.cfg.AuthServerAddresses(); len(addrs) > 0 {
-		cfg.AuthServer = addrs[0].String()
-		addr = addrs[0].String()
-
-		localCAResponse, err := clt.GetClusterCACert(ctx)
-		if err != nil {
-			return nil, trace.Wrap(err)
-		}
-		caPins, err := tlsca.CalculatePins(localCAResponse.TLSCA)
-		if err != nil {
-			return nil, trace.Wrap(err)
-		}
-		cfg.Onboarding.CAPins = caPins
-		log.DebugContext(ctx, "Using auth address", "addr", cfg.AuthServer)
-		generateEnvVars = authEnv
-	} else {
-		cfg.ProxyServer = c.cfg.ProxyServer.String()
-		addr = c.cfg.ProxyServer.String()
-		log.DebugContext(ctx, "Using proxy address", "addr", cfg.ProxyServer)
-		generateEnvVars = proxyEnv
+	addrs := c.cfg.AuthServerAddresses()
+	if len(addrs) == 0 {
+		return nil, trace.BadParameter("no auth server addresses found")
 	}
-	err := cfg.CheckAndSetDefaults()
+	addr := addrs[0]
+	// When invoked only with auth address, tbot will try both joining as an auth and as a proxy.
+	// This allows us to not care about how the user connects to Teleport
+	cfg.AuthServer = addr.String()
+
+	localCAResponse, err := clt.GetClusterCACert(ctx)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+	caPins, err := tlsca.CalculatePins(localCAResponse.TLSCA)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+	cfg.Onboarding.CAPins = caPins
+	log.DebugContext(ctx, "Using auth address", "addr", cfg.AuthServer)
+
+	err = cfg.CheckAndSetDefaults()
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
@@ -265,30 +252,33 @@ func (c *TerraformCommand) getCertsAndEnvVars(ctx context.Context, token string,
 	}
 
 	id := facade.Get()
-	return generateEnvVars(addr, id)
+
+	// Workaround for https://github.com/gravitational/teleport-private/issues/1572
+	clusterName, err := clt.GetClusterName()
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+	knownHosts, err := ssh.GenerateKnownHosts(ctx, clt, []string{clusterName.GetClusterName()}, addr.Host())
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+	id.SSHCACertBytes = [][]byte{
+		[]byte(knownHosts),
+	}
+	// End of workaround
+
+	return generateEnvVars(addr.String(), id)
 }
 
 func showProgress(update string) {
 	_, _ = fmt.Fprintln(os.Stderr, update)
 }
 
-type identityToEnv func(string, *identity.Identity) (map[string]string, error)
-
-func authEnv(addr string, id *identity.Identity) (map[string]string, error) {
-	keyBase64 := base64.StdEncoding.EncodeToString(id.PrivateKeyBytes)
-	certBase64 := base64.StdEncoding.EncodeToString(id.TLSCertBytes)
-	caBundle := bytes.Join(id.TLSCACertsBytes, []byte("\n"))
-	caCertsBase64 := base64.StdEncoding.EncodeToString(caBundle)
-	return map[string]string{
-		EnvVarTerraformAddress: addr,
-		EnvVarTerraformCert:    certBase64,
-		EnvVarTerraformKey:     keyBase64,
-		EnvVarTerraformCACert:  caCertsBase64,
-	}, nil
-
-}
-
-func proxyEnv(addr string, id *identity.Identity) (map[string]string, error) {
+func generateEnvVars(addr string, id *identity.Identity) (map[string]string, error) {
+	// keyBase64 := base64.StdEncoding.EncodeToString(id.PrivateKeyBytes)
+	// certBase64 := base64.StdEncoding.EncodeToString(id.TLSCertBytes)
+	// caBundle := bytes.Join(id.TLSCACertsBytes, []byte("\n"))
+	// caCertsBase64 := base64.StdEncoding.EncodeToString(caBundle)
 	idFile := &identityfile.IdentityFile{
 		PrivateKey: id.PrivateKeyBytes,
 		Certs: identityfile.Certs{
@@ -306,7 +296,10 @@ func proxyEnv(addr string, id *identity.Identity) (map[string]string, error) {
 	}
 	idBase64 := base64.StdEncoding.EncodeToString(idBytes)
 	return map[string]string{
-		EnvVarTerraformAddress:  addr,
+		EnvVarTerraformAddress: addr,
+		//	EnvVarTerraformCert:     certBase64,
+		//	EnvVarTerraformKey:      keyBase64,
+		//	EnvVarTerraformCACert:   caCertsBase64,
 		EnvVarTerraformIdentity: idBase64,
 	}, nil
 
