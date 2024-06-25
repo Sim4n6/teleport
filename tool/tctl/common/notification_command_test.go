@@ -64,7 +64,7 @@ func TestNotificationCommmandCRUD(t *testing.T) {
 	// Test creating a global notification for users with the test-1 role.
 	buf, err = runNotificationsCommand(t, clt, []string{"create", "--roles", "test-1", "--title", "test-1 role test notification", "--content", "This is a test notification."})
 	require.NoError(t, err)
-	require.Contains(t, buf.String(), "for users with one or more of the following roles: test-1")
+	require.Contains(t, buf.String(), "for users with one or more of the following roles: [test-1]")
 	globalNotificationId := strings.Split(buf.String(), " ")[2]
 
 	// List notifications for auditor and verify output.

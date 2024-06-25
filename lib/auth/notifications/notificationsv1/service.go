@@ -504,6 +504,10 @@ func (s *Service) CreateGlobalNotification(ctx context.Context, req *notificatio
 
 // CreateUserNotification creates a user-specific notification.
 func (s *Service) CreateUserNotification(ctx context.Context, req *notificationsv1.CreateUserNotificationRequest) (*notificationsv1.Notification, error) {
+	if req.Username == "" {
+		return nil, trace.BadParameter("missing username")
+	}
+
 	authCtx, err := s.authorizer.Authorize(ctx)
 	if err != nil {
 		return nil, trace.Wrap(err)
@@ -532,6 +536,10 @@ func (s *Service) DeleteGlobalNotification(ctx context.Context, req *notificatio
 		return nil, trace.Wrap(err)
 	}
 
+	if err := authCtx.AuthorizeAdminActionAllowReusedMFA(); err != nil {
+		return nil, trace.Wrap(err)
+	}
+
 	if err := authCtx.CheckAccessToKind(types.KindNotification, types.VerbDelete); err != nil {
 		return nil, trace.Wrap(err)
 	}
@@ -547,6 +555,10 @@ func (s *Service) DeleteUserNotification(ctx context.Context, req *notifications
 		return nil, trace.Wrap(err)
 	}
 
+	if err := authCtx.AuthorizeAdminActionAllowReusedMFA(); err != nil {
+		return nil, trace.Wrap(err)
+	}
+
 	if err := authCtx.CheckAccessToKind(types.KindNotification, types.VerbDelete); err != nil {
 		return nil, trace.Wrap(err)
 	}
@@ -557,21 +569,21 @@ func (s *Service) DeleteUserNotification(ctx context.Context, req *notifications
 
 // ListAllUserCreatedNotificationsForUser returns a paginated list of all user-created user-specific notifications for a user. This should only be used by admins.
 func (s *Service) ListAllUserCreatedNotificationsForUser(ctx context.Context, req *notificationsv1.ListAllUserCreatedNotificationsForUserRequest) (*notificationsv1.ListNotificationsResponse, error) {
+	if req.Username == "" {
+		return nil, trace.BadParameter("missing username")
+	}
+
 	authCtx, err := s.authorizer.Authorize(ctx)
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
 
 	if !authz.HasBuiltinRole(*authCtx, string(types.RoleAdmin)) {
-		return nil, trace.AccessDenied("only users with the admin role can list notifications for another user")
+		return nil, trace.AccessDenied("only RoleAdmin can list notifications for a specific user")
 	}
 
 	if err := authCtx.CheckAccessToKind(types.KindNotification, types.VerbList); err != nil {
 		return nil, trace.Wrap(err)
-	}
-
-	if req.Username == "" {
-		return nil, trace.BadParameter("missing username")
 	}
 
 	stream := stream.FilterMap(
@@ -613,7 +625,7 @@ func (s *Service) ListAllUserCreatedGlobalNotifications(ctx context.Context, req
 	}
 
 	if !authz.HasBuiltinRole(*authCtx, string(types.RoleAdmin)) {
-		return nil, trace.AccessDenied("only users with the admin role can list all global notifications")
+		return nil, trace.AccessDenied("only RoleAdmin can list all global notifications")
 	}
 
 	stream := stream.FilterMap(

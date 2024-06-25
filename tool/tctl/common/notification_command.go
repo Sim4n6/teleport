@@ -24,7 +24,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/alecthomas/kingpin/v2"
@@ -49,7 +48,7 @@ type NotificationCommand struct {
 
 	format          string
 	user            string
-	roles           string
+	roles           []string
 	requireAllRoles bool
 	warning         bool
 
@@ -66,7 +65,7 @@ func (n *NotificationCommand) Initialize(app *kingpin.Application, _ *servicecfg
 
 	n.create = notif.Command("create", "Create a cluster notification.").Alias("add")
 	n.create.Flag("user", "Target a specific user.").StringVar(&n.user)
-	n.create.Flag("roles", "Target a specific set of roles. By default, this will target all users with any of the provided roles, use --require-all-roles to exclusively target users with all of them.").StringVar(&n.roles)
+	n.create.Flag("roles", "Target a specific set of roles. By default, this will target all users with any of the provided roles, use --require-all-roles to exclusively target users with all of them.").StringsVar(&n.roles)
 	n.create.Flag("require-all-roles", "Set whether this notification should target users who have all of the provided roles.").BoolVar(&n.requireAllRoles)
 	n.create.Flag("title", "Set the notification's title.").Short('t').Required().StringVar(&n.title)
 	n.create.Flag("content", "Set the notification's content.").Required().StringVar(&n.content)
@@ -95,7 +94,7 @@ func (n *NotificationCommand) TryRun(ctx context.Context, cmd string, client *au
 	case n.ls.FullCommand():
 		err = n.List(ctx, nc)
 	case n.rm.FullCommand():
-		err = n.Remove(ctx, nc)
+		err = n.Remove(ctx, client)
 	default:
 		return false, nil
 	}
@@ -127,7 +126,7 @@ func (n *NotificationCommand) Create(ctx context.Context, client *authclient.Cli
 	nc := client.NotificationServiceClient()
 
 	if n.user != "" {
-		if n.roles != "" || n.requireAllRoles {
+		if len(n.roles) != 0 || n.requireAllRoles {
 			return trace.BadParameter("roles cannot be configured for a notification which targets a specific user")
 		}
 
@@ -147,20 +146,18 @@ func (n *NotificationCommand) Create(ctx context.Context, client *authclient.Cli
 			return trail.FromGRPC(err)
 		}
 
-		fmt.Printf("\n\ncreated notification: \n%v\n", created)
-
 		fmt.Fprintf(n.stdout, "Created notification %s for user %s\n", created.GetMetadata().GetName(), n.user)
 		return nil
 	}
 
-	if n.roles != "" {
+	if len(n.roles) != 0 {
 		created, err := nc.CreateGlobalNotification(ctx, &notificationspb.CreateGlobalNotificationRequest{
 			GlobalNotification: &notificationspb.GlobalNotification{
 				Kind: types.KindGlobalNotification,
 				Spec: &notificationspb.GlobalNotificationSpec{
 					Matcher: &notificationspb.GlobalNotificationSpec_ByRoles{
 						ByRoles: &notificationspb.ByRoles{
-							Roles: n.splitRoles(),
+							Roles: n.roles,
 						},
 					},
 					MatchAllConditions: n.requireAllRoles,
@@ -208,7 +205,6 @@ func (n *NotificationCommand) Create(ctx context.Context, client *authclient.Cli
 			},
 		},
 	})
-
 	if err != nil {
 		return trail.FromGRPC(err)
 	}
@@ -251,11 +247,11 @@ func (n *NotificationCommand) List(ctx context.Context, client notificationspb.N
 		}
 	}
 
-	displayNotifications(n.format, result)
+	displayNotifications(n.format, result, n.stdout)
 	return nil
 }
 
-func displayNotifications(format string, notifications []*notificationspb.Notification) {
+func displayNotifications(format string, notifications []*notificationspb.Notification, w io.Writer) {
 	switch format {
 	case teleport.Text:
 		var rows [][]string
@@ -268,41 +264,41 @@ func displayNotifications(format string, notifications []*notificationspb.Notifi
 			})
 		}
 		table := asciitable.MakeTableWithTruncatedColumn([]string{"ID", "Created", "Expires", "Title"}, rows, "Title")
-		fmt.Println(table.AsBuffer().String())
+		fmt.Fprint(w, table.AsBuffer().String())
 	case teleport.JSON:
-		utils.WriteJSONArray(os.Stdout, notifications)
+		utils.WriteJSONArray(w, notifications)
 	case teleport.YAML:
-		utils.WriteYAML(os.Stdout, notifications)
+		utils.WriteYAML(w, notifications)
 	default:
 		// Do nothing, kingpin validates the --format flag before we ever get here.
 	}
 }
 
 // Remove removes a notification.
-func (n *NotificationCommand) Remove(ctx context.Context, client notificationspb.NotificationServiceClient) error {
+func (n *NotificationCommand) Remove(ctx context.Context, client *authclient.Client) error {
 	var err error
+
+	// Prompt for admin action MFA re-auth.
+	mfaResponse, err := mfa.PerformAdminActionMFACeremony(ctx, client.PerformMFACeremony, true /*allowReuse*/)
+	if err == nil {
+		ctx = mfa.ContextWithMFAResponse(ctx, mfaResponse)
+	} else if !errors.Is(err, &mfa.ErrMFANotRequired) && !errors.Is(err, &mfa.ErrMFANotSupported) {
+		return trace.Wrap(err)
+	}
+
+	nc := client.NotificationServiceClient()
+
 	switch {
 	case n.user != "":
-		_, err = client.DeleteUserNotification(ctx, &notificationspb.DeleteUserNotificationRequest{
+		_, err = nc.DeleteUserNotification(ctx, &notificationspb.DeleteUserNotificationRequest{
 			Username:       n.user,
 			NotificationId: n.title,
 		})
 	default:
-		_, err = client.DeleteGlobalNotification(ctx, &notificationspb.DeleteGlobalNotificationRequest{
+		_, err = nc.DeleteGlobalNotification(ctx, &notificationspb.DeleteGlobalNotificationRequest{
 			NotificationId: n.title,
 		})
 	}
 
 	return trail.FromGRPC(err)
-}
-
-func (n *NotificationCommand) splitRoles() []string {
-	var roles []string
-	for _, s := range strings.Split(n.roles, ",") {
-		if s == "" {
-			continue
-		}
-		roles = append(roles, s)
-	}
-	return roles
 }

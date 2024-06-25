@@ -58,13 +58,6 @@ func Commands() []CLICommand {
 		&accessmonitoring.Command{},
 		&plugin.PluginsCommand{},
 		&NotificationCommand{},
-	}
-}
-
-// OSSCommands returns the oss variants of commands that use different variants
-// for oss and ent.
-func OSSCommands() []CLICommand {
-	return []CLICommand{
 		&configure.SSOConfigureCommand{},
 		&tester.SSOTestCommand{},
 		&fido2Command{},
