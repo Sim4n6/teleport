@@ -29,7 +29,6 @@ import (
 	"net"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -4007,34 +4006,10 @@ func (tc *TeleportClient) SAMLSingleLogout(ctx context.Context, SAMLSingleLogout
 	relayState := parsed.Query().Get("RelayState")
 	_, connectorName, _ := strings.Cut(relayState, ",")
 
-	var execCmd *exec.Cmd
-	if tc.Browser != teleport.BrowserNone {
-		switch runtime.GOOS {
-		// macOS.
-		case constants.DarwinOS:
-			path, err := exec.LookPath(teleport.OpenBrowserDarwin)
-			if err == nil {
-				execCmd = exec.Command(path, SAMLSingleLogoutURL)
-			}
-		// Windows.
-		case constants.WindowsOS:
-			path, err := exec.LookPath(teleport.OpenBrowserWindows)
-			if err == nil {
-				execCmd = exec.Command(path, "url.dll,FileProtocolHandler", SAMLSingleLogoutURL)
-			}
-		// Linux or any other operating system.
-		default:
-			path, err := exec.LookPath(teleport.OpenBrowserLinux)
-			if err == nil {
-				execCmd = exec.Command(path, SAMLSingleLogoutURL)
-			}
-		}
-	}
+	err = OpenURLInBrowser(tc.Browser, SAMLSingleLogoutURL)
 	// If no browser was opened.
-	if execCmd != nil || tc.Browser == teleport.BrowserNone {
-		if err := execCmd.Start(); err != nil {
-			fmt.Fprintf(os.Stderr, "Open the following link to log out of %s: %v\n", connectorName, SAMLSingleLogoutURL)
-		}
+	if err != nil || tc.Browser == teleport.BrowserNone {
+		fmt.Fprintf(os.Stderr, "Open the following link to log out of %s: %v\n", connectorName, SAMLSingleLogoutURL)
 	}
 
 	return nil

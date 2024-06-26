@@ -2098,10 +2098,14 @@ func onLogout(cf *CLIConf) error {
 			Warnf("Failed to retrieve cluster client for user %s, SAML single logout will be skipped: %v", active.Username, err)
 	}
 
-	user, err := clt.AuthClient.GetUser(cf.Context, active.Username, false)
-	if err != nil {
-		log.
-			Warnf("Failed to retrieve user details for user %s, SAML single logout will be skipped: %v", active.Username, err)
+	var user types.User
+	// Only run this if the ConnectToCluster above was successful.
+	if err == nil {
+		user, err = clt.AuthClient.GetUser(cf.Context, active.Username, false)
+		if err != nil {
+			log.
+				Warnf("Failed to retrieve user details for user %s, SAML single logout will be skipped: %v", active.Username, err)
+		}
 	}
 	if user != nil {
 		if len(user.GetSAMLIdentities()) > 0 {
