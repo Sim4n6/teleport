@@ -29,6 +29,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -3995,6 +3996,48 @@ func (tc *TeleportClient) ssoLogin(ctx context.Context, priv *keys.PrivateKey, c
 		ProxySupportsKeyPolicyMessage: versionSupportsKeyPolicyMessage(proxyVersion),
 	}, nil)
 	return response, trace.Wrap(err)
+}
+
+// SAMLSingleLogout initiates SAML SLO (single logout) by opening the IdP's SLO URL in the user's browser.
+func (tc *TeleportClient) SAMLSingleLogout(ctx context.Context, SAMLSingleLogoutURL string) error {
+	parsed, err := url.Parse(SAMLSingleLogoutURL)
+	if err != nil {
+		return trace.Wrap(err, "Failed to parse SAML single logout URL.")
+	}
+	relayState := parsed.Query().Get("RelayState")
+	_, connectorName, _ := strings.Cut(relayState, ",")
+
+	var execCmd *exec.Cmd
+	if tc.Browser != teleport.BrowserNone {
+		switch runtime.GOOS {
+		// macOS.
+		case constants.DarwinOS:
+			path, err := exec.LookPath(teleport.OpenBrowserDarwin)
+			if err == nil {
+				execCmd = exec.Command(path, SAMLSingleLogoutURL)
+			}
+		// Windows.
+		case constants.WindowsOS:
+			path, err := exec.LookPath(teleport.OpenBrowserWindows)
+			if err == nil {
+				execCmd = exec.Command(path, "url.dll,FileProtocolHandler", SAMLSingleLogoutURL)
+			}
+		// Linux or any other operating system.
+		default:
+			path, err := exec.LookPath(teleport.OpenBrowserLinux)
+			if err == nil {
+				execCmd = exec.Command(path, SAMLSingleLogoutURL)
+			}
+		}
+	}
+	// If no browser was opened.
+	if execCmd != nil || tc.Browser == teleport.BrowserNone {
+		if err := execCmd.Start(); err != nil {
+			fmt.Fprintf(os.Stderr, "Open the following link to log out of %s: %v\n", connectorName, SAMLSingleLogoutURL)
+		}
+	}
+
+	return nil
 }
 
 // ConnectToRootCluster activates the provided key and connects to the
