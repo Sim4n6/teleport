@@ -294,7 +294,7 @@ func TestNotificationCleanupOnUserDelete(t *testing.T) {
 			Username: username,
 		},
 		Metadata: &headerv1.Metadata{
-			Labels: map[string]string{"description": "test"},
+			Labels: map[string]string{types.NotificationTitleLabel: "test"},
 		},
 	}
 	notif, err := notificationsSvc.CreateUserNotification(ctx, testNotification)
