@@ -70,8 +70,9 @@ func TestTerraformCommand_createRoleIfNeeded(t *testing.T) {
 			expectedRoleAppLabels: testLabels,
 		},
 		{
-			name:    "Fails if existing role is not found",
-			wantErr: require.Error,
+			name:             "Fails if existing role is not found",
+			existingRoleFlag: "existing-role",
+			wantErr:          require.Error,
 		},
 	}
 	for _, tt := range tests {
@@ -111,4 +112,8 @@ func TestTerraformCommand_createRoleIfNeeded(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_identityToTerraformEnvVars(t *testing.T) {
+
 }

@@ -108,6 +108,12 @@ func (c *TerraformCommand) RunHelper(ctx context.Context, client *authclient.Cli
 		return trace.BadParameter("--bot-ttl must be greater than zero")
 	}
 
+	addrs := c.cfg.AuthServerAddresses()
+	if len(addrs) == 0 {
+		return trace.BadParameter("no auth server addresses found")
+	}
+	addr := addrs[0]
+
 	// Prompt for admin action MFA if required, allowing reuse for UpsertRole, UpsertToken and CreateBot.
 	showProgress("Detecting if MFA is required")
 	mfaResponse, err := mfa.PerformAdminActionMFACeremony(ctx, client.PerformMFACeremony, true /*allowReuse*/)
@@ -126,14 +132,19 @@ func (c *TerraformCommand) RunHelper(ctx context.Context, client *authclient.Cli
 	// Create temporary bot and token
 	tokenName, err := c.createTransientBotAndToken(ctx, client, roleName)
 	if err != nil {
-		return trace.Wrap(err)
+		return trace.Wrap(err, "bootstrapping bot")
 	}
 
 	// Now run tbot
 	showProgress("Using the temporary bot to obtain certificates 🤖")
-	envVars, err := c.getCertsAndEnvVars(ctx, tokenName, client)
+	id, err := c.useBotToObtainIdentity(ctx, addr, tokenName, client)
 	if err != nil {
-		return trace.Wrap(err)
+		return trace.Wrap(err, "obtaining identity")
+	}
+
+	envVars, err := identityToTerraformEnvVars(addr.String(), id)
+	if err != nil {
+		return trace.Wrap(err, "exporting identity into environment variables")
 	}
 
 	// Export environment variables
@@ -164,7 +175,7 @@ func (c *TerraformCommand) createTransientBotAndToken(ctx context.Context, clien
 	// Generate a token
 	tokenName, err := utils.CryptoRandomHex(defaults.TokenLenBytes)
 	if err != nil {
-		return "", trace.Wrap(err)
+		return "", trace.Wrap(err, "generating random token")
 	}
 	tokenSpec := types.ProvisionTokenSpecV2{
 		Roles:      types.SystemRoles{types.RoleBot},
@@ -178,7 +189,7 @@ func (c *TerraformCommand) createTransientBotAndToken(ctx context.Context, clien
 		return "", trace.Wrap(err)
 	}
 	if err := client.UpsertToken(ctx, token); err != nil {
-		return "", trace.Wrap(err)
+		return "", trace.Wrap(err, "upserting token")
 	}
 
 	// Create bot
@@ -196,9 +207,16 @@ func (c *TerraformCommand) createTransientBotAndToken(ctx context.Context, clien
 		Bot: bot,
 	})
 	if err != nil {
-		return "", trace.Wrap(err)
+		return "", trace.Wrap(err, "creating bot")
 	}
 	return tokenName, nil
+}
+
+// roleClient describes the minimal set of operations that the helper uses to
+// create the Terraform provider role.
+type roleClient interface {
+	UpsertRole(context.Context, types.Role) (types.Role, error)
+	GetRole(context.Context, string) (types.Role, error)
 }
 
 // createRoleIfNeeded upserts the Terraform role, or checks if the role exists.
@@ -217,7 +235,7 @@ func (c *TerraformCommand) createRoleIfNeeded(ctx context.Context, client roleCl
 		}
 		_, err = client.UpsertRole(ctx, role)
 		if err != nil {
-			return "", trace.Wrap(err)
+			return "", trace.Wrap(err, "upserting role")
 		}
 		showProgress(fmt.Sprintf("Created Terraform Provider role: %q", roleName))
 	} else {
@@ -227,7 +245,7 @@ func (c *TerraformCommand) createRoleIfNeeded(ctx context.Context, client roleCl
 			log.ErrorContext(ctx, "Role not found", "role", roleName)
 			return "", trace.Wrap(err)
 		} else if err != nil {
-			return "", trace.Wrap(err)
+			return "", trace.Wrap(err, "getting role")
 		}
 
 		log.InfoContext(ctx, "Using existing Terraform role", "role", roleName)
@@ -236,11 +254,11 @@ func (c *TerraformCommand) createRoleIfNeeded(ctx context.Context, client roleCl
 	return roleName, nil
 }
 
-// getCertsAndEnvVars takes secret bot token and runs a one-shot in-process tbot to trade the token
+// useBotToObtainIdentity takes secret bot token and runs a one-shot in-process tbot to trade the token
 // against valid certificates. Those certs are then serialized into an identity file.
 // The output is a set of environment variables, one of them including the base64-encoded identity file.
 // Later, the Terraform provider will read those environment variables to build its Teleport client.
-func (c *TerraformCommand) getCertsAndEnvVars(ctx context.Context, token string, clt *authclient.Client) (map[string]string, error) {
+func (c *TerraformCommand) useBotToObtainIdentity(ctx context.Context, addr utils.NetAddr, token string, clt *authclient.Client) (*identity.Identity, error) {
 	credential := &config.UnstableClientCredentialOutput{}
 	cfg := &config.BotConfig{
 		Version: "",
@@ -252,13 +270,11 @@ func (c *TerraformCommand) getCertsAndEnvVars(ctx context.Context, token string,
 		Outputs:        []config.Output{credential},
 		CertificateTTL: c.botTTL,
 		Oneshot:        true,
+		// If --insecure is passed, the bot will trust the certificate on first use.
+		// This does not truly disable TLS validation, only trusts the certificate on first connection.
+		Insecure: clt.Config().InsecureSkipVerify,
 	}
 
-	addrs := c.cfg.AuthServerAddresses()
-	if len(addrs) == 0 {
-		return nil, trace.BadParameter("no auth server addresses found")
-	}
-	addr := addrs[0]
 	// When invoked only with auth address, tbot will try both joining as an auth and as a proxy.
 	// This allows us to not care about how the user connects to Teleport (auth vs proxy joining).
 	cfg.AuthServer = addr.String()
@@ -268,30 +284,30 @@ func (c *TerraformCommand) getCertsAndEnvVars(ctx context.Context, token string,
 	// (no man in the middle possible between when we build the auth client and when we run tbot).
 	localCAResponse, err := clt.GetClusterCACert(ctx)
 	if err != nil {
-		return nil, trace.Wrap(err)
+		return nil, trace.Wrap(err, "getting cluster CA certificate")
 	}
 	caPins, err := tlsca.CalculatePins(localCAResponse.TLSCA)
 	if err != nil {
-		return nil, trace.Wrap(err)
+		return nil, trace.Wrap(err, "calculating CA pins")
 	}
 	cfg.Onboarding.CAPins = caPins
 
 	err = cfg.CheckAndSetDefaults()
 	if err != nil {
-		return nil, trace.Wrap(err)
+		return nil, trace.Wrap(err, "checking the bot's configuration")
 	}
 
 	// Run the bot
 	bot := tbot.New(cfg, slog.Default())
 	err = bot.Run(ctx)
 	if err != nil {
-		return nil, trace.Wrap(err)
+		return nil, trace.Wrap(err, "running the bot")
 	}
 
 	// Retrieve the credentials obtained by tbot.
 	facade, err := credential.Facade()
 	if err != nil {
-		return nil, trace.Wrap(err)
+		return nil, trace.Wrap(err, "accessing credentials")
 	}
 
 	id := facade.Get()
@@ -299,18 +315,18 @@ func (c *TerraformCommand) getCertsAndEnvVars(ctx context.Context, token string,
 	// Workaround for https://github.com/gravitational/teleport-private/issues/1572
 	clusterName, err := clt.GetClusterName()
 	if err != nil {
-		return nil, trace.Wrap(err)
+		return nil, trace.Wrap(err, "retrieving cluster name")
 	}
 	knownHosts, err := ssh.GenerateKnownHosts(ctx, clt, []string{clusterName.GetClusterName()}, addr.Host())
 	if err != nil {
-		return nil, trace.Wrap(err)
+		return nil, trace.Wrap(err, "retrieving SSH Host CA")
 	}
 	id.SSHCACertBytes = [][]byte{
 		[]byte(knownHosts),
 	}
 	// End of workaround
 
-	return generateTerraformEnvVars(addr.String(), id)
+	return id, nil
 }
 
 // showProgress sends status update messages ot the user.
@@ -318,9 +334,9 @@ func showProgress(update string) {
 	_, _ = fmt.Fprintln(os.Stderr, update)
 }
 
-// generateTerraformEnvVars takes an identity and builds environment variables
+// identityToTerraformEnvVars takes an identity and builds environment variables
 // configuring the Terraform provider to use this identity.
-func generateTerraformEnvVars(addr string, id *identity.Identity) (map[string]string, error) {
+func identityToTerraformEnvVars(addr string, id *identity.Identity) (map[string]string, error) {
 	idFile := &identityfile.IdentityFile{
 		PrivateKey: id.PrivateKeyBytes,
 		Certs: identityfile.Certs{
@@ -341,11 +357,4 @@ func generateTerraformEnvVars(addr string, id *identity.Identity) (map[string]st
 		EnvVarTerraformAddress:  addr,
 		EnvVarTerraformIdentity: idBase64,
 	}, nil
-}
-
-// roleClient describes the minimal set of operations that the helper uses to
-// create the Terraform provider role.
-type roleClient interface {
-	UpsertRole(context.Context, types.Role) (types.Role, error)
-	GetRole(context.Context, string) (types.Role, error)
 }
