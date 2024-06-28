@@ -86,7 +86,7 @@ func (a *App) Init(baseApp *common.BaseApp) error {
 		PluginType:                 a.pluginType,
 		RuleAppliesCallback:        a.amrAppliesToThisPlugin,
 		FetchRecipientCallback:     a.bot.FetchRecipient,
-		MatchAccessRequestCallback: matchAccessRequest,
+		MatchAccessRequestCallback: MatchAccessRequest,
 	})
 
 	var ok bool

@@ -22,6 +22,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -30,7 +31,9 @@ import (
 
 	tp "github.com/gravitational/teleport"
 	"github.com/gravitational/teleport/api/client/proto"
+	accessmonitoringrulesv1 "github.com/gravitational/teleport/api/gen/proto/go/teleport/accessmonitoringrules/v1"
 	"github.com/gravitational/teleport/api/types"
+	"github.com/gravitational/teleport/integrations/access/accessrequest"
 	"github.com/gravitational/teleport/integrations/access/common"
 	"github.com/gravitational/teleport/integrations/access/common/teleport"
 	"github.com/gravitational/teleport/integrations/lib"
@@ -66,6 +69,8 @@ type App struct {
 	opsgenie   *Client
 	mainJob    lib.ServiceJob
 	conf       Config
+
+	accessMonitoringRules *common.AccessMonitoringRuleHandler
 }
 
 // NewOpsgenieApp initializes a new teleport-opsgenie app and returns it.
@@ -74,6 +79,23 @@ func NewOpsgenieApp(ctx context.Context, conf *Config) (*App, error) {
 		PluginName: pluginName,
 		conf:       *conf,
 	}
+	teleClient, err := conf.GetTeleportClient(ctx)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+	opsgenieApp.accessMonitoringRules = common.NewAccessMonitoringRuleHandler(common.AccessMonitoringRuleHandlerConfig{
+		Client:              teleClient,
+		PluginType:          string(conf.BaseConfig.PluginType),
+		RuleAppliesCallback: opsgenieApp.amrAppliesToThisPlugin,
+		FetchRecipientCallback: func(_ context.Context, name string) (*common.Recipient, error) {
+			return &common.Recipient{
+				Name: name,
+				ID:   name,
+				Kind: common.RecipientKindSchedule,
+			}, nil
+		},
+		MatchAccessRequestCallback: accessrequest.MatchAccessRequest,
+	})
 	opsgenieApp.mainJob = lib.NewServiceJob(opsgenieApp.run)
 	return opsgenieApp, nil
 }
@@ -110,7 +132,10 @@ func (a *App) run(ctx context.Context) error {
 	watcherJob, err := watcherjob.NewJob(
 		a.teleport,
 		watcherjob.Config{
-			Watch:            types.Watch{Kinds: []types.WatchKind{types.WatchKind{Kind: types.KindAccessRequest}}},
+			Watch: types.Watch{Kinds: []types.WatchKind{
+				{Kind: types.KindAccessRequest},
+				{Kind: types.KindAccessMonitoringRule},
+			}},
 			EventFuncTimeout: handlerTimeout,
 		},
 		a.onWatcherEvent,
@@ -121,6 +146,10 @@ func (a *App) run(ctx context.Context) error {
 	a.SpawnCriticalJob(watcherJob)
 	ok, err := watcherJob.WaitReady(ctx)
 	if err != nil {
+		return trace.Wrap(err)
+	}
+
+	if err := a.accessMonitoringRules.InitAccessMonitoringRulesCache(ctx); err != nil {
 		return trace.Wrap(err)
 	}
 
@@ -180,7 +209,19 @@ func (a *App) checkTeleportVersion(ctx context.Context) (proto.PingResponse, err
 	return pong, trace.Wrap(err)
 }
 
+// onWatcherEvent is called for every cluster Event. It will filter out non-access-request events and
+// call onPendingRequest, onResolvedRequest and on DeletedRequest depending on the event.
 func (a *App) onWatcherEvent(ctx context.Context, event types.Event) error {
+	switch event.Resource.GetKind() {
+	case types.KindAccessMonitoringRule:
+		return trace.Wrap(a.accessMonitoringRules.HandleAccessMonitoringRule(ctx, event))
+	case types.KindAccessRequest:
+		return trace.Wrap(a.handleAcessRequest(ctx, event))
+	}
+	return trace.BadParameter("unexpected kind %s", event.Resource.GetKind())
+}
+
+func (a *App) handleAcessRequest(ctx context.Context, event types.Event) error {
 	if kind := event.Resource.GetKind(); kind != types.KindAccessRequest {
 		return trace.Errorf("unexpected kind %s", kind)
 	}
@@ -287,7 +328,7 @@ func (a *App) getOnCallServiceNames(req types.AccessRequest) ([]string, error) {
 func (a *App) tryNotifyService(ctx context.Context, req types.AccessRequest) (bool, error) {
 	log := logger.Get(ctx)
 
-	serviceNames, err := a.getNotifyServiceNames(req)
+	recipients, err := a.getMessageRecipients(ctx, req)
 	if err != nil {
 		log.Debugf("Skipping the notification: %s", err)
 		return false, trace.Wrap(errMissingAnnotation)
@@ -318,10 +359,10 @@ func (a *App) tryNotifyService(ctx context.Context, req types.AccessRequest) (bo
 	}
 
 	if isNew {
-		for _, serviceName := range serviceNames {
-			alertCtx, _ := logger.WithField(ctx, "opsgenie_service_name", serviceName)
+		for _, recipient := range recipients {
+			alertCtx, _ := logger.WithField(ctx, "opsgenie_service_name", recipient.Name)
 
-			if err = a.createAlert(alertCtx, serviceName, reqID, reqData); err != nil {
+			if err = a.createAlert(alertCtx, recipient.Name, reqID, reqData); err != nil {
 				return isNew, trace.Wrap(err, "creating Opsgenie alert")
 			}
 		}
@@ -333,6 +374,31 @@ func (a *App) tryNotifyService(ctx context.Context, req types.AccessRequest) (bo
 		}
 	}
 	return isNew, nil
+}
+
+func (a *App) getMessageRecipients(ctx context.Context, req types.AccessRequest) ([]common.Recipient, error) {
+	recipientSet := common.NewRecipientSet()
+
+	recipients := a.accessMonitoringRules.RecipientsFromAccessMonitoringRules(ctx, req)
+	recipients.ForEach(func(r common.Recipient) {
+		recipientSet.Add(r)
+	})
+	if recipientSet.Len() != 0 {
+		return recipientSet.ToSlice(), nil
+	}
+	rawRecipients, err := a.getNotifyServiceNames(req)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+	for _, rawRecipient := range rawRecipients {
+		rec := &common.Recipient{
+			Name: rawRecipient,
+			ID:   rawRecipient,
+			Kind: common.RecipientKindSchedule,
+		}
+		recipientSet.Add(*rec)
+	}
+	return recipientSet.ToSlice(), nil
 }
 
 // createAlert posts an alert with request information.
@@ -562,5 +628,14 @@ func (a *App) updatePluginData(ctx context.Context, reqID string, data PluginDat
 		Plugin:   pluginName,
 		Set:      EncodePluginData(data),
 		Expect:   EncodePluginData(expectData),
+	})
+}
+
+func (a *App) amrAppliesToThisPlugin(amr *accessmonitoringrulesv1.AccessMonitoringRule) bool {
+	if amr.Spec.Notification.Name != a.PluginName {
+		return false
+	}
+	return slices.ContainsFunc(amr.Spec.Subjects, func(subject string) bool {
+		return subject == types.KindAccessRequest
 	})
 }
