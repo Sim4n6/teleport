@@ -225,6 +225,8 @@ func ParseShortcut(in string) (string, error) {
 		return types.KindBot, nil
 	case types.KindBotInstance, types.KindBotInstance + "s":
 		return types.KindBotInstance, nil
+	case types.KindKubeProvision, types.KindKubeProvision + "s":
+		return types.KindKubeProvision, nil
 	case types.KindDatabaseObjectImportRule, "db_object_import_rules", "database_object_import_rule":
 		return types.KindDatabaseObjectImportRule, nil
 	case types.KindAccessMonitoringRule:

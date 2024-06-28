@@ -1,0 +1,45 @@
+// Copyright 2024 Gravitational, Inc
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package teleport.kubeprovision.v1;
+
+import "teleport/header/v1/metadata.proto";
+
+//import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
+
+option go_package = "github.com/gravitational/teleport/api/gen/proto/go/teleport/kubeprovision/v1;kubeprovisionv1";
+
+// KubeProvision represents a Kubernetes resources that can be provisioned on the Kubernetes clusters.
+// This includes roles/role bindings and cluster roles/cluster role bindings.
+// For rationale behind this type, see the RFD 174.
+message KubeProvision {
+  // The kind of resource represented.
+  string kind = 1;
+  // Not populated for this resource type.
+  string sub_kind = 2;
+  // The version of the resource being represented.
+  string version = 3;
+  // Common metadata that all resources share.
+  teleport.header.v1.Metadata metadata = 4;
+  // The specific properties of kube provision.
+  KubeProvisionSpec spec = 5;
+}
+
+// KubeProvisionSpec is the spec for the kube provision message.
+message KubeProvisionSpec {
+  // resources_data is base64 encoded YAML definitions of the Kubernetes resources.
+  string resources_data = 1;
+}
