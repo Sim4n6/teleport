@@ -555,11 +555,11 @@ func (s *Service) DeleteUserNotification(ctx context.Context, req *notifications
 		return nil, trace.Wrap(err)
 	}
 
-	if err := authCtx.AuthorizeAdminActionAllowReusedMFA(); err != nil {
+	if err := authCtx.CheckAccessToKind(types.KindNotification, types.VerbDelete); err != nil {
 		return nil, trace.Wrap(err)
 	}
 
-	if err := authCtx.CheckAccessToKind(types.KindNotification, types.VerbDelete); err != nil {
+	if err := authCtx.AuthorizeAdminActionAllowReusedMFA(); err != nil {
 		return nil, trace.Wrap(err)
 	}
 
@@ -567,8 +567,8 @@ func (s *Service) DeleteUserNotification(ctx context.Context, req *notifications
 	return nil, trace.Wrap(err)
 }
 
-// ListAllUserCreatedNotificationsForUser returns a paginated list of all user-created user-specific notifications for a user. This should only be used by admins.
-func (s *Service) ListAllUserCreatedNotificationsForUser(ctx context.Context, req *notificationsv1.ListAllUserCreatedNotificationsForUserRequest) (*notificationsv1.ListNotificationsResponse, error) {
+// ListUserSpecificNotificationsForUser returns a paginated list of all user-specific notifications for a user. This should only be used by admins.
+func (s *Service) ListUserSpecificNotificationsForUser(ctx context.Context, req *notificationsv1.ListUserSpecificNotificationsForUserRequest) (*notificationsv1.ListNotificationsResponse, error) {
 	if req.Username == "" {
 		return nil, trace.BadParameter("missing username")
 	}
@@ -589,7 +589,9 @@ func (s *Service) ListAllUserCreatedNotificationsForUser(ctx context.Context, re
 	stream := stream.FilterMap(
 		s.userNotificationCache.StreamUserNotifications(ctx, req.Username, req.PageToken),
 		func(n *notificationsv1.Notification) (*notificationsv1.Notification, bool) {
-			if (n.GetSubKind() != types.NotificationUserCreatedInformationalSubKind) &&
+			// If only user-created notifications are requested, filter by the user-creatd subkinds.
+			if (req.UserCreatedOnly) &&
+				(n.GetSubKind() != types.NotificationUserCreatedInformationalSubKind) &&
 				(n.GetSubKind() != types.NotificationUserCreatedWarningSubKind) {
 				return nil, false
 			}
@@ -617,8 +619,8 @@ func (s *Service) ListAllUserCreatedNotificationsForUser(ctx context.Context, re
 	}, nil
 }
 
-// ListAllUserCreatedGlobalNotifications returns a paginated list of all user-created global notifications. This should only be used by admins.
-func (s *Service) ListAllUserCreatedGlobalNotifications(ctx context.Context, req *notificationsv1.ListAllUserCreatedGlobalNotificationsRequest) (*notificationsv1.ListNotificationsResponse, error) {
+// ListGlobalNotifications returns a paginated list of all global notifications. This should only be used by admins.
+func (s *Service) ListGlobalNotifications(ctx context.Context, req *notificationsv1.ListGlobalNotificationsRequest) (*notificationsv1.ListNotificationsResponse, error) {
 	authCtx, err := s.authorizer.Authorize(ctx)
 	if err != nil {
 		return nil, trace.Wrap(err)
@@ -631,7 +633,9 @@ func (s *Service) ListAllUserCreatedGlobalNotifications(ctx context.Context, req
 	stream := stream.FilterMap(
 		s.globalNotificationCache.StreamGlobalNotifications(ctx, req.PageToken),
 		func(gn *notificationsv1.GlobalNotification) (*notificationsv1.GlobalNotification, bool) {
-			if (gn.GetSpec().GetNotification().GetSubKind() != types.NotificationUserCreatedInformationalSubKind) &&
+			// If only user-created notifications are requested, filter by the user-creatd subkinds.
+			if (req.UserCreatedOnly) &&
+				(gn.GetSpec().GetNotification().GetSubKind() != types.NotificationUserCreatedInformationalSubKind) &&
 				(gn.GetSpec().GetNotification().GetSubKind() != types.NotificationUserCreatedWarningSubKind) {
 				return nil, false
 			}
