@@ -1859,6 +1859,27 @@ export const formatters: Formatters = {
       return `User [${user}] attempted to call [${procedure}] in database [${db_name}] on [${db_service}]`;
     },
   },
+  [eventCodes.INTEGRATION_CREATE]: {
+    type: 'integration.create',
+    desc: 'Integration Created',
+    format: ({ user, name }) => {
+      return `User [${user}] created an integration [${name}]`;
+    },
+  },
+  [eventCodes.INTEGRATION_UPDATE]: {
+    type: 'integration.update',
+    desc: 'Integration Updated',
+    format: ({ user, name }) => {
+      return `User [${user}] updated an integration [${name}]`;
+    },
+  },
+  [eventCodes.INTEGRATION_DELETE]: {
+    type: 'integration.delete',
+    desc: 'Integration Deleted',
+    format: ({ user, name }) => {
+      return `User [${user}] deleted an integration [${name}]`;
+    },
+  },
   [eventCodes.UNKNOWN]: {
     type: 'unknown',
     desc: 'Unknown Event',
