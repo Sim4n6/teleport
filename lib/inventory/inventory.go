@@ -23,6 +23,7 @@ import (
 	"errors"
 	"io"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gravitational/trace"
@@ -54,6 +55,9 @@ type DownstreamHandle interface {
 	// stream instance. If not currently healthy, this blocks indefinitely until a healthy control
 	// stream is established.
 	Sender() <-chan DownstreamSender
+	// GetSender provides the last known, if any, DownstreamSender. If the control
+	// stream has never been established the returned boolean will be false.
+	GetSender() (s DownstreamSender, ok bool)
 	// RegisterPingHandler registers a handler for downstream ping messages, returning
 	// a de-registration function.
 	RegisterPingHandler(DownstreamPingHandler) (unregister func())
@@ -100,6 +104,7 @@ func NewDownstreamHandle(fn DownstreamCreateFunc, hello proto.UpstreamInventoryH
 }
 
 type downstreamHandle struct {
+	sender            atomic.Pointer[downstreamSender]
 	mu                sync.Mutex
 	handlerNonce      uint64
 	pingHandlers      map[uint64]DownstreamPingHandler
@@ -222,6 +227,7 @@ func (h *downstreamHandle) handleStream(stream client.DownstreamInventoryControl
 	}
 
 	sender := downstreamSender{stream, downstreamHello}
+	h.sender.Swap(&sender)
 
 	// handle incoming messages and distribute sender references
 	for {
@@ -289,6 +295,15 @@ func (h *downstreamHandle) GetUpstreamLabels(kind proto.LabelUpdateKind) map[str
 		return h.upstreamSSHLabels
 	}
 	return nil
+}
+
+func (h *downstreamHandle) GetSender() (s DownstreamSender, ok bool) {
+	sender := h.sender.Load()
+	if sender == nil {
+		return nil, false
+	}
+
+	return sender, true
 }
 
 func (h *downstreamHandle) Sender() <-chan DownstreamSender {

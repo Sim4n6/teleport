@@ -881,6 +881,65 @@ func TestGoodbye(t *testing.T) {
 	}
 }
 
+func TestGetSender(t *testing.T) {
+
+	controller := NewController(
+		&fakeAuth{},
+		usagereporter.DiscardUsageReporter{},
+		withInstanceHBInterval(time.Millisecond*200),
+	)
+	defer controller.Close()
+
+	// Set up fake in-memory control stream.
+	upstream, downstream := client.InventoryControlStreamPipe(client.ICSPipePeerAddr("127.0.0.1:8090"))
+
+	downstreamHello := proto.DownstreamInventoryHello{
+		Version:  teleport.Version,
+		ServerID: "auth",
+		Capabilities: &proto.DownstreamInventoryHello_SupportedCapabilities{
+			AppCleanup:     true,
+			AppHeartbeats:  true,
+			NodeHeartbeats: true,
+		},
+	}
+
+	upstreamHello := proto.UpstreamInventoryHello{
+		ServerID: "llama",
+		Version:  teleport.Version,
+		Services: []types.SystemRole{types.RoleNode, types.RoleApp},
+	}
+
+	handle := NewDownstreamHandle(func(ctx context.Context) (client.DownstreamInventoryControlStream, error) {
+		return downstream, nil
+	}, upstreamHello)
+
+	// Validate that the sender is not present prior to
+	// the stream becoming healthy.
+	s, ok := handle.GetSender()
+	require.False(t, ok)
+	require.Nil(t, s)
+
+	// Wait for upstream hello.
+	select {
+	case msg := <-upstream.Recv():
+		require.Equal(t, upstreamHello, msg)
+	case <-time.After(5 * time.Second):
+		require.Fail(t, "never got upstream hello")
+	}
+	// Send the downstream hello so that the
+	// sender becomes available.
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	require.NoError(t, upstream.Send(ctx, downstreamHello))
+
+	// Validate that once healthy the sender is provided.
+	require.EventuallyWithT(t, func(t *assert.CollectT) {
+		s, ok = handle.GetSender()
+		assert.True(t, ok)
+		assert.NotNil(t, s)
+	}, 10*time.Second, 100*time.Millisecond)
+}
+
 type eventOpts struct {
 	expect map[testEvent]int
 	deny   map[testEvent]struct{}
