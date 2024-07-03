@@ -307,6 +307,18 @@ func (h *downstreamHandle) Close() error {
 func (h *downstreamHandle) SendGoodbye(ctx context.Context) error {
 	select {
 	case sender := <-h.Sender():
+		// Only send the goodbye if the other half of the stream
+		// has indicated that it supports cleanup. Otherwise, the
+		// upstream will receive an unknown message and terminate
+		// the stream.
+		capabilities := sender.Hello().Capabilities
+		switch {
+		case capabilities == nil:
+			return nil
+		case !capabilities.AppCleanup:
+			return nil
+		}
+
 		return trace.Wrap(sender.Send(ctx, proto.UpstreamInventoryGoodbye{DeleteResources: true}))
 	case <-ctx.Done():
 		return trace.Wrap(ctx.Err())
