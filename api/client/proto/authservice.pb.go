@@ -13674,7 +13674,7 @@ func (m *InventoryHeartbeat) GetAppServer() *types.AppServerV3 {
 // UpstreamInventoryGoodbye informs the upstream service that instance
 // is terminating
 type UpstreamInventoryGoodbye struct {
-	// DeleteResources indicates that any heartbeats recevied from
+	// DeleteResources indicates that any heartbeats received from
 	// the instance should be terminated when the stream is closed.
 	DeleteResources      bool     `protobuf:"varint,1,opt,name=DeleteResources,proto3" json:"DeleteResources,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
