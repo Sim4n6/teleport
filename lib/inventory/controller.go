@@ -320,7 +320,7 @@ func (c *Controller) handleControlStream(handle *upstreamHandle) {
 	}
 
 	defer func() {
-		if handle.goodbye != nil && handle.goodbye.DeleteResources {
+		if handle.goodbye.GetDeleteResources() {
 			log.WithField("apps", len(handle.appServers)).Debug("Cleaning up resources in response to instance termination")
 			for _, app := range handle.appServers {
 				if err := c.auth.DeleteApplicationServer(c.closeContext, apidefaults.Namespace, app.resource.GetHostID(), app.resource.GetName()); err != nil && !trace.IsNotFound(err) {
@@ -382,7 +382,7 @@ func (c *Controller) handleControlStream(handle *upstreamHandle) {
 			case proto.UpstreamInventoryPong:
 				c.handlePong(handle, m)
 			case proto.UpstreamInventoryGoodbye:
-				handle.goodbye = &m
+				handle.goodbye = m
 			default:
 				log.Warnf("Unexpected upstream message type %T on control stream of server %q.", m, handle.Hello().ServerID)
 				handle.CloseWithError(trace.BadParameter("unexpected upstream message type %T", m))

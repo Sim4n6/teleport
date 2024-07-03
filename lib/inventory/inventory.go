@@ -505,7 +505,7 @@ func (i *instanceStateTracker) nextHeartbeat(now time.Time, hello proto.Upstream
 type upstreamHandle struct {
 	client.UpstreamInventoryControlStream
 	hello   proto.UpstreamInventoryHello
-	goodbye *proto.UpstreamInventoryGoodbye
+	goodbye proto.UpstreamInventoryGoodbye
 
 	agentMDLock   sync.RWMutex
 	agentMetadata proto.UpstreamInventoryAgentMetadata
