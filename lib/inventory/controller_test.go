@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"github.com/gravitational/trace"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/gravitational/teleport"
@@ -779,6 +780,105 @@ func TestAgentMetadata(t *testing.T) {
 		return slices.Contains(upstreamHandle.AgentMetadata().InstallMethods, "awsoidc_deployservice") &&
 			upstreamHandle.AgentMetadata().OS == runtime.GOOS
 	}, 5*time.Second, 200*time.Millisecond)
+}
+
+func TestGoodbye(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name            string
+		supportsGoodbye bool
+	}{
+		{
+			name: "no goodbye",
+		},
+		{
+			name:            "goodbye",
+			supportsGoodbye: true,
+		},
+	}
+
+	upstreamHello := proto.UpstreamInventoryHello{
+		ServerID: "llama",
+		Version:  teleport.Version,
+		Services: []types.SystemRole{types.RoleNode, types.RoleApp},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			controller := NewController(
+				&fakeAuth{},
+				usagereporter.DiscardUsageReporter{},
+				withInstanceHBInterval(time.Millisecond*200),
+			)
+			defer controller.Close()
+
+			// Set up fake in-memory control stream.
+			upstream, downstream := client.InventoryControlStreamPipe(client.ICSPipePeerAddr("127.0.0.1:8090"))
+
+			downstreamHello := proto.DownstreamInventoryHello{
+				Version:  teleport.Version,
+				ServerID: "auth",
+				Capabilities: &proto.DownstreamInventoryHello_SupportedCapabilities{
+					AppCleanup:     test.supportsGoodbye,
+					AppHeartbeats:  true,
+					NodeHeartbeats: true,
+				},
+			}
+
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			handle := NewDownstreamHandle(func(ctx context.Context) (client.DownstreamInventoryControlStream, error) {
+				return downstream, nil
+			}, upstreamHello)
+
+			// Wait for upstream hello.
+			select {
+			case msg := <-upstream.Recv():
+				require.Equal(t, upstreamHello, msg)
+			case <-ctx.Done():
+				require.Fail(t, "never got upstream hello")
+			}
+			require.NoError(t, upstream.Send(ctx, downstreamHello))
+
+			// Attempt to send a goodbye.
+			go func() {
+				ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+				assert.NoError(t, handle.SendGoodbye(ctx))
+				// Close the handle to unblock receive below.
+				assert.NoError(t, handle.Close())
+			}()
+
+			// Wait to see if a goodbye is received.
+			timeoutC := time.After(10 * time.Second)
+			for {
+				select {
+				case msg := <-upstream.Recv():
+					switch msg.(type) {
+					case proto.UpstreamInventoryHello, proto.InventoryHeartbeat,
+						proto.UpstreamInventoryPong, proto.UpstreamInventoryAgentMetadata:
+					case proto.UpstreamInventoryGoodbye:
+						if test.supportsGoodbye {
+							require.Equal(t, proto.UpstreamInventoryGoodbye{DeleteResources: true}, msg)
+						} else {
+							t.Fatalf("received an unexpected message %v", msg)
+						}
+						return
+					}
+				case <-upstream.Done():
+					return
+				case <-timeoutC:
+					if test.supportsGoodbye {
+						require.FailNow(t, "timeout waiting for goodbye message")
+					} else {
+						return
+					}
+				}
+			}
+		})
+	}
 }
 
 type eventOpts struct {
