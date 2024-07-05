@@ -1,13 +1,13 @@
 ---
-title: Database Access with AWS ElastiCache and AWS MemoryDB for Redis
-description: How to configure Teleport database access with AWS ElastiCache and AWS MemoryDB for Redis.
+title: Database Access with Amazon ElastiCache and Amazon MemoryDB for Redis
+description: How to configure Teleport database access with Amazon ElastiCache and Amazon MemoryDB for Redis.
 ---
 
 (!docs/pages/includes/database-access/db-introduction.mdx dbType="Amazon ElastiCache or MemoryDB for Redis" dbConfigure="with IAM authentication"!)
 
 ## How it works
 
-The Teleport Database Service proxies traffic from users to AWS ElastiCache or
+The Teleport Database Service proxies traffic from users to Amazon ElastiCache or
 MemoryDB for Redis. Authentication between the Database Service and the
 AWS-hosted Redis database can take one of two forms:
 
@@ -31,11 +31,7 @@ AWS-hosted Redis database can take one of two forms:
 
 </Tabs>
 
-This guide shows how to enroll a single AWS Elasticache or MemoryDB cluster
-through the Teleport Database Service. For a more scalable approach, learn how
-to [configure the Teleport Discovery
-Service](../../auto-discovery/databases.mdx) to automatically enroll all AWS
-databases in your infrastructure.
+(!docs/pages/includes/database-access/how-it-works/aws-auto-discovery.mdx db="Amazon ElastiCache or MemoryDB cluster" !)
 
 ## Prerequisites
 

@@ -1301,6 +1301,10 @@
           "slug": "/database-access/enroll-aws-databases/",
           "entries": [
             {
+              "title": "Amazon DocumentDB",
+              "slug": "/database-access/enroll-aws-databases/aws-docdb/"
+            },
+            {
               "title": "Amazon DynamoDB",
               "slug": "/database-access/enroll-aws-databases/aws-dynamodb/"
             },
