@@ -75,7 +75,7 @@ class RedirectChecker {
   // Returns an array of URLs with missing files or redirects.
   checkFile(filePath) {
     const docsPattern = new RegExp(
-      /https:\/\/goteleport.com\/docs\/(ver\/[0-9]+\.x\/)?[\w\/_#-]+/,
+      /https:\/\/goteleport.com\/docs(\/ver\/[0-9]+\.x)?(\/[\w\/_-]+)\/?#?/,
       'gm'
     );
     const text = this.fs.readFileSync(filePath, 'utf8');
@@ -95,7 +95,7 @@ class RedirectChecker {
         return;
       }
 
-      let pathPart = url[0].slice(teleportDocsURL.length);
+      let pathPart = url[2];
       if (pathPart[pathPart.length - 1] != '/') {
         pathPart += '/';
       }
