@@ -24,6 +24,8 @@ This is a link to a [documentation page](https://goteleport.com/docs/subdirector
 
 Here is a link to a [missing page](https://goteleport.com/docs/page3).
 
+Here is a link to a [missing page](https://goteleport.com/docs/page3).
+
 `,
     '/docs/content/1.x/docs/pages/page1.mdx': `---
 title: "Sample Page 1"
@@ -68,6 +70,32 @@ title: "Desktop Access Getting Started"
 
   test(`allows missing docs pages if there is a redirect`, () => {
     const vol = Volume.fromJSON(files);
+    const fs = createFsFromVolume(vol);
+    const checker = new RedirectChecker(fs, '/blog', '/docs/content/1.x', [
+      {
+        source: '/page3/',
+        destination: '/page1/',
+        permanent: true,
+      },
+    ]);
+    const results = checker.check();
+    expect(results).toEqual([]);
+  });
+
+  test(`allows missing docs pages for links with fragments there is a redirect`, () => {
+    const vol = Volume.fromJSON({
+      '/blog/content2.mdx': `---
+title: "Sample Page 2"
+---
+
+Here is a link to a [missing page](https://goteleport.com/docs/page3/#my-fragment).
+
+`,
+      '/docs/content/1.x/docs/pages/page1.mdx': `---
+title: "Sample Page 1"
+---
+`,
+    });
     const fs = createFsFromVolume(vol);
     const checker = new RedirectChecker(fs, '/blog', '/docs/content/1.x', [
       {
