@@ -71,7 +71,7 @@ FIPS_MESSAGE := with-FIPS-support
 RELEASE = teleport-$(GITTAG)-$(OS)-$(ARCH)-fips-bin
 endif
 
-# Look for the PAM header "security/pam_appl.h" to dertermine if we should
+# Look for the PAM header "security/pam_appl.h" to determine if we should
 # enable PAM support in teleport. A native build will have it in /usr/include.
 # Darwin has it in /usr/local/include (SIP prevents us from modifying/creating
 # it in /usr/include), and the ng buildbox has it in one of the
