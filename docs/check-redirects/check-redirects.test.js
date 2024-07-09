@@ -71,8 +71,8 @@ title: "Desktop Access Getting Started"
     const fs = createFsFromVolume(vol);
     const checker = new RedirectChecker(fs, '/blog', '/docs/content/1.x', [
       {
-        source: '/docs/page3/',
-        destination: '/docs/page1',
+        source: '/page3/',
+        destination: '/page1/',
         permanent: true,
       },
     ]);
