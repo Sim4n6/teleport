@@ -339,37 +339,51 @@ func (a AccessListMembershipChecker) getAccessListDynamicMembers(ctx context.Con
 }
 
 func (a AccessListMembershipChecker) recursiveIsAccessListMemberCheck(ctx context.Context, identity tlsca.Identity, accessList *accesslist.AccessList) error {
-	err := RecurseAccessLists(identity.Username, accessList.GetName(),
-		func(s string) ([]string, error) {
-			return a.getAccessListDynamicMembers(ctx, s)
-		},
-		func(username, list string) error {
-			_, err := a.members.GetAccessListMember(ctx, list, username)
-			if err != nil {
+	seen := map[string]struct{}{}
+	queue := []string{accessList.GetName()}
+
+	for len(queue) > 0 {
+		size := len(queue)
+		for i := 0; i < size; i++ {
+			pal := queue[0]
+			queue = queue[1:]
+
+			member, err := a.members.GetAccessListMember(ctx, pal, identity.Username)
+			if err != nil && !trace.IsNotFound(err) {
 				return trace.Wrap(err)
 			}
-			return nil
-		},
-		func(current string) error {
-			member, err := a.members.GetAccessListMember(ctx, current, identity.Username)
-			if err != nil {
-				return trace.Wrap(err)
+			if trace.IsNotFound(err) {
+				subAccessListMembers, err := a.getAccessListDynamicMembers(ctx, pal)
+				if err != nil {
+					return trace.NotFound("error finding access list %s", pal)
+				}
+				for _, next := range subAccessListMembers {
+					if _, ok := seen[next]; ok {
+						continue
+					}
+					seen[next] = struct{}{}
+					queue = append(queue, next)
+				}
+				continue
 			}
+
 			expires := member.Spec.Expires
 			if !expires.IsZero() && !a.clock.Now().Before(expires) {
 				return trace.AccessDenied("user %s's membership has expired in the access list", identity.Username)
 			}
 
-			subAccessList, err := a.members.GetAccessList(ctx, current)
+			subAccessList, err := a.members.GetAccessList(ctx, pal)
 			if err != nil {
 				return trace.Wrap(err)
 			}
-			if !UserMeetsRequirements(identity, subAccessList.Spec.MembershipRequires) {
-				return trace.AccessDenied("user %s is a member, but does not have the roles or traits required to be a member of this list", identity.Username)
+			if UserMeetsRequirements(identity, subAccessList.Spec.MembershipRequires) {
+				return nil
 			}
-			return nil
-		})
-	return trace.Wrap(err)
+
+		}
+	}
+	return trace.NotFound("user %s is not a member of the access list or its parents", identity.Username)
+
 }
 
 func recursiveIsAccessListOwnerCheck(ctx context.Context, members AccessListMemberGetter, identity tlsca.Identity, accessList *accesslist.AccessList) error {

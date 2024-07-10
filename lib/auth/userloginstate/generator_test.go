@@ -25,7 +25,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/gravitational/trace"
 	"github.com/jonboulle/clockwork"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
@@ -42,6 +41,7 @@ import (
 	"github.com/gravitational/teleport/lib/modules"
 	"github.com/gravitational/teleport/lib/services"
 	"github.com/gravitational/teleport/lib/services/local"
+	"github.com/gravitational/trace"
 )
 
 const ownerUser = "owner"
@@ -393,24 +393,25 @@ func TestAccessLists(t *testing.T) {
 			expectedTraitCount: 6,
 		},
 		{
-			name:  "access lists member of sub list",
+			name:  "access lists member of nested list",
 			cloud: true,
 			user:  userNoRolesOrTraits,
-			// user is member of acl 3, acl 1 includes acl 2, which includes acl 2 and 3
+			// user is member of acl 3, acl 1 includes acl 2, which includes 3
 			// so user will be granted role1 and 2, and trait1
 			accessLists: []*accesslist.AccessList{
-				newAccessListsWithMemberRefs(t, clock, "1", grants([]string{"role1"},
+				newAccessList(t, clock, "1", grants([]string{"role1"},
 					trait.Traits{
 						"trait1": {"value"},
 					}),
-					emptyGrants,
-					[]string{"2"}),
-				newAccessListsWithMemberRefs(t, clock, "2", grants([]string{"role1"}, trait.Traits{}),
-					emptyGrants,
-					[]string{"3"}),
+					emptyGrants),
+				newAccessList(t, clock, "2", grants([]string{"role1"}, trait.Traits{}),
+					emptyGrants),
 				newAccessList(t, clock, "3", grants([]string{"role2"}, trait.Traits{}), emptyGrants),
 			},
-			members: newAccessListMembers(t, clock, "3", "user"),
+			members: append(
+				newAccessListMembers(t, clock, "3", "user"),
+				newAccessListMemberWithKind(t, clock, "2", accesslist.MemberKindList, "3"),
+				newAccessListMemberWithKind(t, clock, "1", accesslist.MemberKindList, "2")),
 			roles:   []string{"role1", "role2"},
 			wantErr: require.NoError,
 			expected: newUserLoginState(t, "user",
@@ -423,6 +424,38 @@ func TestAccessLists(t *testing.T) {
 				trait.Traits{"trait1": {"value"}}),
 			expectedRoleCount:  2,
 			expectedTraitCount: 1,
+		},
+		{
+			name:  "access lists member of nested list",
+			cloud: true,
+			user:  userNoRolesOrTraits,
+			// user is member of acl 3, acl 1 includes acl 2, which includes 3
+			// so user will be granted role1 and 2, and trait1
+			accessLists: []*accesslist.AccessList{
+				newAccessList(t, clock, "1", grants([]string{}, trait.Traits{"trait": {"1"}}), emptyGrants),
+				newAccessList(t, clock, "2", grants([]string{}, trait.Traits{"trait": {"2"}}), emptyGrants),
+				newAccessList(t, clock, "3", grants([]string{}, trait.Traits{"trait": {"3"}}), emptyGrants),
+				newAccessList(t, clock, "4", grants([]string{}, trait.Traits{"trait": {"4"}}), emptyGrants),
+			},
+			members: append(
+				newAccessListMembers(t, clock, "1", "user"),
+				newAccessListMemberWithKind(t, clock, "2", accesslist.MemberKindList, "1"),
+				newAccessListMemberWithKind(t, clock, "3", accesslist.MemberKindList, "1"),
+				newAccessListMemberWithKind(t, clock, "4", accesslist.MemberKindList, "3"),
+				newAccessListMemberWithKind(t, clock, "4", accesslist.MemberKindList, "2"),
+			),
+			roles:   nil,
+			wantErr: require.NoError,
+			expected: newUserLoginState(t, "user",
+				map[string]string{
+					userloginstate.OriginalRolesAndTraitsSet: "true",
+				},
+				nil,
+				nil,
+				nil,
+				trait.Traits{"trait": {"1", "2", "3", "4"}}),
+			expectedRoleCount:  0,
+			expectedTraitCount: 4,
 		},
 	}
 
@@ -534,12 +567,6 @@ func grants(roles []string, traits trait.Traits) accesslist.Grants {
 	}
 }
 
-func newAccessListsWithMemberRefs(t *testing.T, clock clockwork.Clock, name string, grants accesslist.Grants, ownerGrants accesslist.Grants, memberlists []string) *accesslist.AccessList {
-	acl := newAccessList(t, clock, name, grants, ownerGrants)
-	acl.Spec.DynamicMembers.AccessLists = memberlists
-	return acl
-}
-
 func newAccessList(t *testing.T, clock clockwork.Clock, name string, grants accesslist.Grants, ownerGrants accesslist.Grants) *accesslist.AccessList {
 	t.Helper()
 
@@ -590,6 +617,25 @@ func newAccessListMembers(t *testing.T, clock clockwork.Clock, accessList string
 	}
 
 	return alMembers
+}
+
+func newAccessListMemberWithKind(t *testing.T, clock clockwork.Clock, accessList string, kind string, member string) *accesslist.AccessListMember {
+
+	var err error
+	res, err := accesslist.NewAccessListMember(header.Metadata{
+		Name: member,
+	}, accesslist.AccessListMemberSpec{
+		AccessList: accessList,
+		Name:       member,
+		Joined:     clock.Now(),
+		Expires:    clock.Now().Add(24 * time.Hour),
+		Reason:     "added",
+		AddedBy:    ownerUser,
+		Kind:       kind,
+	})
+	require.NoError(t, err)
+
+	return res
 }
 
 func newUserLoginState(t *testing.T, name string, labels map[string]string, originalRoles []string, originalTraits map[string][]string,
