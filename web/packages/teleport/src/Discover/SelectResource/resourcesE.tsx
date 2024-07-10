@@ -28,7 +28,7 @@ export const SAML_APPLICATIONS: ResourceSpec[] = [
     kind: ResourceKind.SamlApplication,
     samlMeta: { preset: SamlServiceProviderPreset.Unspecified },
     keywords: 'saml sso application idp',
-    icon: 'Application',
+    icon: 'application',
     event: DiscoverEventResource.SamlApplication,
   },
   {
@@ -36,7 +36,7 @@ export const SAML_APPLICATIONS: ResourceSpec[] = [
     kind: ResourceKind.SamlApplication,
     samlMeta: { preset: SamlServiceProviderPreset.Grafana },
     keywords: 'saml sso application idp grafana',
-    icon: 'Grafana',
+    icon: 'grafana',
     event: DiscoverEventResource.SamlApplication,
   },
   {
@@ -44,7 +44,7 @@ export const SAML_APPLICATIONS: ResourceSpec[] = [
     kind: ResourceKind.SamlApplication,
     samlMeta: { preset: SamlServiceProviderPreset.GcpWorkforce },
     keywords: 'saml sso application idp gcp workforce federation',
-    icon: 'Gcp',
+    icon: 'googlecloud',
     event: DiscoverEventResource.SamlApplication,
   },
 ];

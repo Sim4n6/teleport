@@ -17,6 +17,7 @@
  */
 
 import { Platform } from 'design/platform';
+import { ResourceIconName } from 'design/ResourceIcon/resourceIconSpecs';
 
 import { Resource } from 'gen-proto-ts/teleport/userpreferences/v1/onboard_pb';
 
@@ -28,8 +29,6 @@ import type {
   DiscoverDiscoveryConfigMethod,
   DiscoverEventResource,
 } from 'teleport/services/userEvent';
-
-import type { ResourceIconName } from 'design/ResourceIcon';
 
 export enum DatabaseLocation {
   Aws,
