@@ -20,6 +20,8 @@ package reversetunnel
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"net"
 	"sync"
@@ -108,34 +110,63 @@ func (s *remoteSite) getRemoteClient() (authclient.ClientI, bool, error) {
 	}
 	keys := ca.GetTrustedTLSKeyPairs()
 
+	if len(keys) == 0 {
+		return nil, false, trace.BadParameter("no TLS keys found")
+	}
 	// The fact that cluster has keys to remote CA means that the key exchange
 	// has completed.
-	if len(keys) != 0 {
-		s.logger.Debug("Using TLS client to remote cluster.")
-		pool, err := services.CertPool(ca)
+
+	s.logger.Debug("Using TLS client to remote cluster.")
+
+	tlsConfig := s.srv.ClientTLS.Clone()
+
+	// encode the name of this cluster to identify this cluster,
+	// connecting to the remote one (it is used to find the right certificate
+	// authority to verify)
+	tlsConfig.ServerName = apiutils.EncodeClusterName(s.srv.ClusterName)
+
+	tlsConfig.InsecureSkipVerify = true
+	tlsConfig.VerifyConnection = func(cs tls.ConnectionState) error {
+		roots, err := services.CertPool(ca)
 		if err != nil {
-			return nil, false, trace.Wrap(err)
+			return trace.Wrap(err)
 		}
-		tlsConfig := s.srv.ClientTLS.Clone()
-		tlsConfig.RootCAs = pool
-		// encode the name of this cluster to identify this cluster,
-		// connecting to the remote one (it is used to find the right certificate
-		// authority to verify)
-		tlsConfig.ServerName = apiutils.EncodeClusterName(s.srv.ClusterName)
-		clt, err := authclient.NewClient(client.Config{
-			Dialer: client.ContextDialerFunc(s.authServerContextDialer),
-			Credentials: []client.Credentials{
-				client.LoadTLS(tlsConfig),
-			},
-			CircuitBreakerConfig: s.srv.CircuitBreakerConfig,
-		})
-		if err != nil {
-			return nil, false, trace.Wrap(err)
+		certs := cs.PeerCertificates
+
+		now := tlsConfig.Time
+		if now == nil {
+			now = time.Now
 		}
-		return clt, false, nil
+
+		opts := x509.VerifyOptions{
+			Roots:         roots,
+			Intermediates: nil,
+
+			CurrentTime: now(),
+			DNSName:     cs.ServerName,
+		}
+		if len(certs) > 1 {
+			opts.Intermediates = x509.NewCertPool()
+			for _, cert := range certs[1:] {
+				opts.Intermediates.AddCert(cert)
+			}
+		}
+
+		_, err = certs[0].Verify(opts)
+		return trace.Wrap(err)
 	}
 
-	return nil, false, trace.BadParameter("no TLS keys found")
+	clt, err := authclient.NewClient(client.Config{
+		Dialer: client.ContextDialerFunc(s.authServerContextDialer),
+		Credentials: []client.Credentials{
+			client.LoadTLS(tlsConfig),
+		},
+		CircuitBreakerConfig: s.srv.CircuitBreakerConfig,
+	})
+	if err != nil {
+		return nil, false, trace.Wrap(err)
+	}
+	return clt, false, nil
 }
 
 func (s *remoteSite) authServerContextDialer(ctx context.Context, network, address string) (net.Conn, error) {

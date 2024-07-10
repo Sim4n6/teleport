@@ -41,7 +41,6 @@ import (
 	"github.com/jonboulle/clockwork"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/crypto/ssh"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -369,9 +368,8 @@ func TestServiceCheckPrincipals(t *testing.T) {
 	require.NoError(t, err)
 	defer tlsServer.Close()
 
-	testConnector := &Connector{
-		serverIdentity: tlsServer.Identity,
-	}
+	testConnector, err := newConnector(tlsServer.Identity, tlsServer.Identity)
+	require.NoError(t, err)
 
 	tests := []struct {
 		inPrincipals  []string
@@ -889,18 +887,25 @@ func TestSetupProxyTLSConfig(t *testing.T) {
 				// Setting Supervisor so that `ExitContext` can be called.
 				Supervisor: NewSupervisor("process-id", cfg.Log),
 			}
-			conn := &Connector{
-				clientIdentity: &state.Identity{},
-				serverIdentity: &state.Identity{
-					Cert: &ssh.Certificate{
-						Permissions: ssh.Permissions{
-							Extensions: map[string]string{},
-						},
-					},
-				},
-			}
+			// id := &state.Identity{
+			// 	Cert: &ssh.Certificate{
+			// 		Permissions: ssh.Permissions{
+			// 			Extensions: map[string]string{},
+			// 		},
+			// 	},
+			// }
+			// conn := &Connector{
+			// 	clientIdentity: &state.Identity{},
+			// 	serverIdentity: &state.Identity{
+			// 		Cert: &ssh.Certificate{
+			// 			Permissions: ssh.Permissions{
+			// 				Extensions: map[string]string{},
+			// 			},
+			// 		},
+			// 	},
+			// }
 			tls, err := process.setupProxyTLSConfig(
-				conn,
+				new(Connector),
 				&mockReverseTunnelServer{},
 				&mockAccessPoint{},
 				"cluster",
@@ -1239,11 +1244,9 @@ func TestProxyGRPCServers(t *testing.T) {
 	serverIdentity, err := auth.NewServerIdentity(testAuthServer.AuthServer, hostID, types.RoleProxy)
 	require.NoError(t, err)
 
-	testConnector := &Connector{
-		clientIdentity: serverIdentity,
-		serverIdentity: serverIdentity,
-		Client:         client,
-	}
+	testConnector, err := newConnector(serverIdentity, serverIdentity)
+	require.NoError(t, err)
+	testConnector.Client = client
 
 	// Create a listener for the insecure gRPC server.
 	insecureListener, err := net.Listen("tcp", "localhost:0")

@@ -83,6 +83,7 @@ import (
 	"github.com/gravitational/teleport/api/utils/aws"
 	"github.com/gravitational/teleport/api/utils/grpc/interceptors"
 	"github.com/gravitational/teleport/api/utils/keys"
+	apisshutils "github.com/gravitational/teleport/api/utils/sshutils"
 	"github.com/gravitational/teleport/lib"
 	"github.com/gravitational/teleport/lib/agentless"
 	"github.com/gravitational/teleport/lib/auditd"
@@ -156,6 +157,7 @@ import (
 	"github.com/gravitational/teleport/lib/srv/transport/transportv1"
 	"github.com/gravitational/teleport/lib/sshutils"
 	"github.com/gravitational/teleport/lib/system"
+	"github.com/gravitational/teleport/lib/tlsca"
 	usagereporter "github.com/gravitational/teleport/lib/usagereporter/teleport"
 	"github.com/gravitational/teleport/lib/utils"
 	awsutils "github.com/gravitational/teleport/lib/utils/aws"
@@ -293,18 +295,100 @@ const (
 	TeleportOKEvent = "TeleportOKEvent"
 )
 
+func newConnector(clientIdentity, serverIdentity *state.Identity) (*Connector, error) {
+	clientState, err := newConnectorState(clientIdentity)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+	serverState, err := newConnectorState(serverIdentity)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+	c := &Connector{
+		clusterName:        clientIdentity.ClusterName,
+		hostID:             clientIdentity.ID.HostUUID,
+		role:               clientIdentity.ID.Role,
+		encodedClusterName: apiutils.EncodeClusterName(clientIdentity.ClusterName),
+	}
+	c.clientState.Store(clientState)
+	c.serverState.Store(serverState)
+	return c, nil
+}
+
+func newConnectorState(identity *state.Identity) (*connectorState, error) {
+	state := &connectorState{
+		identity: identity,
+	}
+	if identity.Cert != nil {
+		hostCheckers, err := apisshutils.ParseAuthorizedKeys(identity.SSHCACertBytes)
+		if err != nil {
+			return nil, trace.Wrap(err, "parsing SSH host CAs")
+		}
+		state.hostCheckers = hostCheckers
+
+		state.sshCert = identity.Cert
+		state.sshCertSigner = identity.KeySigner
+	}
+	if identity.HasTLSConfig() {
+		tlsCert, err := keys.X509KeyPair(identity.TLSCertBytes, identity.KeyBytes)
+		if err != nil {
+			return nil, trace.Wrap(err, "parsing X.509 certificate")
+		}
+		tlsCert.Leaf = identity.XCert
+		certPool := x509.NewCertPool()
+		for j := range identity.TLSCACertsBytes {
+			parsedCert, err := tlsca.ParseCertificatePEM(identity.TLSCACertsBytes[j])
+			if err != nil {
+				return nil, trace.Wrap(err, "parsing X.509 host CA")
+			}
+			certPool.AddCert(parsedCert)
+		}
+		state.tlsCert = &tlsCert
+		state.pool = certPool
+	}
+	return state, nil
+}
+
+// connectorState contains immutable state (generally derived from a
+// [*state.Identity]) suitable for sharing behind an atomic pointer.
+type connectorState struct {
+	identity *state.Identity
+
+	// tlsCert is the TLS client certificate for the identity, with Signer and
+	// Leaf filled.
+	tlsCert *tls.Certificate
+	// pool contains the host CA certificates trusted by the identity.
+	pool *x509.CertPool
+
+	// sshCert is the SSH certificate associated with the identity.
+	sshCert *ssh.Certificate
+	// sshCertSigner is a [ssh.Signer] presenting the sshCert certificate as its
+	// public key.
+	sshCertSigner ssh.Signer
+	// hostCheckers contains the (non-certificate) public keys that make up the
+	// host CA trusted by the identity.
+	hostCheckers []ssh.PublicKey
+}
+
 // Connector has all resources process needs to connect to other parts of the
 // cluster: client and identity.
 type Connector struct {
-	// clientIdentity is the identity to be used in internal cluster
-	// clients to the auth service.
-	clientIdentity *state.Identity
+	clusterName string
+	hostID      string
+	role        types.SystemRole
 
-	// serverIdentity is the identity to be used in servers - serving SSH
-	// and x509 certificates to clients.
-	serverIdentity *state.Identity
+	encodedClusterName string
 
-	// Client is authenticated client with credentials from ClientIdentity.
+	// clientState contains the current connector state for outbound connections
+	// to the cluster.
+	clientState atomic.Pointer[connectorState]
+	// serverState contains the current connector state for inbound connections
+	// from the cluster.
+	serverState atomic.Pointer[connectorState]
+
+	// Client is an authenticated client intended to use the credentials in
+	// clientState (unless it's a client shared from some other connector as
+	// signified by ReusedClient).
 	Client *authclient.Client
 
 	// ReusedClient, if true, indicates that the client reference is owned by
@@ -313,65 +397,112 @@ type Connector struct {
 }
 
 func (c *Connector) ClusterName() string {
-	return c.clientIdentity.ClusterName
+	return c.clusterName
 }
 
 func (c *Connector) HostID() string {
-	return c.clientIdentity.ID.HostUUID
+	return c.hostID
 }
 
 func (c *Connector) Role() types.SystemRole {
-	return c.clientIdentity.ID.Role
+	return c.role
 }
 
 func (c *Connector) ClientTLSConfig(cipherSuites []uint16) (*tls.Config, error) {
-	return c.clientIdentity.TLSConfig(cipherSuites)
+	conf := utils.TLSConfig(cipherSuites)
+	conf.ServerName = c.encodedClusterName
+	conf.GetClientCertificate = func(cri *tls.CertificateRequestInfo) (*tls.Certificate, error) {
+		tlsCert := c.clientState.Load().tlsCert
+		if tlsCert == nil {
+			return nil, trace.NotFound("no TLS credentials setup for this identity")
+		}
+		return tlsCert, nil
+	}
+
+	conf.InsecureSkipVerify = true
+	conf.VerifyConnection = func(cs tls.ConnectionState) error {
+		roots := c.clientState.Load().pool
+		if roots == nil {
+			return trace.NotFound("no TLS credentials setup for this identity")
+		}
+		certs := cs.PeerCertificates
+
+		now := conf.Time
+		if now == nil {
+			now = time.Now
+		}
+
+		opts := x509.VerifyOptions{
+			Roots:         roots,
+			Intermediates: nil,
+
+			CurrentTime: now(),
+			DNSName:     cs.ServerName,
+		}
+		if len(certs) > 1 {
+			opts.Intermediates = x509.NewCertPool()
+			for _, cert := range certs[1:] {
+				opts.Intermediates.AddCert(cert)
+			}
+		}
+
+		_, err := certs[0].Verify(opts)
+		return trace.Wrap(err)
+	}
+
+	return conf, nil
 }
 
 func (c *Connector) ClientGetCertificate() (*tls.Certificate, error) {
-	cert, err := keys.X509KeyPair(c.clientIdentity.TLSCertBytes, c.clientIdentity.KeyBytes)
-	if err != nil {
-		return nil, trace.Wrap(err)
-	}
-	return &cert, nil
+	return c.clientState.Load().tlsCert, nil
 }
 
 func (c *Connector) ClientAuthMethods() []ssh.AuthMethod {
-	return []ssh.AuthMethod{ssh.PublicKeys(c.clientIdentity.KeySigner)}
+	return []ssh.AuthMethod{
+		ssh.PublicKeysCallback(func() (signers []ssh.Signer, err error) {
+			return []ssh.Signer{
+				c.clientState.Load().sshCertSigner,
+			}, nil
+		}),
+	}
 }
 
 func (c *Connector) ClientIdentityString() string {
-	return c.clientIdentity.String()
+	return c.clientState.Load().identity.String()
 }
 
-func (c *Connector) ClientInstanceSystemRoles() []string {
-	return slices.Clone(c.clientIdentity.SystemRoles)
+func (c *Connector) getServerIdentity() *state.Identity {
+	// FIXME(espadolini): delete
+	return c.serverState.Load().identity
 }
 
 func (c *Connector) ServerTLSConfig(cipherSuites []uint16) (*tls.Config, error) {
-	return c.serverIdentity.TLSConfig(cipherSuites)
+	return c.getServerIdentity().TLSConfig(cipherSuites)
 }
 
 func (c *Connector) ServerGetHostSigners() []ssh.Signer {
-	return []ssh.Signer{c.serverIdentity.KeySigner}
+	return []ssh.Signer{c.serverState.Load().sshCertSigner}
 }
 
 func (c *Connector) ServerGetValidPrincipals() []string {
-	return slices.Clone(c.serverIdentity.Cert.ValidPrincipals)
+	// TODO(espadolini): get rid of this function after refactoring the two
+	// integration tests that use it
+	return slices.Clone(c.serverState.Load().sshCert.ValidPrincipals)
 }
 
 func (c *Connector) getPROXYSigner(clock clockwork.Clock) (multiplexer.PROXYHeaderSigner, error) {
-	signer, err := keys.ParsePrivateKey(c.serverIdentity.KeyBytes)
+	serverIdentity := c.getServerIdentity()
+	signer, err := keys.ParsePrivateKey(serverIdentity.KeyBytes)
 	if err != nil {
 		return nil, trace.Wrap(err, "could not parse identity's private key")
 	}
 
-	jwtSigner, err := services.GetJWTSigner(signer, c.serverIdentity.ClusterName, clock)
+	jwtSigner, err := services.GetJWTSigner(signer, serverIdentity.ClusterName, clock)
 	if err != nil {
 		return nil, trace.Wrap(err, "could not create JWT signer")
 	}
 
-	proxySigner, err := multiplexer.NewPROXYSigner(c.serverIdentity.XCert, jwtSigner)
+	proxySigner, err := multiplexer.NewPROXYSigner(serverIdentity.XCert, jwtSigner)
 	if err != nil {
 		return nil, trace.Wrap(err, "could not create PROXY signer")
 	}
@@ -2923,7 +3054,7 @@ func (process *TeleportProcess) initSSH() error {
 				process.ExitContext(),
 				reversetunnel.AgentPoolConfig{
 					Component:            teleport.ComponentNode,
-					HostUUID:             conn.serverIdentity.ID.HostUUID,
+					HostUUID:             conn.HostID(),
 					Resolver:             conn.TunnelProxyResolver(),
 					Client:               conn.Client,
 					AccessPoint:          authClient,
@@ -4401,30 +4532,37 @@ func (process *TeleportProcess) initProxyEndpoint(conn *Connector) error {
 		})
 
 		webConfig := web.Config{
-			Proxy:                   tsrv,
-			AuthServers:             cfg.AuthServerAddresses()[0],
-			DomainName:              cfg.Hostname,
-			ProxyClient:             conn.Client,
-			ProxySSHAddr:            proxySSHAddr,
-			ProxyWebAddr:            cfg.Proxy.WebAddr,
-			ProxyPublicAddrs:        cfg.Proxy.PublicAddrs,
-			CipherSuites:            cfg.CipherSuites,
-			FIPS:                    cfg.FIPS,
-			AccessPoint:             accessPoint,
-			Emitter:                 asyncEmitter,
-			PluginRegistry:          process.PluginRegistry,
-			HostUUID:                process.Config.HostUUID,
-			Context:                 process.GracefulExitContext(),
-			StaticFS:                fs,
-			ClusterFeatures:         process.GetClusterFeatures(),
-			GetProxyClientTLSConfig: conn.ClientTLSConfig,
-			UI:                      cfg.Proxy.UI,
-			ProxySettings:           proxySettings,
-			PublicProxyAddr:         process.proxyPublicAddr().Addr,
-			ALPNHandler:             alpnHandlerForWeb.HandleConnection,
-			ProxyKubeAddr:           proxyKubeAddr,
-			TraceClient:             traceClt,
-			Router:                  proxyRouter,
+			Proxy:            tsrv,
+			AuthServers:      cfg.AuthServerAddresses()[0],
+			DomainName:       cfg.Hostname,
+			ProxyClient:      conn.Client,
+			ProxySSHAddr:     proxySSHAddr,
+			ProxyWebAddr:     cfg.Proxy.WebAddr,
+			ProxyPublicAddrs: cfg.Proxy.PublicAddrs,
+			CipherSuites:     cfg.CipherSuites,
+			FIPS:             cfg.FIPS,
+			AccessPoint:      accessPoint,
+			Emitter:          asyncEmitter,
+			PluginRegistry:   process.PluginRegistry,
+			HostUUID:         process.Config.HostUUID,
+			Context:          process.GracefulExitContext(),
+			StaticFS:         fs,
+			ClusterFeatures:  process.GetClusterFeatures(),
+			GetProxyClientTLSConfig: func(cipherSuites []uint16) (*tls.Config, error) {
+				conf := utils.TLSConfig(cipherSuites)
+				conf.GetClientCertificate = func(cri *tls.CertificateRequestInfo) (*tls.Certificate, error) {
+					return conn.ClientGetCertificate()
+				}
+				return conf, nil
+			},
+			GetProxyClientCertificate: conn.ClientGetCertificate,
+			UI:                        cfg.Proxy.UI,
+			ProxySettings:             proxySettings,
+			PublicProxyAddr:           process.proxyPublicAddr().Addr,
+			ALPNHandler:               alpnHandlerForWeb.HandleConnection,
+			ProxyKubeAddr:             proxyKubeAddr,
+			TraceClient:               traceClt,
+			Router:                    proxyRouter,
 			SessionControl: web.SessionControllerFunc(func(ctx context.Context, sctx *web.SessionContext, login, localAddr, remoteAddr string) (context.Context, error) {
 				controller := srv.WebSessionController(sessionController)
 				ctx, err := controller(ctx, sctx, login, localAddr, remoteAddr)

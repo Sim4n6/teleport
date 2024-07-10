@@ -20,7 +20,6 @@ package peer
 
 import (
 	"context"
-	"crypto/tls"
 	"crypto/x509"
 	"testing"
 	"time"
@@ -167,13 +166,9 @@ func TestCAChange(t *testing.T) {
 
 	// new connection should succeed because client tls config references new
 	// RootCAs.
-	client.config.getConfigForServer = func() (*tls.Config, error) {
-		config := client.config.TLSConfig.Clone()
-		rootCAs := x509.NewCertPool()
-		rootCAs.AddCert(newServerCA.Cert)
-		config.RootCAs = rootCAs
-		return config, nil
-	}
+	rootCAs := x509.NewCertPool()
+	rootCAs.AddCert(newServerCA.Cert)
+	client.config.TLSConfig.RootCAs = rootCAs
 
 	conn, err = client.connect("s1", server.config.Listener.Addr().String())
 	require.NoError(t, err)

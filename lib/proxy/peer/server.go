@@ -53,10 +53,6 @@ type ServerConfig struct {
 	Log           logrus.FieldLogger
 	ClusterName   string
 
-	// getConfigForClient gets the client tls config.
-	// configurable for testing purposes.
-	getConfigForClient func(*tls.ClientHelloInfo) (*tls.Config, error)
-
 	// service is a custom ProxyServiceServer
 	// configurable for testing purposes.
 	service proto.ProxyServiceServer
@@ -98,11 +94,6 @@ func (c *ServerConfig) checkAndSetDefaults() error {
 
 	c.TLSConfig = c.TLSConfig.Clone()
 	c.TLSConfig.ClientAuth = tls.RequireAndVerifyClientCert
-
-	if c.getConfigForClient == nil {
-		c.getConfigForClient = getConfigForClient(c.TLSConfig, c.AccessCache, c.Log, c.ClusterName)
-	}
-	c.TLSConfig.GetConfigForClient = c.getConfigForClient
 
 	if c.service == nil {
 		c.service = &proxyService{

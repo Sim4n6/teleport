@@ -73,10 +73,6 @@ type ClientConfig struct {
 	// ClusterName is the name of the cluster.
 	ClusterName string
 
-	// getConfigForServer updates the client tls config.
-	// configurable for testing purposes.
-	getConfigForServer func() (*tls.Config, error)
-
 	// connShuffler determines the order client connections will be used.
 	connShuffler connShuffler
 
@@ -145,16 +141,8 @@ func (c *ClientConfig) checkAndSetDefaults() error {
 		return trace.BadParameter("missing tls config")
 	}
 
-	if len(c.TLSConfig.Certificates) == 0 {
-		return trace.BadParameter("missing tls certificate")
-	}
-
 	if c.connShuffler == nil {
 		c.connShuffler = randomConnShuffler()
-	}
-
-	if c.getConfigForServer == nil {
-		c.getConfigForServer = getConfigForServer(c.Context, c.TLSConfig, c.AccessPoint, c.Log, c.ClusterName)
 	}
 
 	return nil
@@ -642,16 +630,11 @@ func (c *Client) getConnections(proxyIDs []string) ([]*clientConn, bool, error) 
 
 // connect dials a new connection to proxyAddr.
 func (c *Client) connect(peerID string, peerAddr string) (*clientConn, error) {
-	tlsConfig, err := c.config.getConfigForServer()
-	if err != nil {
-		return nil, trace.Wrap(err, "Error updating client tls config")
-	}
-
 	expectedPeer := authclient.HostFQDN(peerID, c.config.ClusterName)
 
 	conn, err := grpc.Dial(
 		peerAddr,
-		grpc.WithTransportCredentials(newClientCredentials(expectedPeer, peerAddr, c.config.Log, credentials.NewTLS(tlsConfig))),
+		grpc.WithTransportCredentials(newClientCredentials(expectedPeer, peerAddr, c.config.Log, credentials.NewTLS(c.config.TLSConfig))),
 		grpc.WithStatsHandler(newStatsHandler(c.reporter)),
 		grpc.WithChainStreamInterceptor(metadata.StreamClientInterceptor, interceptors.GRPCClientStreamErrorInterceptor),
 		grpc.WithKeepaliveParams(keepalive.ClientParameters{

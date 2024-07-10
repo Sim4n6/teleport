@@ -465,7 +465,10 @@ func newWebSuiteWithConfig(t *testing.T, cfg webSuiteConfig) *WebSuite {
 		HostUUID: proxyID,
 	}
 	dns := []string{"localhost", "127.0.0.1"}
+
 	proxyIdentity, err := auth.LocalRegister(authID, s.server.Auth(), nil, dns, "", nil)
+	require.NoError(t, err)
+	proxyClientCert, err := keys.X509KeyPair(proxyIdentity.TLSCertBytes, proxyIdentity.KeyBytes)
 	require.NoError(t, err)
 
 	handlerConfig := Config{
@@ -487,12 +490,21 @@ func newWebSuiteWithConfig(t *testing.T, cfg webSuiteConfig) *WebSuite {
 			ctx, err := controller(ctx, sctx, login, localAddr, remoteAddr)
 			return ctx, trace.Wrap(err)
 		}),
-		Router:                  router,
-		HealthCheckAppServer:    cfg.HealthCheckAppServer,
-		UI:                      cfg.uiConfig,
-		PresenceChecker:         cfg.presenceChecker,
-		GetProxyClientTLSConfig: proxyIdentity.TLSConfig,
-		IntegrationAppHandler:   &mockIntegrationAppHandler{},
+		Router:               router,
+		HealthCheckAppServer: cfg.HealthCheckAppServer,
+		UI:                   cfg.uiConfig,
+		PresenceChecker:      cfg.presenceChecker,
+		GetProxyClientTLSConfig: func(ciphersuites []uint16) (*tls.Config, error) {
+			c := utils.TLSConfig(ciphersuites)
+			c.GetClientCertificate = func(cri *tls.CertificateRequestInfo) (*tls.Certificate, error) {
+				return &proxyClientCert, nil
+			}
+			return c, nil
+		},
+		GetProxyClientCertificate: func() (*tls.Certificate, error) {
+			return &proxyClientCert, nil
+		},
+		IntegrationAppHandler: &mockIntegrationAppHandler{},
 	}
 
 	if handlerConfig.HealthCheckAppServer == nil {
@@ -8171,8 +8183,12 @@ func createProxy(ctx context.Context, t *testing.T, proxyID string, node *regula
 		HostUUID: proxyID,
 	}
 	dns := []string{"localhost", "127.0.0.1"}
+
 	proxyIdentity, err := auth.LocalRegister(authID, authServer.Auth(), nil, dns, "", nil)
 	require.NoError(t, err)
+	proxyClientCert, err := keys.X509KeyPair(proxyIdentity.TLSCertBytes, proxyIdentity.KeyBytes)
+	require.NoError(t, err)
+
 	handler, err := NewHandler(Config{
 		Proxy:            revTunServer,
 		AuthServers:      utils.FromAddr(authServer.Addr()),
@@ -8194,8 +8210,17 @@ func createProxy(ctx context.Context, t *testing.T, proxyID string, node *regula
 		Router:                         router,
 		HealthCheckAppServer:           func(context.Context, string, string) error { return nil },
 		MinimalReverseTunnelRoutesOnly: cfg.minimalHandler,
-		GetProxyClientTLSConfig:        proxyIdentity.TLSConfig,
-		IntegrationAppHandler:          &mockIntegrationAppHandler{},
+		GetProxyClientTLSConfig: func(ciphersuites []uint16) (*tls.Config, error) {
+			c := utils.TLSConfig(ciphersuites)
+			c.GetClientCertificate = func(cri *tls.CertificateRequestInfo) (*tls.Certificate, error) {
+				return &proxyClientCert, nil
+			}
+			return c, nil
+		},
+		GetProxyClientCertificate: func() (*tls.Certificate, error) {
+			return &proxyClientCert, nil
+		},
+		IntegrationAppHandler: &mockIntegrationAppHandler{},
 	}, SetSessionStreamPollPeriod(200*time.Millisecond), SetClock(clock))
 	require.NoError(t, err)
 

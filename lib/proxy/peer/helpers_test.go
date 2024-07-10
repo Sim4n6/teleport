@@ -183,14 +183,8 @@ func setupClient(t *testing.T, clientCA, serverCA *tlsca.CertAuthority, role typ
 	tlsConf := certFromIdentity(t, clientCA, tlsca.Identity{
 		Groups: []string{string(role)},
 	})
-
-	getConfigForServer := func() (*tls.Config, error) {
-		config := tlsConf.Clone()
-		rootCAs := x509.NewCertPool()
-		rootCAs.AddCert(serverCA.Cert)
-		config.RootCAs = rootCAs
-		return config, nil
-	}
+	tlsConf.RootCAs = x509.NewCertPool()
+	tlsConf.RootCAs.AddCert(serverCA.Cert)
 
 	client, err := NewClient(ClientConfig{
 		ID:                      "client-proxy",
@@ -199,7 +193,6 @@ func setupClient(t *testing.T, clientCA, serverCA *tlsca.CertAuthority, role typ
 		TLSConfig:               tlsConf,
 		Clock:                   clockwork.NewFakeClock(),
 		GracefulShutdownTimeout: time.Second,
-		getConfigForServer:      getConfigForServer,
 		sync:                    func() {},
 		connShuffler:            noopConnShuffler(),
 		ClusterName:             "test",
@@ -219,27 +212,19 @@ func setupServer(t *testing.T, name string, serverCA, clientCA *tlsca.CertAuthor
 		Username: name + ".test",
 		Groups:   []string{string(role)},
 	})
-
-	getConfigForClient := func(chi *tls.ClientHelloInfo) (*tls.Config, error) {
-		config := tlsConf.Clone()
-		config.ClientAuth = tls.RequireAndVerifyClientCert
-		clientCAs := x509.NewCertPool()
-		clientCAs.AddCert(clientCA.Cert)
-		config.ClientCAs = clientCAs
-		return config, nil
-	}
+	tlsConf.ClientCAs = x509.NewCertPool()
+	tlsConf.ClientCAs.AddCert(clientCA.Cert)
 
 	listener, err := net.Listen("tcp", "localhost:0")
 	require.NoError(t, err)
 
 	config := ServerConfig{
-		AccessCache:        &mockCAGetter{},
-		Listener:           listener,
-		TLSConfig:          tlsConf,
-		ClusterDialer:      &mockClusterDialer{},
-		getConfigForClient: getConfigForClient,
-		service:            &mockProxyService{},
-		ClusterName:        "test",
+		AccessCache:   &mockCAGetter{},
+		Listener:      listener,
+		TLSConfig:     tlsConf,
+		ClusterDialer: &mockClusterDialer{},
+		service:       &mockProxyService{},
+		ClusterName:   "test",
 	}
 	for _, option := range options {
 		option(&config)
