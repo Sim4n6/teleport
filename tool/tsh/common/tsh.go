@@ -2086,36 +2086,13 @@ func onLogout(cf *CLIConf) error {
 		proxyHost = cf.Proxy
 	}
 
-	tc, err := makeClient(cf)
-	if err != nil {
-		return trace.Wrap(err)
-	}
-
-	var SAMLSingleLogoutURL string
-	clt, err := tc.ConnectToCluster(cf.Context)
-	if err != nil {
-		log.
-			Warnf("Failed to retrieve cluster client for user %s, SAML single logout will be skipped: %v", active.Username, err)
-	}
-
-	var user types.User
-	// Only run this if the ConnectToCluster above was successful.
-	if err == nil {
-		user, err = clt.AuthClient.GetUser(cf.Context, active.Username, false)
-		if err != nil {
-			log.
-				Warnf("Failed to retrieve user details for user %s, SAML single logout will be skipped: %v", active.Username, err)
-		}
-	}
-	if user != nil {
-		if len(user.GetSAMLIdentities()) > 0 {
-			SAMLSingleLogoutURL = user.GetSAMLIdentities()[0].SAMLSingleLogoutURL
-		}
-	}
-
 	switch {
 	// Proxy and username for key to remove.
 	case proxyHost != "" && cf.Username != "":
+		tc, err := makeClient(cf)
+		if err != nil {
+			return trace.Wrap(err)
+		}
 		// Load profile for the requested proxy/user.
 		profile, err := tc.ProfileStatus()
 		if err != nil && !trace.IsNotFound(err) && !trace.IsCompareFailed(err) {
@@ -2153,6 +2130,10 @@ func onLogout(cf *CLIConf) error {
 		fmt.Printf("Logged out %v from %v.\n", cf.Username, proxyHost)
 	// Remove all keys.
 	case proxyHost == "" && cf.Username == "":
+		tc, err := makeClient(cf)
+		if err != nil {
+			return trace.Wrap(err)
+		}
 		log.Debugf("Removing Teleport related entries with server '%v' from kubeconfig.", tc.KubeClusterAddr())
 		if err = kubeconfig.RemoveByServerAddr("", tc.KubeClusterAddr()); err != nil {
 			return trace.Wrap(err)
@@ -2179,18 +2160,38 @@ func onLogout(cf *CLIConf) error {
 			}
 		}
 
+		// If any of the profiles have SAML SLO (single logout) enabled, fetch all clusters clients.
+		var clusters []*clusterClient
+		for _, profile := range profiles {
+			if profile.SAMLSingleLogoutEnabled {
+				clusters, err = getClusterClients(cf, "")
+				if err != nil {
+					return trace.Wrap(err)
+				}
+				break
+			}
+		}
+
+		for _, cluster := range clusters {
+			if cluster.profile.SAMLSingleLogoutEnabled {
+				SAMLSingleLogoutURL, err := tc.GetSAMLSingleLogoutURL(cf.Context, cluster.cluster, cluster.profile)
+				if err != nil {
+					fmt.Printf("We were unable to log you out of your SAML identity provider: %v", err)
+				}
+				// Initiate SAML SLO (single logout) if there is a relevant SLO URL.
+				if SAMLSingleLogoutURL != "" {
+					err := tc.SAMLSingleLogout(cf.Context, SAMLSingleLogoutURL)
+					if err != nil {
+						fmt.Printf("We were unable to log you out of your SAML identity provider: %v", err)
+					}
+				}
+			}
+		}
+
 		// Remove all keys from disk and the running agent.
 		err = tc.LogoutAll()
 		if err != nil {
 			return trace.Wrap(err)
-		}
-
-		// Initiate SAML SLO (single logout) if there is a relevant SLO URL.
-		if SAMLSingleLogoutURL != "" {
-			err := tc.SAMLSingleLogout(cf.Context, SAMLSingleLogoutURL)
-			if err != nil {
-				fmt.Printf("We were unable to log you out of your SAML identity provider: %v", err)
-			}
 		}
 
 		fmt.Printf("Logged out all users from all proxies.\n")
