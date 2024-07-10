@@ -18,42 +18,12 @@
 
 import React from 'react';
 
-import Flex from './Flex';
-import Box from './../Box';
+import teleportSvg from './../assets/images/enterprise-dark.svg';
+
+import Image from '.';
 
 export default {
-  title: 'Design/Flex',
+  title: 'Design/Image',
 };
 
-export const Basic = () => (
-  <Flex gap={5}>
-    <Box width={1 / 2} bg="pink" p={5}>
-      Box one
-    </Box>
-    <Box width={1 / 2} bg="orange" p={5}>
-      Box two
-    </Box>
-  </Flex>
-);
-
-export const Wrapped = () => (
-  <Flex flexWrap="wrap" gap={2}>
-    <Box width={[1, 1 / 2]} bg="pink" p={5}>
-      Box one
-    </Box>
-    <Box width={[1, 1 / 2]} bg="orange" p={5}>
-      Box two
-    </Box>
-  </Flex>
-);
-
-export const Justified = () => (
-  <Flex justifyContent="space-around">
-    <Box width={1 / 3} bg="pink" p={5}>
-      Box one
-    </Box>
-    <Box width={1 / 3} bg="orange" p={5}>
-      Box two
-    </Box>
-  </Flex>
-);
+export const Logo = () => <Image src={teleportSvg} />;

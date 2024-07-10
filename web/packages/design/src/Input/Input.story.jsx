@@ -18,22 +18,15 @@
 
 import React from 'react';
 
-import { Box } from './../';
-
-import Alert from './index';
+import Input from '.';
 
 export default {
-  title: 'Design/Alerts',
+  title: 'Design/Inputs',
 };
 
-export const Alerts = () => (
-  <Box maxWidth="600px">
-    <Alert kind="danger">Some error message</Alert>
-    <Alert kind="warning">Some warning message</Alert>
-    <Alert kind="info">Some informational message</Alert>
-    <Alert kind="success">This is success</Alert>
-    <Alert kind="outline-info">Text align it yourself</Alert>
-    <Alert kind="outline-warn">Text align it yourself</Alert>
-    <Alert kind="outline-danger">Text align it yourself</Alert>
-  </Box>
+export const Inputs = () => (
+  <>
+    <Input mb={4} placeholder="Enter SomeText" />
+    <Input mb={4} hasError={true} defaultValue="This field has an error" />
+  </>
 );

@@ -18,15 +18,10 @@
 
 import React from 'react';
 
-import Input from '../Input';
+import Indicator from '.';
 
 export default {
-  title: 'Design/Inputs',
+  title: 'Design/Indicator',
 };
 
-export const Inputs = () => (
-  <>
-    <Input mb={4} placeholder="Enter SomeText" />
-    <Input mb={4} hasError={true} defaultValue="This field has an error" />
-  </>
-);
+export const Loader = () => <Indicator />;
