@@ -103,6 +103,17 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 
 // ListNotifications returns a paginated list of notifications which match the user.
 func (s *Service) ListNotifications(ctx context.Context, req *notificationsv1.ListNotificationsRequest) (*notificationsv1.ListNotificationsResponse, error) {
+	if req.Filters != nil {
+		if req.Filters.GlobalOnly {
+			return s.listGlobalNotifications(ctx, req.Filters.UserCreatedOnly, req.PageToken, req.PageSize)
+		}
+		if req.Filters.Username != "" {
+			return s.listUserSpecificNotificationsForUser(ctx, req.Filters.Username, req.Filters.UserCreatedOnly, req.PageToken, req.PageSize)
+		}
+
+		return nil, trace.BadParameter("Invalid filters were provided, exactly one of GlobalOnly or Username must be defined.")
+	}
+
 	authCtx, err := s.authorizer.Authorize(ctx)
 	if err != nil {
 		return nil, trace.Wrap(err)
@@ -567,9 +578,9 @@ func (s *Service) DeleteUserNotification(ctx context.Context, req *notifications
 	return nil, trace.Wrap(err)
 }
 
-// ListUserSpecificNotificationsForUser returns a paginated list of all user-specific notifications for a user. This should only be used by admins.
-func (s *Service) ListUserSpecificNotificationsForUser(ctx context.Context, req *notificationsv1.ListUserSpecificNotificationsForUserRequest) (*notificationsv1.ListNotificationsResponse, error) {
-	if req.Username == "" {
+// listUserSpecificNotificationsForUser returns a paginated list of all user-specific notifications for a user. This should only be used by admins.
+func (s *Service) listUserSpecificNotificationsForUser(ctx context.Context, username string, userCreatedOnly bool, pageToken string, pageSize int32) (*notificationsv1.ListNotificationsResponse, error) {
+	if username == "" {
 		return nil, trace.BadParameter("missing username")
 	}
 
@@ -587,10 +598,10 @@ func (s *Service) ListUserSpecificNotificationsForUser(ctx context.Context, req 
 	}
 
 	stream := stream.FilterMap(
-		s.userNotificationCache.StreamUserNotifications(ctx, req.Username, req.PageToken),
+		s.userNotificationCache.StreamUserNotifications(ctx, username, pageToken),
 		func(n *notificationsv1.Notification) (*notificationsv1.Notification, bool) {
 			// If only user-created notifications are requested, filter by the user-creatd subkinds.
-			if (req.UserCreatedOnly) &&
+			if (userCreatedOnly) &&
 				(n.GetSubKind() != types.NotificationUserCreatedInformationalSubKind) &&
 				(n.GetSubKind() != types.NotificationUserCreatedWarningSubKind) {
 				return nil, false
@@ -607,7 +618,7 @@ func (s *Service) ListUserSpecificNotificationsForUser(ctx context.Context, req 
 		if item != nil {
 			notifications = append(notifications, item)
 		}
-		if len(notifications) == int(req.PageSize) {
+		if len(notifications) == int(pageSize) {
 			nextKey = item.GetMetadata().GetName()
 			break
 		}
@@ -619,8 +630,8 @@ func (s *Service) ListUserSpecificNotificationsForUser(ctx context.Context, req 
 	}, nil
 }
 
-// ListGlobalNotifications returns a paginated list of all global notifications. This should only be used by admins.
-func (s *Service) ListGlobalNotifications(ctx context.Context, req *notificationsv1.ListGlobalNotificationsRequest) (*notificationsv1.ListNotificationsResponse, error) {
+// listGlobalNotifications returns a paginated list of all global notifications. This should only be used by admins.
+func (s *Service) listGlobalNotifications(ctx context.Context, userCreatedOnly bool, pageToken string, pageSize int32) (*notificationsv1.ListNotificationsResponse, error) {
 	authCtx, err := s.authorizer.Authorize(ctx)
 	if err != nil {
 		return nil, trace.Wrap(err)
@@ -631,10 +642,10 @@ func (s *Service) ListGlobalNotifications(ctx context.Context, req *notification
 	}
 
 	stream := stream.FilterMap(
-		s.globalNotificationCache.StreamGlobalNotifications(ctx, req.PageToken),
+		s.globalNotificationCache.StreamGlobalNotifications(ctx, pageToken),
 		func(gn *notificationsv1.GlobalNotification) (*notificationsv1.GlobalNotification, bool) {
 			// If only user-created notifications are requested, filter by the user-creatd subkinds.
-			if (req.UserCreatedOnly) &&
+			if (userCreatedOnly) &&
 				(gn.GetSpec().GetNotification().GetSubKind() != types.NotificationUserCreatedInformationalSubKind) &&
 				(gn.GetSpec().GetNotification().GetSubKind() != types.NotificationUserCreatedWarningSubKind) {
 				return nil, false
@@ -654,7 +665,7 @@ func (s *Service) ListGlobalNotifications(ctx context.Context, req *notification
 
 			notifications = append(notifications, notification)
 		}
-		if len(notifications) == int(req.PageSize) {
+		if len(notifications) == int(pageSize) {
 			nextKey = item.GetMetadata().GetName()
 			break
 		}

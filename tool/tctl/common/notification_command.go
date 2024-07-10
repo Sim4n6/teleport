@@ -226,20 +226,25 @@ func (n *NotificationCommand) List(ctx context.Context, client notificationspb.N
 
 		// If a user was specified, list user-specific notifications for them, if not, default to listing global notifications.
 		if n.user != "" {
-			resp, err = client.ListUserSpecificNotificationsForUser(ctx, &notificationspb.ListUserSpecificNotificationsForUserRequest{
-				Username:        n.user,
-				PageSize:        defaults.DefaultChunkSize,
-				PageToken:       pageToken,
-				UserCreatedOnly: !n.allNotifications,
+			resp, err = client.ListNotifications(ctx, &notificationspb.ListNotificationsRequest{
+				PageSize:  defaults.DefaultChunkSize,
+				PageToken: pageToken,
+				Filters: &notificationspb.ListNotificationsRequest_Filters{
+					Username:        n.user,
+					UserCreatedOnly: !n.allNotifications,
+				},
 			})
 			if err != nil {
 				return trace.Wrap(err)
 			}
 		} else {
-			resp, err = client.ListGlobalNotifications(ctx, &notificationspb.ListGlobalNotificationsRequest{
-				PageSize:        defaults.DefaultChunkSize,
-				PageToken:       pageToken,
-				UserCreatedOnly: !n.allNotifications,
+			resp, err = client.ListNotifications(ctx, &notificationspb.ListNotificationsRequest{
+				PageSize:  defaults.DefaultChunkSize,
+				PageToken: pageToken,
+				Filters: &notificationspb.ListNotificationsRequest_Filters{
+					GlobalOnly:      true,
+					UserCreatedOnly: !n.allNotifications,
+				},
 			})
 			if err != nil {
 				return trace.Wrap(err)
