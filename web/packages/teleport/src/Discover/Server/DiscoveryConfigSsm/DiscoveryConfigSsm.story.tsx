@@ -19,7 +19,7 @@
 import React, { useEffect } from 'react';
 import { MemoryRouter } from 'react-router';
 import { initialize, mswLoader } from 'msw-storybook-addon';
-import { rest } from 'msw';
+import { http, HttpResponse, delay } from 'msw';
 import { Info } from 'design/Alert';
 
 import { ContextProvider } from 'teleport';
@@ -68,11 +68,11 @@ export const SuccessCloud = () => {
 SuccessCloud.parameters = {
   msw: {
     handlers: [
-      rest.post(cfg.api.joinTokenPath, (req, res, ctx) =>
-        res(ctx.json({ id: 'token-id' }))
+      http.post(cfg.api.joinTokenPath, () =>
+        HttpResponse.json({ id: 'token-id' })
       ),
-      rest.post(cfg.api.discoveryConfigPath, (req, res, ctx) =>
-        res(ctx.json({ name: 'discovery-cfg-name' }))
+      http.post(cfg.api.discoveryConfigPath, () =>
+        HttpResponse.json({ name: 'discovery-cfg-name' })
       ),
     ],
   },
@@ -82,11 +82,11 @@ export const SuccessSelfHosted = () => <Component />;
 SuccessSelfHosted.parameters = {
   msw: {
     handlers: [
-      rest.post(cfg.api.joinTokenPath, (req, res, ctx) =>
-        res(ctx.json({ id: 'token-id' }))
+      http.post(cfg.api.joinTokenPath, () =>
+        HttpResponse.json({ id: 'token-id' })
       ),
-      rest.post(cfg.api.discoveryConfigPath, (req, res, ctx) =>
-        res(ctx.json({ name: 'discovery-cfg-name' }))
+      http.post(cfg.api.discoveryConfigPath, () =>
+        HttpResponse.json({ name: 'discovery-cfg-name' })
       ),
     ],
   },
@@ -99,12 +99,10 @@ export const Loading = () => {
 Loading.parameters = {
   msw: {
     handlers: [
-      rest.post(cfg.api.joinTokenPath, (req, res, ctx) =>
-        res(ctx.json({ id: 'token-id' }))
+      http.post(cfg.api.joinTokenPath, () =>
+        HttpResponse.json({ id: 'token-id' })
       ),
-      rest.post(cfg.api.discoveryConfigPath, (req, res, ctx) =>
-        res(ctx.delay('infinite'))
-      ),
+      http.post(cfg.api.discoveryConfigPath, () => delay('infinite')),
     ],
   },
 };
@@ -113,13 +111,15 @@ export const Failed = () => <Component />;
 Failed.parameters = {
   msw: {
     handlers: [
-      rest.post(cfg.api.joinTokenPath, (req, res, ctx) =>
-        res(ctx.json({ id: 'token-id' }))
+      http.post(cfg.api.joinTokenPath, () =>
+        HttpResponse.json({ id: 'token-id' })
       ),
-      rest.post(cfg.api.discoveryConfigPath, (req, res, ctx) =>
-        res(
-          ctx.status(403),
-          ctx.json({ message: 'Some kind of error message' })
+      http.post(cfg.api.discoveryConfigPath, () =>
+        HttpResponse.json(
+          {
+            message: 'Some kind of error message',
+          },
+          { status: 403 }
         )
       ),
     ],

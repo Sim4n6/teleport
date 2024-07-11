@@ -63,7 +63,8 @@ const config: StorybookConfig = {
       if (plugin && 'name' in plugin) {
         return (
           plugin.name !== 'teleport-html-plugin' &&
-          plugin.name !== 'teleport-transform-html-plugin'
+          plugin.name !== 'teleport-transform-html-plugin' &&
+          plugin.name !== 'storybook:react-docgen-plugin'
         );
       }
     });

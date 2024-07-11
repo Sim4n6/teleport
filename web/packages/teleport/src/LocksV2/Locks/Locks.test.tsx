@@ -19,7 +19,7 @@
 import React from 'react';
 import { MemoryRouter } from 'react-router';
 import { setupServer } from 'msw/node';
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { render, fireEvent, screen } from 'design/utils/testing';
 
 import { ContextProvider } from 'teleport';
@@ -30,29 +30,27 @@ import { Locks } from './Locks';
 
 test('lock search', async () => {
   const server = setupServer(
-    rest.get(cfg.getLocksUrl(), (req, res, ctx) => {
-      return res(
-        ctx.json([
-          {
-            name: 'lock-name-1',
-            targets: {
-              user: 'lock-user',
-            },
+    http.get(cfg.getLocksUrl(), () => {
+      return HttpResponse.json([
+        {
+          name: 'lock-name-1',
+          targets: {
+            user: 'lock-user',
           },
-          {
-            name: 'lock-name-2',
-            targets: {
-              role: 'lock-role-1',
-            },
+        },
+        {
+          name: 'lock-name-2',
+          targets: {
+            role: 'lock-role-1',
           },
-          {
-            name: 'lock-name-3',
-            targets: {
-              role: 'lock-role-2',
-            },
+        },
+        {
+          name: 'lock-name-3',
+          targets: {
+            role: 'lock-role-2',
           },
-        ])
-      );
+        },
+      ]);
     })
   );
 

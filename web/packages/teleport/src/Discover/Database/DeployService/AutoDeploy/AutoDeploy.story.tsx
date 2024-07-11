@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { initialize, mswLoader } from 'msw-storybook-addon';
-import { rest } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 
 import cfg from 'teleport/config';
 
@@ -56,10 +56,8 @@ export const Init = () => {
 Init.parameters = {
   msw: {
     handlers: [
-      rest.post(
-        cfg.getListSecurityGroupsUrl('test-integration'),
-        (req, res, ctx) =>
-          res(ctx.json({ securityGroups: securityGroupsResponse }))
+      http.post(cfg.getListSecurityGroupsUrl('test-integration'), () =>
+        HttpResponse.json({ securityGroups: securityGroupsResponse })
       ),
     ],
   },
@@ -88,19 +86,13 @@ export const InitWithAutoEnroll = () => {
 InitWithAutoEnroll.parameters = {
   msw: {
     handlers: [
-      rest.post(
-        cfg.getListSecurityGroupsUrl('test-integration'),
-        (req, res, ctx) =>
-          res(ctx.json({ securityGroups: securityGroupsResponse }))
+      http.post(cfg.getListSecurityGroupsUrl('test-integration'), () =>
+        HttpResponse.json({ securityGroups: securityGroupsResponse })
       ),
-      rest.post(
-        cfg.getAwsRdsDbsDeployServicesUrl('test-integration'),
-        (req, res, ctx) =>
-          res(
-            ctx.json({
-              clusterDashboardUrl: 'some-cluster-dashboard-url',
-            })
-          )
+      http.post(cfg.getAwsRdsDbsDeployServicesUrl('test-integration'), () =>
+        HttpResponse.json({
+          clusterDashboardUrl: 'some-cluster-dashboard-url',
+        })
       ),
     ],
   },
@@ -130,10 +122,8 @@ export const InitWithLabels = () => {
 InitWithLabels.parameters = {
   msw: {
     handlers: [
-      rest.post(
-        cfg.getListSecurityGroupsUrl('test-integration'),
-        (req, res, ctx) =>
-          res(ctx.json({ securityGroups: securityGroupsResponse }))
+      http.post(cfg.getListSecurityGroupsUrl('test-integration'), () =>
+        HttpResponse.json({ securityGroups: securityGroupsResponse })
       ),
     ],
   },
@@ -150,15 +140,13 @@ export const InitSecurityGroupsLoadingFailed = () => {
 InitSecurityGroupsLoadingFailed.parameters = {
   msw: {
     handlers: [
-      rest.post(
-        cfg.getListSecurityGroupsUrl('test-integration'),
-        (req, res, ctx) =>
-          res(
-            ctx.status(403),
-            ctx.json({
-              message: 'some error when trying to list security groups',
-            })
-          )
+      http.post(cfg.getListSecurityGroupsUrl('test-integration'), () =>
+        HttpResponse.json(
+          {
+            message: 'some error when trying to list security groups',
+          },
+          { status: 403 }
+        )
       ),
     ],
   },
@@ -175,9 +163,8 @@ export const InitSecurityGroupsLoading = () => {
 InitSecurityGroupsLoading.parameters = {
   msw: {
     handlers: [
-      rest.post(
-        cfg.getListSecurityGroupsUrl('test-integration'),
-        (req, res, ctx) => res(ctx.delay('infinite'))
+      http.post(cfg.getListSecurityGroupsUrl('test-integration'), () =>
+        delay('infinite')
       ),
     ],
   },

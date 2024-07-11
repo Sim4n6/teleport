@@ -20,7 +20,7 @@ import React from 'react';
 import { MemoryRouter } from 'react-router';
 import { subSeconds, subMinutes, subHours, subDays } from 'date-fns';
 import { initialize, mswLoader } from 'msw-storybook-addon';
-import { rest } from 'msw';
+import { http, HttpResponse, delay } from 'msw';
 
 import { Flex, Text } from 'design';
 
@@ -133,19 +133,21 @@ export const NotificationsList = () => <ListComponent />;
 NotificationsList.parameters = {
   msw: {
     handlers: [
-      rest.get(cfg.api.notificationsPath, (req, res, ctx) =>
-        res.once(ctx.json(mockNotificationsResponseFirstPage))
+      http.get(cfg.api.notificationsPath, () =>
+        HttpResponse.json(mockNotificationsResponseFirstPage)
       ),
-      rest.put(cfg.api.notificationLastSeenTimePath, (req, res, ctx) =>
-        res(ctx.delay(2000), ctx.json({ time: Date.now() }))
-      ),
-      rest.put(cfg.api.notificationStatePath, (req, res, ctx) => {
-        const body = req.body as UpsertNotificationStateRequest;
-        return res(ctx.json({ notificationState: body.notificationState }));
+      http.put(cfg.api.notificationLastSeenTimePath, async () => {
+        await delay(2000);
+        return HttpResponse.json({ time: Date.now() });
       }),
-      rest.get(cfg.api.notificationsPath, (req, res, ctx) =>
-        res(ctx.delay(2000), ctx.json(mockNotificationsResponseSecondPage))
-      ),
+      http.put(cfg.api.notificationStatePath, async ({ request }) => {
+        const body = (await request.json()) as UpsertNotificationStateRequest;
+        return HttpResponse.json({ notificationState: body.notificationState });
+      }),
+      http.get(cfg.api.notificationsPath, async () => {
+        await delay(2000);
+        return HttpResponse.json(mockNotificationsResponseSecondPage);
+      }),
     ],
   },
 };
@@ -154,23 +156,24 @@ export const NotificationListNotificationStateErrors = () => <ListComponent />;
 NotificationListNotificationStateErrors.parameters = {
   msw: {
     handlers: [
-      rest.get(cfg.api.notificationsPath, (req, res, ctx) =>
-        res.once(ctx.json(mockNotificationsResponseFirstPage))
+      http.get(cfg.api.notificationsPath, () =>
+        HttpResponse.json(mockNotificationsResponseFirstPage)
       ),
-      rest.put(cfg.api.notificationLastSeenTimePath, (req, res, ctx) =>
-        res(ctx.json({ time: Date.now() }))
+      http.put(cfg.api.notificationLastSeenTimePath, () =>
+        HttpResponse.json({ time: Date.now() })
       ),
-      rest.put(cfg.api.notificationStatePath, (req, res, ctx) =>
-        res(
-          ctx.status(403),
-          ctx.json({
+      http.put(cfg.api.notificationStatePath, () =>
+        HttpResponse.json(
+          {
             message: 'failed to update state',
-          })
+          },
+          { status: 403 }
         )
       ),
-      rest.get(cfg.api.notificationsPath, (req, res, ctx) =>
-        res(ctx.delay(2000), ctx.json(mockNotificationsResponseSecondPage))
-      ),
+      http.get(cfg.api.notificationsPath, async () => {
+        await delay(2000);
+        return HttpResponse.json(mockNotificationsResponseSecondPage);
+      }),
     ],
   },
 };
@@ -179,14 +182,12 @@ export const NotificationsListEmpty = () => <ListComponent />;
 NotificationsListEmpty.parameters = {
   msw: {
     handlers: [
-      rest.get(cfg.api.notificationsPath, (req, res, ctx) =>
-        res(
-          ctx.json({
-            nextKey: '',
-            userLastSeenNotification: subDays(Date.now(), 15).toISOString(), // 15 days ago
-            notifications: [],
-          })
-        )
+      http.get(cfg.api.notificationsPath, () =>
+        HttpResponse.json({
+          nextKey: '',
+          userLastSeenNotification: subDays(Date.now(), 15).toISOString(), // 15 days ago
+          notifications: [],
+        })
       ),
     ],
   },
@@ -196,12 +197,12 @@ export const NotificationsListError = () => <ListComponent />;
 NotificationsListError.parameters = {
   msw: {
     handlers: [
-      rest.get(cfg.api.notificationsPath, (req, res, ctx) =>
-        res(
-          ctx.status(403),
-          ctx.json({
+      http.get(cfg.api.notificationsPath, () =>
+        HttpResponse.json(
+          {
             message: 'Error encountered: failed to fetch notifications',
-          })
+          },
+          { status: 403 }
         )
       ),
     ],

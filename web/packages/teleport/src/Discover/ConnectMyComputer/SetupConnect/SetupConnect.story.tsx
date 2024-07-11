@@ -19,7 +19,7 @@
 import React from 'react';
 import { MemoryRouter } from 'react-router';
 import { initialize, mswLoader } from 'msw-storybook-addon';
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 
 import {
   OverrideUserAgent,
@@ -52,8 +52,8 @@ export default {
   loaders: [mswLoader],
 };
 
-const noNodesHandler = rest.get(cfg.api.nodesPath, (req, res, ctx) =>
-  res(ctx.json({ items: [] }))
+const noNodesHandler = http.get(cfg.api.nodesPath, () =>
+  HttpResponse.json({ items: [] })
 );
 
 export const macOS = () => (
@@ -105,11 +105,11 @@ export const PollingSuccess = () => (
 PollingSuccess.parameters = {
   msw: {
     handlers: [
-      rest.get(cfg.api.nodesPath, (req, res, ctx) => {
-        return res.once(ctx.json({ items: [] }));
+      http.get(cfg.api.nodesPath, () => {
+        return HttpResponse.json({ items: [] });
       }),
-      rest.get(cfg.api.nodesPath, (req, res, ctx) => {
-        return res(ctx.json({ items: [{ id: '1234', hostname: 'foo' }] }));
+      http.get(cfg.api.nodesPath, () => {
+        return HttpResponse.json({ items: [{ id: '1234', hostname: 'foo' }] });
       }),
     ],
   },
@@ -125,9 +125,7 @@ HintTimeout.parameters = {
   msw: {
     handlers: [
       noNodesHandler,
-      rest.post(cfg.api.webRenewTokenPath, (req, res, ctx) =>
-        res(ctx.json({}))
-      ),
+      http.post(cfg.api.webRenewTokenPath, () => HttpResponse.json({})),
     ],
   },
 };

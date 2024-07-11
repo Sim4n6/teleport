@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { initialize, mswLoader } from 'msw-storybook-addon';
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 
 import { noAccess, getAcl } from 'teleport/mocks/contexts';
 import cfg from 'teleport/config';
@@ -40,14 +40,12 @@ export default {
   parameters: {
     msw: {
       handlers: {
-        fetchUser: rest.get(cfg.api.userWithUsernamePath, (req, res, ctx) =>
-          res(
-            ctx.json({
-              name: 'llama',
-              roles: ['access'],
-              traits: dynamicTraits,
-            })
-          )
+        fetchUser: http.get(cfg.api.userWithUsernamePath, () =>
+          HttpResponse.json({
+            name: 'llama',
+            roles: ['access'],
+            traits: dynamicTraits,
+          })
         ),
       },
     },
@@ -77,9 +75,7 @@ NoTraits.parameters = {
   msw: {
     handlers: {
       fetchUser: [
-        rest.get(cfg.api.userWithUsernamePath, (req, res, ctx) =>
-          res(ctx.json({}))
-        ),
+        http.get(cfg.api.userWithUsernamePath, () => HttpResponse.json({})),
       ],
     },
   },

@@ -16,30 +16,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 
 import cfg from 'teleport/config';
 import { INTERNAL_RESOURCE_ID_LABEL_KEY } from 'teleport/services/joinToken';
 
 // handlersTeleport defines default positive (200) response values.
 export const handlersTeleport = [
-  rest.post(cfg.api.joinTokenPath, (req, res, ctx) => {
-    return res(
-      ctx.json({
-        id: 'token-id',
-        suggestedLabels: [
-          { name: INTERNAL_RESOURCE_ID_LABEL_KEY, value: 'resource-id' },
-        ],
-      })
-    );
+  http.post(cfg.api.joinTokenPath, () => {
+    return HttpResponse.json({
+      id: 'token-id',
+      suggestedLabels: [
+        { name: INTERNAL_RESOURCE_ID_LABEL_KEY, value: 'resource-id' },
+      ],
+    });
   }),
-  rest.post(cfg.api.captureUserEventPath, (req, res, ctx) => {
-    return res(ctx.status(200));
+  http.post(cfg.api.captureUserEventPath, () => {
+    return HttpResponse.json();
   }),
-  rest.get(cfg.api.thumbprintPath, (req, res, ctx) => {
-    return res(ctx.json('examplevaluehere'));
+  http.get(cfg.api.thumbprintPath, () => {
+    return HttpResponse.json('examplevaluehere');
   }),
-  rest.post(cfg.getIntegrationsUrl(), (req, res, ctx) => {
-    return res(ctx.json({}));
+  http.post(cfg.getIntegrationsUrl(), () => {
+    return HttpResponse.json({});
   }),
 ];

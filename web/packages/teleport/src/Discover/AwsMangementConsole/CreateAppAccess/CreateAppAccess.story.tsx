@@ -19,7 +19,7 @@
 import React from 'react';
 import { MemoryRouter } from 'react-router';
 import { initialize, mswLoader } from 'msw-storybook-addon';
-import { rest } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { Info } from 'design/Alert';
 
 import { ContextProvider } from 'teleport';
@@ -49,8 +49,8 @@ export const Success = () => <Component />;
 Success.parameters = {
   msw: {
     handlers: [
-      rest.post(cfg.api.awsAppAccessPath, (req, res, ctx) =>
-        res(ctx.json({ name: 'app-1' }))
+      http.post(cfg.api.awsAppAccessPath, () =>
+        HttpResponse.json({ name: 'app-1' })
       ),
     ],
   },
@@ -63,9 +63,7 @@ export const Loading = () => {
 Loading.parameters = {
   msw: {
     handlers: [
-      rest.post(cfg.api.awsAppAccessPath, (req, res, ctx) =>
-        res(ctx.delay('infinite'))
-      ),
+      http.post(cfg.api.awsAppAccessPath, async () => await delay('infinite')),
     ],
   },
 };
@@ -74,10 +72,12 @@ export const Failed = () => <Component />;
 Failed.parameters = {
   msw: {
     handlers: [
-      rest.post(cfg.api.awsAppAccessPath, (req, res, ctx) =>
-        res(
-          ctx.status(403),
-          ctx.json({ message: 'Some kind of error message' })
+      http.post(cfg.api.awsAppAccessPath, () =>
+        HttpResponse.json(
+          {
+            message: 'Some kind of error message',
+          },
+          { status: 403 }
         )
       ),
     ],

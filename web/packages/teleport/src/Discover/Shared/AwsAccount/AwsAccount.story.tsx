@@ -20,7 +20,7 @@ import React from 'react';
 import { MemoryRouter } from 'react-router';
 
 import { initialize, mswLoader } from 'msw-storybook-addon';
-import { rest } from 'msw';
+import { http, HttpResponse, delay } from 'msw';
 
 import { ContextProvider } from 'teleport';
 import cfg from 'teleport/config';
@@ -39,23 +39,21 @@ export default {
 };
 
 const handlers = [
-  rest.get(cfg.getIntegrationsUrl(), (req, res, ctx) =>
-    res(
-      ctx.json({
-        items: [
-          {
-            name: 'aws-oidc-1',
-            subKind: 'aws-oidc',
-            awsoidc: {
-              roleArn: 'arn:aws:iam::123456789012:role/test1',
-            },
+  http.get(cfg.getIntegrationsUrl(), () =>
+    HttpResponse.json({
+      items: [
+        {
+          name: 'aws-oidc-1',
+          subKind: 'aws-oidc',
+          awsoidc: {
+            roleArn: 'arn:aws:iam::123456789012:role/test1',
           },
-        ],
-      })
-    )
+        },
+      ],
+    })
   ),
-  rest.get(cfg.api.unifiedResourcesPath, (req, res, ctx) =>
-    res(ctx.json({ agents: [{ name: 'app1' }] }))
+  http.get(cfg.api.unifiedResourcesPath, () =>
+    HttpResponse.json({ agents: [{ name: 'app1' }] })
   ),
 ];
 
@@ -69,11 +67,7 @@ Success.parameters = {
 export const Loading = () => <Component />;
 Loading.parameters = {
   msw: {
-    handlers: [
-      rest.get(cfg.getIntegrationsUrl(), (req, res, ctx) =>
-        res(ctx.delay('infinite'))
-      ),
-    ],
+    handlers: [http.get(cfg.getIntegrationsUrl(), () => delay('infinite'))],
   },
 };
 
@@ -81,8 +75,13 @@ export const Failed = () => <Component />;
 Failed.parameters = {
   msw: {
     handlers: [
-      rest.post(cfg.getIntegrationsUrl(), (req, res, ctx) =>
-        res(ctx.status(403), ctx.json({ message: 'some kind of error' }))
+      http.post(cfg.getIntegrationsUrl(), () =>
+        HttpResponse.json(
+          {
+            message: 'some kind of error',
+          },
+          { status: 403 }
+        )
       ),
     ],
   },

@@ -20,7 +20,7 @@ import React from 'react';
 import { MemoryRouter } from 'react-router';
 import { StoryObj } from '@storybook/react';
 
-import { rest } from 'msw';
+import { http, delay, HttpResponse } from 'msw';
 
 import { Context as TeleportContext, ContextProvider } from 'teleport';
 import cfg from 'teleport/config';
@@ -54,8 +54,8 @@ export const Polling: StoryObj = {
   parameters: {
     msw: {
       handlers: [
-        rest.get(cfg.api.kubernetesPath, (req, res, ctx) => {
-          return res(ctx.delay('infinite'));
+        http.get(cfg.api.kubernetesPath, () => {
+          return delay('infinite');
         }),
       ],
     },
@@ -73,8 +73,8 @@ export const PollingSuccess: StoryObj = {
   parameters: {
     msw: {
       handlers: [
-        rest.get(cfg.api.kubernetesPath, (req, res, ctx) => {
-          return res(ctx.json({ items: [{}] }));
+        http.get(cfg.api.kubernetesPath, () => {
+          return HttpResponse.json({ items: [{}] });
         }),
       ],
     },
@@ -92,8 +92,8 @@ export const LoadedPollingErrorWithIgs: StoryObj = {
   parameters: {
     msw: {
       handlers: [
-        rest.get(cfg.api.kubernetesPath, (req, res, ctx) => {
-          return res(ctx.delay('infinite'));
+        http.get(cfg.api.kubernetesPath, () => {
+          return delay('infinite');
         }),
       ],
     },
@@ -111,8 +111,8 @@ export const Processing: StoryObj = {
   parameters: {
     msw: {
       handlers: [
-        rest.post(cfg.api.joinTokenPath, (req, res, ctx) => {
-          return res(ctx.delay('infinite'));
+        http.post(cfg.api.joinTokenPath, () => {
+          return delay('infinite');
         }),
       ],
     },
@@ -130,8 +130,8 @@ export const Failed: StoryObj = {
   parameters: {
     msw: {
       handlers: [
-        rest.post(cfg.api.joinTokenPath, (req, res, ctx) => {
-          return res.once(ctx.status(500));
+        http.post(cfg.api.joinTokenPath, () => {
+          return HttpResponse.json(null, { status: 500 });
         }),
       ],
     },

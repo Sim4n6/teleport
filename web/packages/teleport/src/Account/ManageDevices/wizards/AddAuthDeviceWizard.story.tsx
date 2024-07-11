@@ -24,7 +24,7 @@ import Dialog from 'design/Dialog';
 
 import { initialize, mswLoader } from 'msw-storybook-addon';
 
-import { rest } from 'msw';
+import { http, HttpResponse, delay } from 'msw';
 
 import { DeviceUsage } from 'teleport/services/auth';
 import { createTeleportContext } from 'teleport/mocks/contexts';
@@ -101,9 +101,9 @@ export function CreateMfaAppQrCodeLoading() {
 CreateMfaAppQrCodeLoading.parameters = {
   msw: {
     handlers: [
-      rest.post(
+      http.post(
         cfg.getMfaCreateRegistrationChallengeUrl('privilege-token'),
-        (req, res, ctx) => res(ctx.delay('infinite'))
+        async () => await delay('infinite')
       ),
     ],
   },
@@ -115,9 +115,9 @@ export function CreateMfaAppQrCodeFailed() {
 CreateMfaAppQrCodeFailed.parameters = {
   msw: {
     handlers: [
-      rest.post(
+      http.post(
         cfg.getMfaCreateRegistrationChallengeUrl('privilege-token'),
-        (req, res, ctx) => res(ctx.status(500))
+        () => HttpResponse.json(null, { status: 500 })
       ),
     ],
   },
@@ -132,9 +132,9 @@ export function CreateMfaApp() {
 CreateMfaApp.parameters = {
   msw: {
     handlers: [
-      rest.post(
+      http.post(
         cfg.getMfaCreateRegistrationChallengeUrl('privilege-token'),
-        (req, res, ctx) => res(ctx.json({ totp: { qrCode: dummyQrCode } }))
+        () => HttpResponse.json({ totp: { qrCode: dummyQrCode } })
       ),
     ],
   },

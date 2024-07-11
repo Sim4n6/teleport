@@ -20,7 +20,7 @@ import React, { useEffect } from 'react';
 import { MemoryRouter } from 'react-router';
 
 import { initialize, mswLoader } from 'msw-storybook-addon';
-import { rest } from 'msw';
+import { http, HttpResponse, delay } from 'msw';
 import { Info } from 'design/Alert';
 
 import { ContextProvider } from 'teleport';
@@ -58,33 +58,29 @@ export default {
 initialize();
 
 const baseHandlers = [
-  rest.post(cfg.getListEc2InstancesUrl('test-oidc'), (req, res, ctx) =>
-    res(ctx.json({ servers: ec2InstancesResponse }))
+  http.post(cfg.getListEc2InstancesUrl('test-oidc'), () =>
+    HttpResponse.json({ servers: ec2InstancesResponse })
   ),
-  rest.get(cfg.getClusterNodesUrl('localhost'), (req, res, ctx) =>
-    res(ctx.json({ items: [ec2InstancesResponse[2]] }))
+  http.get(cfg.getClusterNodesUrl('localhost'), () =>
+    HttpResponse.json({ items: [ec2InstancesResponse[2]] })
   ),
-  rest.post(cfg.api.discoveryConfigPath, (req, res, ctx) => res(ctx.json({}))),
+  http.post(cfg.api.discoveryConfigPath, () => HttpResponse.json({})),
 ];
 
 let tick = 0;
-const ec2IceEndpointWithTick = rest.post(
+const ec2IceEndpointWithTick = http.post(
   cfg.getListEc2InstanceConnectEndpointsUrl('test-oidc'),
-  (req, res, ctx) => {
+  () => {
     if (tick == 1) {
       tick = 0; // reset, the polling will be finished by this point.
-      return res(
-        ctx.json({
-          ec2Ices: [mockedCreatedEc2Ice],
-        })
-      );
+      return HttpResponse.json({
+        ec2Ices: [mockedCreatedEc2Ice],
+      });
     }
     tick += 1;
-    return res(
-      ctx.json({
-        ec2Ices: [{ ...mockedCreatedEc2Ice, state: 'create-in-progress' }],
-      })
-    );
+    return HttpResponse.json({
+      ec2Ices: [{ ...mockedCreatedEc2Ice, state: 'create-in-progress' }],
+    });
   }
 );
 
@@ -114,18 +110,12 @@ SingleInstanceListCreated.parameters = {
   msw: {
     handlers: [
       ...baseHandlers,
-      rest.post(
-        cfg.getListEc2InstanceConnectEndpointsUrl('test-oidc'),
-        (req, res, ctx) =>
-          res(
-            ctx.json({
-              ec2Ices: [mockedCreatedEc2Ice],
-            })
-          )
+      http.post(cfg.getListEc2InstanceConnectEndpointsUrl('test-oidc'), () =>
+        HttpResponse.json({
+          ec2Ices: [mockedCreatedEc2Ice],
+        })
       ),
-      rest.post(cfg.api.nodesPathNoParams, (req, res, ctx) =>
-        res(ctx.json(mockedNode))
-      ),
+      http.post(cfg.api.nodesPathNoParams, () => HttpResponse.json(mockedNode)),
     ],
   },
 };
@@ -147,9 +137,7 @@ SingleInstanceListForCloudPending.parameters = {
     handlers: [
       ...baseHandlers,
       ec2IceEndpointWithTick,
-      rest.post(cfg.api.nodesPathNoParams, (req, res, ctx) =>
-        res(ctx.json(mockedNode))
-      ),
+      http.post(cfg.api.nodesPathNoParams, () => HttpResponse.json(mockedNode)),
     ],
   },
 };
@@ -162,14 +150,10 @@ AutoDiscoverInstanceListForCloudCreated.parameters = {
   msw: {
     handlers: [
       ...baseHandlers,
-      rest.post(
-        cfg.getListEc2InstanceConnectEndpointsUrl('test-oidc'),
-        (req, res, ctx) =>
-          res(
-            ctx.json({
-              ec2Ices: [mockedCreatedEc2Ice],
-            })
-          )
+      http.post(cfg.getListEc2InstanceConnectEndpointsUrl('test-oidc'), () =>
+        HttpResponse.json({
+          ec2Ices: [mockedCreatedEc2Ice],
+        })
       ),
     ],
   },
@@ -200,8 +184,8 @@ export const InstanceListLoading = () => <Component />;
 InstanceListLoading.parameters = {
   msw: {
     handlers: [
-      rest.post(cfg.getListEc2InstancesUrl('test-oidc'), (req, res, ctx) =>
-        res(ctx.delay('infinite'))
+      http.post(cfg.getListEc2InstancesUrl('test-oidc'), () =>
+        delay('infinite')
       ),
     ],
   },
@@ -212,10 +196,12 @@ export const WithAwsPermissionsError = () => <Component />;
 WithAwsPermissionsError.parameters = {
   msw: {
     handlers: [
-      rest.post(cfg.api.ec2InstancesListPath, (req, res, ctx) =>
-        res(
-          ctx.status(403),
-          ctx.json({ message: 'StatusCode: 403, RequestID: operation error' })
+      http.post(cfg.api.ec2InstancesListPath, () =>
+        HttpResponse.json(
+          {
+            message: 'StatusCode: 403, RequestID: operation error',
+          },
+          { status: 403 }
         )
       ),
     ],
@@ -227,8 +213,8 @@ export const WithOtherError = () => <Component />;
 WithOtherError.parameters = {
   msw: {
     handlers: [
-      rest.post(cfg.getListEc2InstancesUrl('test-oidc'), (req, res, ctx) =>
-        res(ctx.status(404))
+      http.post(cfg.getListEc2InstancesUrl('test-oidc'), () =>
+        HttpResponse.json(null, { status: 404 })
       ),
     ],
   },

@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { MemoryRouter } from 'react-router';
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { initialize, mswLoader } from 'msw-storybook-addon';
 
 import { ContextProvider } from 'teleport';
@@ -44,11 +44,11 @@ export const Loaded = () => (
 Loaded.parameters = {
   msw: {
     handlers: [
-      rest.get(cfg.api.joinTokensPath, (req, res, ctx) => {
-        return res.once(ctx.json({ items: tokens }));
+      http.get(cfg.api.joinTokensPath, () => {
+        return HttpResponse.json({ items: tokens });
       }),
-      rest.put(cfg.api.joinTokenYamlPath, (req, res, ctx) => {
-        return res.once(ctx.json(editedToken));
+      http.put(cfg.api.joinTokenYamlPath, () => {
+        return HttpResponse.json(editedToken);
       }),
     ],
   },

@@ -20,7 +20,7 @@ import React from 'react';
 import { MemoryRouter } from 'react-router';
 
 import { setupServer } from 'msw/node';
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 
 import {
   render as testingRender,
@@ -46,12 +46,10 @@ import { makeTestUserContext } from 'teleport/User/testHelpers/makeTestUserConte
 import { UserMenuNav } from './UserMenuNav';
 
 const server = setupServer(
-  rest.get(cfg.api.userPreferencesPath, (req, res, ctx) => {
-    return res(
-      ctx.json({
-        theme: Theme.LIGHT,
-      })
-    );
+  http.get(cfg.api.userPreferencesPath, () => {
+    return HttpResponse.json({
+      theme: Theme.LIGHT,
+    });
   })
 );
 

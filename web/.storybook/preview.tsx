@@ -107,7 +107,16 @@ const preview: Preview = {
     },
   },
   loaders: [mswLoader],
-  globals: {
+  decorators: [
+    (Story, meta) => (
+      <UserDecorator userContext={meta.args.userContext}>
+        <ThemeDecorator theme={meta.globals.theme} title={meta.title}>
+          <Story />
+        </ThemeDecorator>
+      </UserDecorator>
+    ),
+  ],
+  initialGlobals: {
     theme: {
       name: 'Theme',
       description: 'Global theme for components',
@@ -119,15 +128,6 @@ const preview: Preview = {
       },
     },
   },
-  decorators: [
-    (Story, meta) => (
-      <UserDecorator userContext={meta.args.userContext}>
-        <ThemeDecorator theme={meta.globals.theme} title={meta.title}>
-          <Story />
-        </ThemeDecorator>
-      </UserDecorator>
-    ),
-  ],
 };
 
 export default preview;
