@@ -76,5 +76,23 @@ func newDiscoveryConfig(t *testing.T, name string) *discoveryconfig.DiscoveryCon
 	discoveryConfig.Status.LastSyncTime = now
 	errMsg := "error message"
 	discoveryConfig.Status.ErrorMessage = &errMsg
+	discoveryConfig.Status.AWSEC2InstancesDiscovered = []*discoveryconfigv1.AWSEC2InstancesDiscovered{
+		{
+			Region:      "us-east-1",
+			Integration: "my-integration",
+			InstanceId:  "i-12345678",
+			EnrollMode:  types.InstallParamEnrollMode_INSTALL_PARAM_ENROLL_MODE_SCRIPT,
+		},
+		{
+			Region:           "us-east-1",
+			Integration:      "my-integration",
+			InstanceId:       "i-12345678",
+			EnrollMode:       types.InstallParamEnrollMode_INSTALL_PARAM_ENROLL_MODE_EICE,
+			EnrollMessage:    "my enroll message",
+			EnrollStatus:     discoveryconfigv1.AWSEC2EnrollmentStatus_AWSEC2_ENROLLMENT_STATUS_ERROR,
+			Name:             "my-instance",
+			SsmInvocationUrl: "https://example.com",
+		},
+	}
 	return discoveryConfig
 }

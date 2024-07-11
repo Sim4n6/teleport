@@ -60,6 +60,7 @@ type Watcher struct {
 	InstancesC     chan Instances
 	missedRotation <-chan []types.Server
 
+	fetchStarted  func(string)
 	fetchersFn    func() []Fetcher
 	pollInterval  time.Duration
 	triggerFetchC <-chan struct{}
@@ -85,7 +86,14 @@ func (w *Watcher) sendInstancesOrLogError(instancesColl []Instances, err error) 
 
 // fetchAndSubmit fetches the resources and submits them for processing.
 func (w *Watcher) fetchAndSubmit() {
+	fetchStartedVisited := make(map[string]struct{})
 	for _, fetcher := range w.fetchersFn() {
+		// Prevent clearing DiscoveryConfigStatus that might already have new data.
+		if _, visited := fetchStartedVisited[fetcher.GetDiscoveryConfig()]; !visited {
+			fetchStartedVisited[fetcher.GetDiscoveryConfig()] = struct{}{}
+			w.fetchStarted(fetcher.GetDiscoveryConfig())
+		}
+
 		w.sendInstancesOrLogError(fetcher.GetInstances(w.ctx, false))
 	}
 }
@@ -97,6 +105,10 @@ func (w *Watcher) Run() {
 
 	if w.triggerFetchC == nil {
 		w.triggerFetchC = make(<-chan struct{})
+	}
+
+	if w.fetchStarted == nil {
+		w.fetchStarted = func(string) {}
 	}
 
 	w.fetchAndSubmit()

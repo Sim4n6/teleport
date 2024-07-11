@@ -27,18 +27,25 @@ import (
 	"github.com/gravitational/trace"
 
 	discoveryconfigv1 "github.com/gravitational/teleport/api/gen/proto/go/teleport/discoveryconfig/v1"
+	"github.com/gravitational/teleport/api/types"
 	"github.com/gravitational/teleport/api/types/discoveryconfig"
+	libevents "github.com/gravitational/teleport/lib/events"
 	aws_sync "github.com/gravitational/teleport/lib/srv/discovery/fetchers/aws-sync"
+	"github.com/gravitational/teleport/lib/srv/server"
 )
 
 // updateDiscoveryConfigStatus updates the DiscoveryConfig Status field with the current in-memory status.
 // The status will be updated with the following matchers:
 // - AWS Sync (TAG) status
+// - AWS EC2 instances
 func (s *Server) updateDiscoveryConfigStatus(discoveryConfigName string) {
 	discoveryConfigStatus := discoveryconfig.Status{
 		State:        discoveryconfigv1.DiscoveryConfigState_DISCOVERY_CONFIG_STATE_SYNCING.String(),
 		LastSyncTime: s.clock.Now(),
 	}
+
+	// Merge AWS EC2 instances Status
+	discoveryConfigStatus = s.awsEC2Status.mergeIntoGlobalStatus(discoveryConfigName, discoveryConfigStatus)
 
 	// Merge AWS Sync (TAG) status
 	discoveryConfigStatus = s.awsSyncStatus.mergeIntoGlobalStatus(discoveryConfigName, discoveryConfigStatus)
@@ -175,4 +182,127 @@ func (d *awsSyncStatus) mergeIntoGlobalStatus(discoveryConfigName string, existi
 	}
 
 	return existingStatus
+}
+
+// awsEC2Status contains the status of the EC2 discovered resources
+type awsEC2Status struct {
+	mu       sync.RWMutex
+	lastSync time.Time
+	// discoveryConfigResources maps the DiscoveryConfig name to the resources.
+	// Each status contains
+	// Each DiscoveryConfig might have multiple `aws_sync` matchers.
+	discoveryConfigResources map[string]map[ec2DiscoveredKey]ec2DiscoveredStatus
+}
+
+// ec2DiscoveredKey uniquely identifies an ec2 instance and an enroll mode.
+type ec2DiscoveredKey struct {
+	region      string
+	integration string
+	instanceID  string
+	enrollMode  types.InstallParamEnrollMode
+}
+
+// ec2DiscoveredResourceStatus reports the result of auto-enrolling the ec2 instance into the cluster.
+type ec2DiscoveredStatus struct {
+	name             string
+	ssmInvocationURL string
+	enrollStatus     discoveryconfigv1.AWSEC2EnrollmentStatus
+	enrollMessage    string
+}
+
+// startIteration resets the known status for the given discovery config.
+// It also sets the initial sync
+func (d *awsEC2Status) startIteration(discoveryConfigName string, lastSync time.Time) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	if d.discoveryConfigResources == nil {
+		d.discoveryConfigResources = make(map[string]map[ec2DiscoveredKey]ec2DiscoveredStatus)
+	}
+
+	d.discoveryConfigResources[discoveryConfigName] = make(map[ec2DiscoveredKey]ec2DiscoveredStatus)
+
+	d.lastSync = lastSync
+}
+
+// upsertStatus adds or replaces the ec2
+func (d *awsEC2Status) upsertStatus(discoveryConfig string, k ec2DiscoveredKey, status ec2DiscoveredStatus) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.discoveryConfigResources == nil {
+		d.discoveryConfigResources = make(map[string]map[ec2DiscoveredKey]ec2DiscoveredStatus)
+	}
+	if d.discoveryConfigResources[discoveryConfig] == nil {
+		d.discoveryConfigResources[discoveryConfig] = make(map[ec2DiscoveredKey]ec2DiscoveredStatus)
+	}
+	d.discoveryConfigResources[discoveryConfig][k] = status
+}
+
+func (d *awsEC2Status) mergeIntoGlobalStatus(discoveryConfig string, existingStatus discoveryconfig.Status) discoveryconfig.Status {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+
+	awsStatus, found := d.discoveryConfigResources[discoveryConfig]
+	if !found {
+		return existingStatus
+	}
+
+	// Keep the earliest sync time.
+	if existingStatus.LastSyncTime.After(d.lastSync) {
+		existingStatus.LastSyncTime = d.lastSync
+	}
+
+	existingStatus.DiscoveredResources = existingStatus.DiscoveredResources + uint64(len(awsStatus))
+
+	for resourceKey, resourceValue := range awsStatus {
+		existingStatus.AWSEC2InstancesDiscovered = append(
+			existingStatus.AWSEC2InstancesDiscovered,
+			&discoveryconfigv1.AWSEC2InstancesDiscovered{
+				Region:           resourceKey.region,
+				Integration:      resourceKey.integration,
+				InstanceId:       resourceKey.instanceID,
+				EnrollMode:       resourceKey.enrollMode,
+				EnrollStatus:     resourceValue.enrollStatus,
+				EnrollMessage:    resourceValue.enrollMessage,
+				Name:             resourceValue.name,
+				SsmInvocationUrl: resourceValue.ssmInvocationURL,
+			},
+		)
+	}
+
+	return existingStatus
+}
+
+func (s *Server) ReportEC2SSMInstallationResult(ctx context.Context, result *server.SSMInstallationResult) error {
+	if err := s.Emitter.EmitAuditEvent(ctx, result.SSMRunEvent); err != nil {
+		return trace.Wrap(err)
+	}
+
+	if result.DiscoveryConfig == "" {
+		return nil
+	}
+
+	region := result.SSMRunEvent.Region
+	instanceID := result.SSMRunEvent.InstanceID
+	resourceKey := ec2DiscoveredKey{
+		region:      region,
+		integration: result.Integration,
+		enrollMode:  types.InstallParamEnrollMode_INSTALL_PARAM_ENROLL_MODE_SCRIPT,
+		instanceID:  instanceID,
+	}
+	enrollStatus := discoveryconfigv1.AWSEC2EnrollmentStatus_AWSEC2_ENROLLMENT_STATUS_SCRIPT_SUCCESS
+	if result.SSMRunEvent.Metadata.Code != libevents.SSMRunSuccessCode {
+		enrollStatus = discoveryconfigv1.AWSEC2EnrollmentStatus_AWSEC2_ENROLLMENT_STATUS_SCRIPT_ERROR
+	}
+	resourceStatus := ec2DiscoveredStatus{
+		name:             result.InstanceName,
+		ssmInvocationURL: result.SSMRunEvent.InvocationURL,
+		enrollStatus:     enrollStatus,
+		enrollMessage:    result.SSMRunEvent.Status,
+	}
+
+	s.awsEC2Status.upsertStatus(result.DiscoveryConfig, resourceKey, resourceStatus)
+	s.updateDiscoveryConfigStatus(result.DiscoveryConfig)
+
+	return nil
 }

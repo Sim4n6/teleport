@@ -21,6 +21,7 @@ import (
 
 	"github.com/gravitational/trace"
 
+	discoveryconfigv1 "github.com/gravitational/teleport/api/gen/proto/go/teleport/discoveryconfig/v1"
 	"github.com/gravitational/teleport/api/types"
 	"github.com/gravitational/teleport/api/types/compare"
 	"github.com/gravitational/teleport/api/types/header"
@@ -82,6 +83,8 @@ type Status struct {
 	DiscoveredResources uint64 `json:"discovered_resources" yaml:"discovered_resources"`
 	// LastSyncTime is the timestamp when the Discovery Config was last sync.
 	LastSyncTime time.Time `json:"last_sync_time,omitempty" yaml:"last_sync_time,omitempty"`
+	// AWSEC2InstancesDiscovered is the list of AWS EC2 Instances discovered.
+	AWSEC2InstancesDiscovered []*discoveryconfigv1.AWSEC2InstancesDiscovered `json:"aws_ec2_instances,omitempty" yaml:"aws_ec2_instances,omitempty"`
 }
 
 // NewDiscoveryConfig will create a new discovery config.

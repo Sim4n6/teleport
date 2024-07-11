@@ -41,6 +41,7 @@ import (
 
 	"github.com/gravitational/teleport"
 	"github.com/gravitational/teleport/api/client/proto"
+	discoveryconfigv1 "github.com/gravitational/teleport/api/gen/proto/go/teleport/discoveryconfig/v1"
 	usageeventsv1 "github.com/gravitational/teleport/api/gen/proto/go/usageevents/v1"
 	"github.com/gravitational/teleport/api/types"
 	"github.com/gravitational/teleport/api/types/discoveryconfig"
@@ -329,6 +330,7 @@ type Server struct {
 
 	dynamicDiscoveryConfig map[string]*discoveryconfig.DiscoveryConfig
 
+	awsEC2Status  awsEC2Status
 	awsSyncStatus awsSyncStatus
 
 	// caRotationCh receives nodes that need to have their CAs rotated.
@@ -363,6 +365,7 @@ func New(ctx context.Context, cfg *Config) (*Server, error) {
 		dynamicTAGSyncFetchers:     make(map[string][]aws_sync.AWSSync),
 		dynamicDiscoveryConfig:     make(map[string]*discoveryconfig.DiscoveryConfig),
 		awsSyncStatus:              awsSyncStatus{},
+		awsEC2Status:               awsEC2Status{},
 	}
 	s.discardUnsupportedMatchers(&s.Matchers)
 
@@ -458,6 +461,10 @@ func (s *Server) initAWSWatchers(matchers []types.AWSMatcher, discoveryConfig st
 		s.ctx, s.getAllAWSServerFetchers, s.caRotationCh,
 		server.WithPollInterval(s.PollInterval),
 		server.WithTriggerFetchC(s.newDiscoveryConfigChangedSub()),
+		server.WithFetchStarted(func(discoveryConfig string) {
+			s.awsEC2Status.startIteration(discoveryConfig, s.clock.Now())
+			s.updateDiscoveryConfigStatus(discoveryConfig)
+		}),
 	)
 	if err != nil {
 		return trace.Wrap(err)
@@ -467,7 +474,7 @@ func (s *Server) initAWSWatchers(matchers []types.AWSMatcher, discoveryConfig st
 
 	if s.ec2Installer == nil {
 		ec2installer, err := server.NewSSMInstaller(server.SSMInstallerConfig{
-			Emitter: s.Emitter,
+			ReportSSMInstallationResultFunc: s.ReportEC2SSMInstallationResult,
 		})
 		if err != nil {
 			return trace.Wrap(err)
@@ -756,7 +763,8 @@ func (s *Server) initGCPWatchers(ctx context.Context, matchers []types.GCPMatche
 	return nil
 }
 
-func (s *Server) filterExistingEC2Nodes(instances *server.EC2Instances) {
+// filterExistingEC2Nodes returns the instances that already exist in teleport and removes those from the list
+func (s *Server) filterExistingEC2Nodes(instances *server.EC2Instances) []server.EC2Instance {
 	nodes := s.nodeWatcher.GetNodes(s.ctx, func(n services.Node) bool {
 		labels := n.GetAllLabels()
 		_, accountOK := labels[types.AWSAccountIDLabel]
@@ -764,6 +772,7 @@ func (s *Server) filterExistingEC2Nodes(instances *server.EC2Instances) {
 		return accountOK && instanceOK
 	})
 
+	var existing []server.EC2Instance
 	var filtered []server.EC2Instance
 outer:
 	for _, inst := range instances.Instances {
@@ -773,12 +782,15 @@ outer:
 				types.AWSInstanceIDLabel: inst.InstanceID,
 			})
 			if match {
+				existing = append(existing, inst)
 				continue outer
 			}
 		}
 		filtered = append(filtered, inst)
 	}
 	instances.Instances = filtered
+
+	return existing
 }
 
 func genEC2InstancesLogStr(instances []server.EC2Instance) string {
@@ -822,14 +834,50 @@ func (s *Server) handleEC2Instances(instances *server.EC2Instances) error {
 	}
 	s.reconciler.queueServerInfos(serverInfos)
 
+	// Add all instances as syncing
+	for _, instance := range instances.Instances {
+		resourceKey := ec2DiscoveredKey{
+			region:      instances.Region,
+			integration: instances.Integration,
+			enrollMode:  instances.EnrollMode,
+			instanceID:  instance.InstanceID,
+		}
+		resourceStatus := ec2DiscoveredStatus{
+			name:         instance.Name,
+			enrollStatus: discoveryconfigv1.AWSEC2EnrollmentStatus_AWSEC2_ENROLLMENT_STATUS_SYNCING,
+		}
+		s.awsEC2Status.upsertStatus(instances.DiscoveryConfig, resourceKey, resourceStatus)
+	}
+	s.updateDiscoveryConfigStatus(instances.DiscoveryConfig)
+
 	// instances.Rotation is true whenever the instances received need
 	// to be rotated, we don't want to filter out existing OpenSSH nodes as
 	// they all need to have the command run on them
 	//
 	// EICE Nodes must never be filtered, so that we can extend their expiration and sync labels.
 	if !instances.Rotation && instances.EnrollMode != types.InstallParamEnrollMode_INSTALL_PARAM_ENROLL_MODE_EICE {
-		s.filterExistingEC2Nodes(instances)
+		// we must update the DiscoveryConfigStatus to Success for the existing nodes.
+
+		instancesAlreadyEnrolled := s.filterExistingEC2Nodes(instances)
+
+		// add all instances with syncing status
+		for _, instance := range instancesAlreadyEnrolled {
+			resourceKey := ec2DiscoveredKey{
+				region:      instances.Region,
+				integration: instances.Integration,
+				enrollMode:  instances.EnrollMode,
+				instanceID:  instance.InstanceID,
+			}
+			resourceStatus := ec2DiscoveredStatus{
+				name:         instance.Name,
+				enrollStatus: discoveryconfigv1.AWSEC2EnrollmentStatus_AWSEC2_ENROLLMENT_STATUS_SUCCESS,
+			}
+			s.awsEC2Status.upsertStatus(instances.DiscoveryConfig, resourceKey, resourceStatus)
+		}
 	}
+	s.updateDiscoveryConfigStatus(instances.DiscoveryConfig)
+	defer s.updateDiscoveryConfigStatus(instances.DiscoveryConfig)
+
 	if len(instances.Instances) == 0 {
 		return trace.NotFound("all fetched nodes already enrolled")
 	}
@@ -864,9 +912,25 @@ func (s *Server) heartbeatEICEInstance(instances *server.EC2Instances) {
 	nodesToUpsert := make([]types.Server, 0, len(instances.Instances))
 	// Add EC2 Instances using EICE method
 	for _, ec2Instance := range instances.Instances {
+		resourceKey := ec2DiscoveredKey{
+			region:      instances.Region,
+			integration: instances.Integration,
+			enrollMode:  instances.EnrollMode,
+			instanceID:  ec2Instance.InstanceID,
+		}
+		resourceStatus := ec2DiscoveredStatus{
+			name:         ec2Instance.Name,
+			enrollStatus: discoveryconfigv1.AWSEC2EnrollmentStatus_AWSEC2_ENROLLMENT_STATUS_SUCCESS,
+		}
+
 		eiceNode, err := common.NewAWSNodeFromEC2v1Instance(ec2Instance.OriginalInstance, awsInfo)
 		if err != nil {
-			s.Log.WithField("instance_id", ec2Instance.InstanceID).Warnf("Error converting to Teleport EICE Node: %v", err)
+			warningMsg := fmt.Sprintf("Error converting to Teleport EICE Node: %v", err)
+			s.Log.WithField("instance_id", ec2Instance.InstanceID).Warn(warningMsg)
+
+			resourceStatus.enrollStatus = discoveryconfigv1.AWSEC2EnrollmentStatus_AWSEC2_ENROLLMENT_STATUS_ERROR
+			resourceStatus.enrollMessage = warningMsg
+			s.awsEC2Status.upsertStatus(instances.DiscoveryConfig, resourceKey, resourceStatus)
 			continue
 		}
 
@@ -906,6 +970,8 @@ func (s *Server) heartbeatEICEInstance(instances *server.EC2Instances) {
 			instanceID := eiceNode.GetAWSInstanceID()
 			s.Log.WithField("instance_id", instanceID).Warnf("Error upserting EC2 instance: %v", err)
 		}
+
+		s.updateDiscoveryConfigStatus(instances.DiscoveryConfig)
 	})
 	if err != nil {
 		s.Log.Warnf("Failed to upsert EC2 nodes: %v", err)
@@ -936,6 +1002,21 @@ func (s *Server) handleEC2RemoteInstallation(instances *server.EC2Instances) err
 		IntegrationName:     instances.Integration,
 	}
 	if err := s.ec2Installer.Run(s.ctx, req); err != nil {
+		for _, instance := range instances.Instances {
+			resourceKey := ec2DiscoveredKey{
+				region:      instances.Region,
+				integration: instances.Integration,
+				enrollMode:  instances.EnrollMode,
+				instanceID:  instance.InstanceID,
+			}
+			resourceStatus := ec2DiscoveredStatus{
+				name:          instance.Name,
+				enrollStatus:  discoveryconfigv1.AWSEC2EnrollmentStatus_AWSEC2_ENROLLMENT_STATUS_ERROR,
+				enrollMessage: err.Error(),
+			}
+			s.awsEC2Status.upsertStatus(instances.DiscoveryConfig, resourceKey, resourceStatus)
+		}
+
 		return trace.Wrap(err)
 	}
 	return nil

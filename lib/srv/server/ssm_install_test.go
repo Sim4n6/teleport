@@ -81,12 +81,12 @@ func (sm *mockSSMClient) WaitUntilCommandExecutedWithContext(aws.Context, *ssm.G
 	return nil
 }
 
-type mockEmitter struct {
+type mockInstallationResults struct {
 	events []events.AuditEvent
 }
 
-func (me *mockEmitter) EmitAuditEvent(ctx context.Context, event events.AuditEvent) error {
-	me.events = append(me.events, event)
+func (me *mockInstallationResults) ReportInstallationResult(ctx context.Context, result *SSMInstallationResult) error {
+	me.events = append(me.events, result.SSMRunEvent)
 	return nil
 }
 
@@ -94,7 +94,6 @@ func TestSSMInstaller(t *testing.T) {
 	document := "ssmdocument"
 
 	for _, tc := range []struct {
-		conf           SSMInstallerConfig
 		req            SSMRunRequest
 		expectedEvents []events.AuditEvent
 		name           string
@@ -126,9 +125,6 @@ func TestSSMInstaller(t *testing.T) {
 				},
 				Region:    "eu-central-1",
 				AccountID: "account-id",
-			},
-			conf: SSMInstallerConfig{
-				Emitter: &mockEmitter{},
 			},
 			expectedEvents: []events.AuditEvent{
 				&events.SSMRun{
@@ -174,9 +170,6 @@ func TestSSMInstaller(t *testing.T) {
 				Region:    "eu-central-1",
 				AccountID: "account-id",
 			},
-			conf: SSMInstallerConfig{
-				Emitter: &mockEmitter{},
-			},
 			expectedEvents: []events.AuditEvent{
 				&events.SSMRun{
 					Metadata: events.Metadata{
@@ -218,9 +211,6 @@ func TestSSMInstaller(t *testing.T) {
 				},
 				Region:    "eu-central-1",
 				AccountID: "account-id",
-			},
-			conf: SSMInstallerConfig{
-				Emitter: &mockEmitter{},
 			},
 			expectedEvents: []events.AuditEvent{
 				&events.SSMRun{
@@ -271,9 +261,6 @@ func TestSSMInstaller(t *testing.T) {
 				},
 				Region:    "eu-central-1",
 				AccountID: "account-id",
-			},
-			conf: SSMInstallerConfig{
-				Emitter: &mockEmitter{},
 			},
 			expectedEvents: []events.AuditEvent{
 				&events.SSMRun{
@@ -342,9 +329,6 @@ func TestSSMInstaller(t *testing.T) {
 				},
 				Region:    "eu-central-1",
 				AccountID: "account-id",
-			},
-			conf: SSMInstallerConfig{
-				Emitter: &mockEmitter{},
 			},
 			expectedEvents: []events.AuditEvent{
 				&events.SSMRun{
@@ -435,9 +419,6 @@ func TestSSMInstaller(t *testing.T) {
 				Region:    "eu-central-1",
 				AccountID: "account-id",
 			},
-			conf: SSMInstallerConfig{
-				Emitter: &mockEmitter{},
-			},
 			expectedEvents: []events.AuditEvent{
 				&events.SSMRun{
 					Metadata: events.Metadata{
@@ -479,9 +460,6 @@ func TestSSMInstaller(t *testing.T) {
 				Region:    "eu-central-1",
 				AccountID: "account-id",
 			},
-			conf: SSMInstallerConfig{
-				Emitter: &mockEmitter{},
-			},
 			expectedEvents: []events.AuditEvent{
 				&events.SSMRun{
 					Metadata: events.Metadata{
@@ -503,14 +481,16 @@ func TestSSMInstaller(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
-			inst, err := NewSSMInstaller(tc.conf)
+			installationResultsCollector := &mockInstallationResults{}
+			inst, err := NewSSMInstaller(SSMInstallerConfig{
+				ReportSSMInstallationResultFunc: installationResultsCollector.ReportInstallationResult,
+			})
 			require.NoError(t, err)
 
 			err = inst.Run(ctx, tc.req)
 			require.NoError(t, err)
 
-			emitter := inst.Emitter.(*mockEmitter)
-			require.ElementsMatch(t, tc.expectedEvents, emitter.events)
+			require.ElementsMatch(t, tc.expectedEvents, installationResultsCollector.events)
 		})
 	}
 }
