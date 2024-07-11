@@ -3861,7 +3861,8 @@ message WebSessionSpecV2 {
   // Pub is the SSH certificate for the user, marshaled in the authorized key
   // format.
   bytes Pub = 2 [(gogoproto.jsontag) = "pub"];
-  // Priv is the SSH private key for the user.
+  // Priv is the SSH private key for the user, in PEM-encoded PKCS#1 or PKCS#8
+  // format. If TLSPriv is unset, this is also the TLS private key.
   bytes Priv = 3 [(gogoproto.jsontag) = "priv,omitempty"];
   // TLSCert is the X.509 certificate for the user (PEM-encoded).
   bytes TLSCert = 4 [(gogoproto.jsontag) = "tls_cert,omitempty"];
@@ -3906,6 +3907,9 @@ message WebSessionSpecV2 {
   // HasDeviceExtensions is true if the session's TLS and SSH certificates are
   // augmented with device extensions.
   bool HasDeviceExtensions = 13 [(gogoproto.jsontag) = "has_device_extensions,omitempty"];
+  // TLSPriv is the TLS private key for the user, in PEM-encoded PKCS#1 or PKCS#8
+  // format. If unset, then Priv is used as both the SSH and TLS private key.
+  bytes TLSPriv = 14 [(gogoproto.jsontag) = "tls_priv,omitempty"];
 }
 
 // Web-focused view of teleport.devicetrust.v1.DeviceWebToken.
