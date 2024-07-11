@@ -1,4 +1,5 @@
 import { Volume, createFsFromVolume } from 'memfs';
+
 import { RedirectChecker } from './check-redirects.js';
 
 describe('check files for links to missing Teleport docs', () => {

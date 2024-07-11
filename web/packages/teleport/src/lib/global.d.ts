@@ -16,15 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import type { SetupWorkerApi } from 'msw';
-
 // Gives us access to vite's import.meta
 import 'vite/client';
 
 declare global {
-  interface Window {
-    msw: {
-      worker: SetupWorkerApi;
-    };
-  }
+  interface Window {}
 }
