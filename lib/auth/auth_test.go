@@ -111,10 +111,12 @@ func newTestPack(
 
 	p.mockEmitter = &eventstest.MockRecorderEmitter{}
 	authConfig := &InitConfig{
-		Backend:                p.bk,
-		ClusterName:            p.clusterName,
-		Authority:              testauthority.New(),
-		Emitter:                p.mockEmitter,
+		Backend:     p.bk,
+		ClusterName: p.clusterName,
+		Authority:   testauthority.New(),
+		Emitter:     p.mockEmitter,
+		// This uses lower bcrypt costs for faster tests.
+		Identity:               local.NewTestIdentityService(p.bk),
 		SkipPeriodicOperations: true,
 	}
 	p.a, err = NewServer(authConfig, opts...)
@@ -219,9 +221,6 @@ func TestSessions(t *testing.T) {
 
 	_, _, err := CreateUserAndRole(s.a, user, []string{user}, nil)
 	require.NoError(t, err)
-
-	// This uses a lower bcrypt cost to speed up the test.
-	s.a.Services.Identity = local.NewTestIdentityService(s.a.bk)
 
 	err = s.a.UpsertPassword(user, pass)
 	require.NoError(t, err)
