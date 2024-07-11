@@ -250,10 +250,11 @@ type RoleGetter interface {
 	GetRole(ctx context.Context, name string) (types.Role, error)
 }
 
-type AccessListGetter interface {
+type AccessListAndMembersGetter interface {
 	GetAccessList(ctx context.Context, name string) (*accesslist.AccessList, error)
 	GetAccessLists(ctx context.Context) ([]*accesslist.AccessList, error)
 	GetAccessListMember(ctx context.Context, accessList string, memberName string) (*accesslist.AccessListMember, error)
+	ListAccessListMembers(ctx context.Context, accessListName string, pageSize int, pageToken string) (members []*accesslist.AccessListMember, nextToken string, err error)
 }
 
 // Modules defines interface that external libraries can implement customizing
@@ -278,7 +279,7 @@ type Modules interface {
 	// GenerateAccessRequestPromotions generates a list of valid promotions for given access request.
 	GenerateAccessRequestPromotions(context.Context, AccessResourcesGetter, types.AccessRequest) (*types.AccessRequestAllowedPromotions, error)
 	// GetSuggestedAccessLists generates a list of valid promotions for given access request.
-	GetSuggestedAccessLists(ctx context.Context, identity *tlsca.Identity, clt AccessListSuggestionClient, accessListGetter AccessListGetter, requestID string) ([]*accesslist.AccessList, error)
+	GetSuggestedAccessLists(ctx context.Context, identity *tlsca.Identity, clt AccessListSuggestionClient, accessListGetter AccessListAndMembersGetter, requestID string) ([]*accesslist.AccessList, error)
 	// EnableRecoveryCodes enables the usage of recovery codes for resetting forgotten passwords
 	EnableRecoveryCodes()
 	// EnablePlugins enables the hosted plugins runtime
@@ -418,7 +419,7 @@ func (p *defaultModules) GenerateAccessRequestPromotions(_ context.Context, _ Ac
 }
 
 func (p *defaultModules) GetSuggestedAccessLists(ctx context.Context, identity *tlsca.Identity, clt AccessListSuggestionClient,
-	accessListGetter AccessListGetter, requestID string,
+	accessListGetter AccessListAndMembersGetter, requestID string,
 ) ([]*accesslist.AccessList, error) {
 	return nil, trace.NotImplemented("GetSuggestedAccessLists not implemented")
 }
