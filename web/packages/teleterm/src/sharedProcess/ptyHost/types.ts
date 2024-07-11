@@ -22,6 +22,8 @@ export type PtyProcessOptions = {
   args: string[];
   cwd?: string;
   initMessage?: string;
+  // Turn off ConPTY due to an uncaught exception being thrown when a PTY is closed.
+  useConpty: boolean;
 };
 
 export type IPtyProcess = {

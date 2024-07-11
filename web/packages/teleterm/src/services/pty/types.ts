@@ -100,10 +100,19 @@ export type PtyCommand =
   | TshKubeLoginCommand
   | GatewayCliClientCommand;
 
-export type SshOptions = {
+type SshOptions = {
   /**
    * Disables SSH connection resumption when running `tsh ssh`
    * (by adding the `--no-resume` option).
    */
   noResume: boolean;
+};
+
+type TerminalOptions = {
+  useConpty: boolean;
+};
+
+export type PtyOptions = {
+  ssh: SshOptions;
+  terminal: TerminalOptions;
 };

@@ -25,8 +25,8 @@ import { assertUnreachable } from 'teleterm/ui/utils';
 import {
   PtyCommand,
   PtyProcessCreationStatus,
-  SshOptions,
   TshKubeLoginCommand,
+  PtyOptions,
 } from '../types';
 
 import {
@@ -36,12 +36,17 @@ import {
 
 export async function buildPtyOptions(
   settings: RuntimeSettings,
-  sshOptions: SshOptions,
+  options: PtyOptions,
   cmd: PtyCommand
 ): Promise<{
   processOptions: PtyProcessOptions;
   creationStatus: PtyProcessCreationStatus;
 }> {
+  const useConpty =
+    settings.platform === 'win32' &&
+    options.terminal.useConpty &&
+    getWindowsBuildNumber(settings.osVersion) >= 18309;
+
   return resolveShellEnvCached(settings.defaultShell)
     .then(resolvedEnv => ({
       shellEnv: resolvedEnv,
@@ -68,7 +73,10 @@ export async function buildPtyOptions(
       return {
         processOptions: getPtyProcessOptions(
           settings,
-          sshOptions,
+          {
+            ssh: options.ssh,
+            terminal: { useConpty },
+          },
           cmd,
           combinedEnv
         ),
@@ -79,7 +87,7 @@ export async function buildPtyOptions(
 
 export function getPtyProcessOptions(
   settings: RuntimeSettings,
-  sshOptions: SshOptions,
+  options: PtyOptions,
   cmd: PtyCommand,
   env: typeof process.env
 ): PtyProcessOptions {
@@ -104,6 +112,7 @@ export function getPtyProcessOptions(
         cwd: cmd.cwd,
         env: { ...env, ...cmd.env },
         initMessage: cmd.initMessage,
+        useConpty: options.terminal.useConpty,
       };
     }
 
@@ -129,6 +138,7 @@ export function getPtyProcessOptions(
         path: settings.defaultShell,
         args: isWindows ? powershellCommandArgs : bashCommandArgs,
         env: { ...env, KUBECONFIG: getKubeConfigFilePath(cmd, settings) },
+        useConpty: options.terminal.useConpty,
       };
     }
 
@@ -140,7 +150,7 @@ export function getPtyProcessOptions(
       const args = [
         `--proxy=${cmd.rootClusterId}`,
         'ssh',
-        ...(sshOptions.noResume ? ['--no-resume'] : []),
+        ...(options.ssh.noResume ? ['--no-resume'] : []),
         '--forward-agent',
         loginHost,
       ];
@@ -149,6 +159,7 @@ export function getPtyProcessOptions(
         path: settings.tshd.binaryPath,
         args,
         env,
+        useConpty: options.terminal.useConpty,
       };
     }
 
@@ -159,6 +170,7 @@ export function getPtyProcessOptions(
         path: cmd.path,
         args: cmd.args,
         env: { ...env, ...cmd.env },
+        useConpty: options.terminal.useConpty,
       };
     }
 
@@ -188,4 +200,13 @@ function getKubeConfigFilePath(
   settings: RuntimeSettings
 ): string {
   return path.join(settings.kubeConfigsDir, command.kubeConfigRelativePath);
+}
+
+function getWindowsBuildNumber(osVersion: string): number {
+  const parsedOsVersion = /(\d+)\.(\d+)\.(\d+)/g.exec(osVersion);
+  let buildNumber = 0;
+  if (parsedOsVersion && parsedOsVersion.length === 4) {
+    buildNumber = parseInt(parsedOsVersion[3]);
+  }
+  return buildNumber;
 }

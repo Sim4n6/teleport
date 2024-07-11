@@ -58,6 +58,7 @@ export class PtyProcess extends EventEmitter implements IPtyProcess {
     try {
       // TODO(ravicious): Set argv0 when node-pty adds support for it.
       // https://github.com/microsoft/node-pty/issues/472
+      this._logger.info('Starting with ConPTY:', this.options.useConpty);
       this._process = nodePTY.spawn(this.options.path, this.options.args, {
         cols,
         rows,
@@ -66,8 +67,7 @@ export class PtyProcess extends EventEmitter implements IPtyProcess {
         // https://unix.stackexchange.com/questions/123858
         cwd: this.options.cwd || getDefaultCwd(this.options.env),
         env: this.options.env,
-        // Turn off ConPTY due to an uncaught exception being thrown when a PTY is closed.
-        useConpty: false,
+        useConpty: this.options.useConpty,
       });
     } catch (error) {
       this._logger.error(error);
