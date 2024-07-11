@@ -23,7 +23,6 @@ import { Attempt, makeErrorAttempt } from 'shared/hooks/useAsync';
 
 import * as types from 'teleterm/ui/services/clusters/types';
 import {
-  appUri,
   makeDatabaseGateway,
   makeKubeGateway,
 } from 'teleterm/services/tshd/testHelpers';
@@ -169,33 +168,14 @@ export const LocalOnlyWithReasonGatewayCertExpiredWithoutGateway = () => {
   );
 };
 
-export const LocalOnlyWithReasonVnetCertExpired = () => {
-  const props = makeProps();
-  props.initAttempt.data.secondFactor = 'off';
-  props.initAttempt.data.allowPasswordless = false;
-  props.reason = {
-    kind: 'reason.vnet-cert-expired',
-    targetUri: appUri,
-    publicAddr: 'tcp-app.teleport.example.com',
-  };
-
-  return (
-    <TestContainer>
-      <ClusterLoginPresentation {...props} />
-    </TestContainer>
-  );
-};
-
-const authProviders = [
-  { type: 'github', name: 'github', displayName: 'GitHub' },
-  { type: 'saml', name: 'microsoft', displayName: 'Microsoft' },
-];
-
 export const SsoOnly = () => {
   const props = makeProps();
   props.initAttempt.data.localAuthEnabled = false;
   props.initAttempt.data.authType = 'github';
-  props.initAttempt.data.authProviders = authProviders;
+  props.initAttempt.data.authProviders = [
+    { type: 'github', name: 'github', displayName: 'github' },
+    { type: 'saml', name: 'microsoft', displayName: 'microsoft' },
+  ];
 
   return (
     <TestContainer>
@@ -225,7 +205,10 @@ export const LocalLoggedInUserWithPasswordless = () => {
 
 export const LocalWithSso = () => {
   const props = makeProps();
-  props.initAttempt.data.authProviders = authProviders;
+  props.initAttempt.data.authProviders = [
+    { type: 'github', name: 'github', displayName: 'github' },
+    { type: 'saml', name: 'microsoft', displayName: 'microsoft' },
+  ];
 
   return (
     <TestContainer>
@@ -260,7 +243,10 @@ export const PasswordlessWithLocalLoggedInUser = () => {
 export const SsoWithLocalAndPasswordless = () => {
   const props = makeProps();
   props.initAttempt.data.authType = 'github';
-  props.initAttempt.data.authProviders = authProviders;
+  props.initAttempt.data.authProviders = [
+    { type: 'github', name: 'github', displayName: 'github' },
+    { type: 'saml', name: 'microsoft', displayName: 'microsoft' },
+  ];
 
   return (
     <TestContainer>
@@ -330,28 +316,6 @@ export const HardwareCredentialPrompt = () => {
   );
 };
 
-export const HardwareCredentialPromptProcessing = () => {
-  const props = makeProps();
-  props.loginAttempt.status = 'processing';
-  props.webauthnLogin = {
-    prompt: 'credential',
-    loginUsernames: [
-      'apple',
-      'banana',
-      'blueberry',
-      'carrot',
-      'durian',
-      'pumpkin',
-      'strawberry',
-    ],
-  };
-  props.webauthnLogin.processing = true;
-  return (
-    <TestContainer>
-      <ClusterLoginPresentation {...props} />
-    </TestContainer>
-  );
-};
 export const SsoPrompt = () => {
   const props = makeProps();
   props.loginAttempt.status = 'processing';

@@ -32,7 +32,6 @@ export const MessageTypeEnum = {
   WEBAUTHN_CHALLENGE: 'n',
   ERROR: 'e',
   LATENCY: 'l',
-  KUBE_EXEC: 'k',
 };
 
 export const messageFields = {
@@ -60,7 +59,6 @@ export const messageFields = {
       event: MessageTypeEnum.AUDIT.charCodeAt(0),
       close: MessageTypeEnum.SESSION_END.charCodeAt(0),
       challengeResponse: MessageTypeEnum.WEBAUTHN_CHALLENGE.charCodeAt(0),
-      kubeExec: MessageTypeEnum.KUBE_EXEC.charCodeAt(0),
       error: MessageTypeEnum.ERROR.charCodeAt(0),
     },
   },
@@ -89,10 +87,6 @@ export class Protobuf {
 
   encodeFileTransferDecision(message) {
     return this.encode(messageFields.type.values.fileTransferDecision, message);
-  }
-
-  encodeKubeExecData(message) {
-    return this.encode(messageFields.type.values.kubeExec, message);
   }
 
   encodeRawMessage(message) {

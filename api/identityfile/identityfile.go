@@ -26,7 +26,6 @@ import (
 	"io"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/gravitational/trace"
 	"golang.org/x/crypto/ssh"
@@ -113,18 +112,6 @@ func (i *IdentityFile) SSHClientConfig() (*ssh.ClientConfig, error) {
 	}
 
 	return ssh, nil
-}
-
-// Expiry returns the credential expiry.
-func (i *IdentityFile) Expiry() (time.Time, bool) {
-	if i.Certs.TLS == nil {
-		return time.Time{}, false
-	}
-	cert, _, err := keys.X509Certificate(i.Certs.TLS)
-	if err != nil {
-		return time.Time{}, false
-	}
-	return cert.NotAfter, true
 }
 
 // Write writes the given identityFile to the specified path.

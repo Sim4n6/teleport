@@ -388,7 +388,10 @@ func TestRootHostUsers(t *testing.T) {
 
 		for _, tc := range tests {
 			t.Run(tc.name, func(t *testing.T) {
-				t.Cleanup(cleanupUsersAndGroups([]string{testuser}, slices.Concat(tc.firstGroups, tc.secondGroups)))
+				allGroups := make([]string, 0, len(tc.firstGroups)+len(tc.secondGroups))
+				allGroups = append(allGroups, tc.firstGroups...)
+				allGroups = append(allGroups, tc.secondGroups...)
+				t.Cleanup(cleanupUsersAndGroups([]string{testuser}, allGroups))
 
 				// Verify that the user is created with the first set of groups.
 				users := srv.NewHostUsers(context.Background(), presence, "host_uuid")

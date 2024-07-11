@@ -46,8 +46,7 @@ exports[`auth2faType: off 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -56,49 +55,29 @@ exports[`auth2faType: off 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: #9F85FF;
   color: #000000;
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
-  min-height: 44px;
-  font-size: 16px;
-  line-height: 24px;
-  letter-spacing: 0.2px;
+  background: #9F85FF;
+  min-height: 40px;
+  font-size: 12px;
+  padding: 0px 40px;
   width: 100%;
 }
 
-.c13:focus-visible,
-.teleport-button__force-focus-visible .c13 {
-  background-color: #9F85FF;
-  color: #000000;
-  border-color: #000000;
-  border-radius: 2px;
-  outline: 2px solid #9F85FF;
-}
-
 .c13:hover,
-.teleport-button__force-hover .c13 {
-  background-color: #B29DFF;
-  border-color: transparent;
-  color: #000000;
-  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.20), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12);
+.c13:focus {
+  background: #B29DFF;
 }
 
-.c13:active,
-.teleport-button__force-active .c13 {
-  background-color: #C5B6FF;
-  border-color: transparent;
-  color: #000000;
+.c13:active {
+  background: #C5B6FF;
 }
 
 .c13:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -254,6 +233,7 @@ exports[`auth2faType: off 1`] = `
             >
               <label
                 class="c10"
+                font-size="0"
               >
                 Username
                 <input
@@ -275,6 +255,7 @@ exports[`auth2faType: off 1`] = `
               >
                 <label
                   class="c10"
+                  font-size="0"
                 >
                   Password
                   <input
@@ -290,7 +271,7 @@ exports[`auth2faType: off 1`] = `
             </div>
             <button
               class="c13"
-              fill="filled"
+              kind="primary"
               type="submit"
               width="100%"
             >
@@ -358,8 +339,7 @@ exports[`auth2faType: optional rendering 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -368,49 +348,29 @@ exports[`auth2faType: optional rendering 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: #9F85FF;
   color: #000000;
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
-  min-height: 44px;
-  font-size: 16px;
-  line-height: 24px;
-  letter-spacing: 0.2px;
+  background: #9F85FF;
+  min-height: 40px;
+  font-size: 12px;
+  padding: 0px 40px;
   width: 100%;
 }
 
-.c17:focus-visible,
-.teleport-button__force-focus-visible .c17 {
-  background-color: #9F85FF;
-  color: #000000;
-  border-color: #000000;
-  border-radius: 2px;
-  outline: 2px solid #9F85FF;
-}
-
 .c17:hover,
-.teleport-button__force-hover .c17 {
-  background-color: #B29DFF;
-  border-color: transparent;
-  color: #000000;
-  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.20), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12);
+.c17:focus {
+  background: #B29DFF;
 }
 
-.c17:active,
-.teleport-button__force-active .c17 {
-  background-color: #C5B6FF;
-  border-color: transparent;
-  color: #000000;
+.c17:active {
+  background: #C5B6FF;
 }
 
 .c17:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -739,6 +699,7 @@ exports[`auth2faType: optional rendering 1`] = `
             >
               <label
                 class="c10"
+                font-size="0"
               >
                 Username
                 <input
@@ -760,6 +721,7 @@ exports[`auth2faType: optional rendering 1`] = `
               >
                 <label
                   class="c10"
+                  font-size="0"
                 >
                   Password
                   <input
@@ -786,6 +748,7 @@ exports[`auth2faType: optional rendering 1`] = `
                 >
                   <label
                     class="c15"
+                    font-size="0"
                     for="select"
                   >
                     Multi-factor Type
@@ -848,7 +811,7 @@ exports[`auth2faType: optional rendering 1`] = `
             </div>
             <button
               class="c17"
-              fill="filled"
+              kind="primary"
               type="submit"
               width="100%"
             >
@@ -922,8 +885,7 @@ exports[`auth2faType: otp rendering 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -932,49 +894,29 @@ exports[`auth2faType: otp rendering 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: #9F85FF;
   color: #000000;
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
-  min-height: 44px;
-  font-size: 16px;
-  line-height: 24px;
-  letter-spacing: 0.2px;
+  background: #9F85FF;
+  min-height: 40px;
+  font-size: 12px;
+  padding: 0px 40px;
   width: 100%;
 }
 
-.c18:focus-visible,
-.teleport-button__force-focus-visible .c18 {
-  background-color: #9F85FF;
-  color: #000000;
-  border-color: #000000;
-  border-radius: 2px;
-  outline: 2px solid #9F85FF;
-}
-
 .c18:hover,
-.teleport-button__force-hover .c18 {
-  background-color: #B29DFF;
-  border-color: transparent;
-  color: #000000;
-  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.20), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12);
+.c18:focus {
+  background: #B29DFF;
 }
 
-.c18:active,
-.teleport-button__force-active .c18 {
-  background-color: #C5B6FF;
-  border-color: transparent;
-  color: #000000;
+.c18:active {
+  background: #C5B6FF;
 }
 
 .c18:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -1303,6 +1245,7 @@ exports[`auth2faType: otp rendering 1`] = `
             >
               <label
                 class="c10"
+                font-size="0"
               >
                 Username
                 <input
@@ -1324,6 +1267,7 @@ exports[`auth2faType: otp rendering 1`] = `
               >
                 <label
                   class="c10"
+                  font-size="0"
                 >
                   Password
                   <input
@@ -1350,6 +1294,7 @@ exports[`auth2faType: otp rendering 1`] = `
                 >
                   <label
                     class="c15"
+                    font-size="0"
                     for="select"
                   >
                     Multi-factor Type
@@ -1414,6 +1359,7 @@ exports[`auth2faType: otp rendering 1`] = `
                 >
                   <label
                     class="c10"
+                    font-size="0"
                   >
                     Authenticator Code
                     <input
@@ -1430,7 +1376,7 @@ exports[`auth2faType: otp rendering 1`] = `
             </div>
             <button
               class="c18"
-              fill="filled"
+              kind="primary"
               type="submit"
               width="100%"
             >
@@ -1498,8 +1444,7 @@ exports[`auth2faType: webauthn rendering 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -1508,49 +1453,29 @@ exports[`auth2faType: webauthn rendering 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: #9F85FF;
   color: #000000;
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
-  min-height: 44px;
-  font-size: 16px;
-  line-height: 24px;
-  letter-spacing: 0.2px;
+  background: #9F85FF;
+  min-height: 40px;
+  font-size: 12px;
+  padding: 0px 40px;
   width: 100%;
 }
 
-.c17:focus-visible,
-.teleport-button__force-focus-visible .c17 {
-  background-color: #9F85FF;
-  color: #000000;
-  border-color: #000000;
-  border-radius: 2px;
-  outline: 2px solid #9F85FF;
-}
-
 .c17:hover,
-.teleport-button__force-hover .c17 {
-  background-color: #B29DFF;
-  border-color: transparent;
-  color: #000000;
-  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.20), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12);
+.c17:focus {
+  background: #B29DFF;
 }
 
-.c17:active,
-.teleport-button__force-active .c17 {
-  background-color: #C5B6FF;
-  border-color: transparent;
-  color: #000000;
+.c17:active {
+  background: #C5B6FF;
 }
 
 .c17:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -1879,6 +1804,7 @@ exports[`auth2faType: webauthn rendering 1`] = `
             >
               <label
                 class="c10"
+                font-size="0"
               >
                 Username
                 <input
@@ -1900,6 +1826,7 @@ exports[`auth2faType: webauthn rendering 1`] = `
               >
                 <label
                   class="c10"
+                  font-size="0"
                 >
                   Password
                   <input
@@ -1926,6 +1853,7 @@ exports[`auth2faType: webauthn rendering 1`] = `
                 >
                   <label
                     class="c15"
+                    font-size="0"
                     for="select"
                   >
                     Multi-factor Type
@@ -1988,7 +1916,7 @@ exports[`auth2faType: webauthn rendering 1`] = `
             </div>
             <button
               class="c17"
-              fill="filled"
+              kind="primary"
               type="submit"
               width="100%"
             >
@@ -2071,8 +1999,7 @@ exports[`cloud auth2faType: on rendering 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -2081,48 +2008,28 @@ exports[`cloud auth2faType: on rendering 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: #9F85FF;
   color: #000000;
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  background: #9F85FF;
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
-}
-
-.c16:focus-visible,
-.teleport-button__force-focus-visible .c16 {
-  background-color: #9F85FF;
-  color: #000000;
-  border-color: #000000;
-  border-radius: 2px;
-  outline: 2px solid #9F85FF;
+  padding: 0px 24px;
 }
 
 .c16:hover,
-.teleport-button__force-hover .c16 {
-  background-color: #B29DFF;
-  border-color: transparent;
-  color: #000000;
-  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.20), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12);
+.c16:focus {
+  background: #B29DFF;
 }
 
-.c16:active,
-.teleport-button__force-active .c16 {
-  background-color: #C5B6FF;
-  border-color: transparent;
-  color: #000000;
+.c16:active {
+  background: #C5B6FF;
 }
 
 .c16:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -2133,8 +2040,7 @@ exports[`cloud auth2faType: on rendering 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -2143,49 +2049,29 @@ exports[`cloud auth2faType: on rendering 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: #9F85FF;
   color: #000000;
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
-  min-height: 44px;
-  font-size: 16px;
-  line-height: 24px;
-  letter-spacing: 0.2px;
+  background: #9F85FF;
+  min-height: 40px;
+  font-size: 12px;
+  padding: 0px 40px;
   width: 100%;
 }
 
-.c22:focus-visible,
-.teleport-button__force-focus-visible .c22 {
-  background-color: #9F85FF;
-  color: #000000;
-  border-color: #000000;
-  border-radius: 2px;
-  outline: 2px solid #9F85FF;
-}
-
 .c22:hover,
-.teleport-button__force-hover .c22 {
-  background-color: #B29DFF;
-  border-color: transparent;
-  color: #000000;
-  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.20), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12);
+.c22:focus {
+  background: #B29DFF;
 }
 
-.c22:active,
-.teleport-button__force-active .c22 {
-  background-color: #C5B6FF;
-  border-color: transparent;
-  color: #000000;
+.c22:active {
+  background: #C5B6FF;
 }
 
 .c22:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -2201,7 +2087,6 @@ exports[`cloud auth2faType: on rendering 1`] = `
 .c15:hover,
 .c15:focus {
   color: #33B1FF;
-  box-shadow: none;
 }
 
 .c15:active {
@@ -2539,6 +2424,7 @@ exports[`cloud auth2faType: on rendering 1`] = `
             >
               <label
                 class="c10"
+                font-size="0"
               >
                 Username
                 <input
@@ -2560,6 +2446,7 @@ exports[`cloud auth2faType: on rendering 1`] = `
               >
                 <label
                   class="c10"
+                  font-size="0"
                 >
                   Password
                   <input
@@ -2577,7 +2464,7 @@ exports[`cloud auth2faType: on rendering 1`] = `
               >
                 <a
                   class="c15 c16"
-                  fill="filled"
+                  kind="primary"
                   style="padding: 0px; min-height: 0;"
                 >
                   Forgot Password?
@@ -2597,6 +2484,7 @@ exports[`cloud auth2faType: on rendering 1`] = `
                 >
                   <label
                     class="c20"
+                    font-size="0"
                     for="select"
                   >
                     Multi-factor Type
@@ -2658,7 +2546,7 @@ exports[`cloud auth2faType: on rendering 1`] = `
               </div>
               <a
                 class="c15 c16"
-                fill="filled"
+                kind="primary"
                 style="padding: 0px; min-height: 0;"
               >
                 Lost Two-Factor Device?
@@ -2666,7 +2554,7 @@ exports[`cloud auth2faType: on rendering 1`] = `
             </div>
             <button
               class="c22"
-              fill="filled"
+              kind="primary"
               type="submit"
               width="100%"
             >
@@ -2833,8 +2721,7 @@ exports[`server error rendering 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -2843,49 +2730,29 @@ exports[`server error rendering 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: #9F85FF;
   color: #000000;
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
-  min-height: 44px;
-  font-size: 16px;
-  line-height: 24px;
-  letter-spacing: 0.2px;
+  background: #9F85FF;
+  min-height: 40px;
+  font-size: 12px;
+  padding: 0px 40px;
   width: 100%;
 }
 
-.c14:focus-visible,
-.teleport-button__force-focus-visible .c14 {
-  background-color: #9F85FF;
-  color: #000000;
-  border-color: #000000;
-  border-radius: 2px;
-  outline: 2px solid #9F85FF;
-}
-
 .c14:hover,
-.teleport-button__force-hover .c14 {
-  background-color: #B29DFF;
-  border-color: transparent;
-  color: #000000;
-  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.20), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12);
+.c14:focus {
+  background: #B29DFF;
 }
 
-.c14:active,
-.teleport-button__force-active .c14 {
-  background-color: #C5B6FF;
-  border-color: transparent;
-  color: #000000;
+.c14:active {
+  background: #C5B6FF;
 }
 
 .c14:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -3047,6 +2914,7 @@ exports[`server error rendering 1`] = `
             >
               <label
                 class="c11"
+                font-size="0"
               >
                 Username
                 <input
@@ -3068,6 +2936,7 @@ exports[`server error rendering 1`] = `
               >
                 <label
                   class="c11"
+                  font-size="0"
                 >
                   Password
                   <input
@@ -3083,7 +2952,7 @@ exports[`server error rendering 1`] = `
             </div>
             <button
               class="c14"
-              fill="filled"
+              kind="primary"
               type="submit"
               width="100%"
             >
@@ -3126,8 +2995,7 @@ exports[`sso list still renders when local auth is disabled 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -3136,49 +3004,29 @@ exports[`sso list still renders when local auth is disabled 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: #9F85FF;
   color: #000000;
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
-  min-height: 44px;
-  font-size: 16px;
-  line-height: 24px;
-  letter-spacing: 0.2px;
+  background: #9F85FF;
+  min-height: 32px;
+  font-size: 12px;
+  padding: 0px 24px;
   width: 100%;
 }
 
-.c7:focus-visible,
-.teleport-button__force-focus-visible .c7 {
-  background-color: #9F85FF;
-  color: #000000;
-  border-color: #000000;
-  border-radius: 2px;
-  outline: 2px solid #9F85FF;
-}
-
 .c7:hover,
-.teleport-button__force-hover .c7 {
-  background-color: #B29DFF;
-  border-color: transparent;
-  color: #000000;
-  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.20), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12);
+.c7:focus {
+  background: #B29DFF;
 }
 
-.c7:active,
-.teleport-button__force-active .c7 {
-  background-color: #C5B6FF;
-  border-color: transparent;
-  color: #000000;
+.c7:active {
+  background: #C5B6FF;
 }
 
 .c7:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -3341,7 +3189,7 @@ exports[`sso list still renders when local auth is disabled 1`] = `
             <button
               class="c7 c8"
               color="#444444"
-              fill="filled"
+              kind="primary"
             >
               <div
                 class="c9"
@@ -3370,7 +3218,7 @@ exports[`sso list still renders when local auth is disabled 1`] = `
             <button
               class="c7 c11"
               color="#dd4b39"
-              fill="filled"
+              kind="primary"
             >
               <div
                 class="c9"
@@ -3447,8 +3295,7 @@ exports[`sso providers rendering 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -3457,49 +3304,29 @@ exports[`sso providers rendering 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: #9F85FF;
   color: #000000;
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
-  min-height: 44px;
-  font-size: 16px;
-  line-height: 24px;
-  letter-spacing: 0.2px;
+  background: #9F85FF;
+  min-height: 32px;
+  font-size: 12px;
+  padding: 0px 24px;
   width: 100%;
 }
 
-.c7:focus-visible,
-.teleport-button__force-focus-visible .c7 {
-  background-color: #9F85FF;
-  color: #000000;
-  border-color: #000000;
-  border-radius: 2px;
-  outline: 2px solid #9F85FF;
-}
-
 .c7:hover,
-.teleport-button__force-hover .c7 {
-  background-color: #B29DFF;
-  border-color: transparent;
-  color: #000000;
-  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.20), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12);
+.c7:focus {
+  background: #B29DFF;
 }
 
-.c7:active,
-.teleport-button__force-active .c7 {
-  background-color: #C5B6FF;
-  border-color: transparent;
-  color: #000000;
+.c7:active {
+  background: #C5B6FF;
 }
 
 .c7:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -3510,8 +3337,7 @@ exports[`sso providers rendering 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -3520,49 +3346,29 @@ exports[`sso providers rendering 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
-  min-height: 44px;
-  font-size: 16px;
-  line-height: 24px;
-  letter-spacing: 0.2px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0.07);
+  min-height: 40px;
+  font-size: 12px;
+  padding: 0px 40px;
   width: 100%;
 }
 
-.c19:focus-visible,
-.teleport-button__force-focus-visible .c19 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
-}
-
 .c19:hover,
-.teleport-button__force-hover .c19 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c19:focus {
+  background: rgba(255,255,255,0.13);
 }
 
-.c19:active,
-.teleport-button__force-active .c19 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c19:active {
+  background: rgba(255,255,255,0.18);
 }
 
 .c19:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -3808,7 +3614,7 @@ exports[`sso providers rendering 1`] = `
             <button
               class="c7 c8"
               color="#444444"
-              fill="filled"
+              kind="primary"
             >
               <div
                 class="c9"
@@ -3832,12 +3638,12 @@ exports[`sso providers rendering 1`] = `
                   </svg>
                 </span>
               </div>
-              GitHub
+              github
             </button>
             <button
               class="c7 c11"
               color="#dd4b39"
-              fill="filled"
+              kind="primary"
             >
               <div
                 class="c9"
@@ -3861,12 +3667,12 @@ exports[`sso providers rendering 1`] = `
                   </svg>
                 </span>
               </div>
-              Google
+              google
             </button>
             <button
               class="c7 c12"
               color="#205081"
-              fill="filled"
+              kind="primary"
             >
               <div
                 class="c9"
@@ -3893,12 +3699,12 @@ exports[`sso providers rendering 1`] = `
                   </svg>
                 </span>
               </div>
-              Bitbucket
+              bitbucket
             </button>
             <button
               class="c7 c13"
               color="#f7931e"
-              fill="filled"
+              kind="primary"
             >
               <div
                 class="c9"
@@ -3930,7 +3736,7 @@ exports[`sso providers rendering 1`] = `
             <button
               class="c7 c14"
               color="#2672ec"
-              fill="filled"
+              kind="primary"
             >
               <div
                 class="c9"
@@ -3986,9 +3792,9 @@ exports[`sso providers rendering 1`] = `
           >
             <button
               class="c19"
-              fill="filled"
+              kind="secondary"
             >
-              Sign in with Username and Password
+              Sign in with username and password
             </button>
           </div>
         </div>

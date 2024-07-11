@@ -18,8 +18,7 @@
 
 import Alert from './Alert';
 import Box from './Box';
-import {
-  Button,
+import Button, {
   ButtonPrimary,
   ButtonWarning,
   ButtonSecondary,

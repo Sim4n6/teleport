@@ -19,7 +19,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import { Button } from 'design';
+import { ButtonPrimary } from 'design';
 
 import cfg from 'teleport/config';
 import { SearchResource } from 'teleport/Discover/SelectResource';
@@ -64,16 +64,15 @@ export default function AgentButtonAdd(props: Props) {
       }}
       style={{ textDecoration: 'none' }}
     >
-      <Button
-        intent="primary"
-        fill="border"
+      <ButtonPrimary
+        textTransform="none"
         title={title}
         disabled={disabled}
         width="240px"
         onClick={onClick}
       >
         {agent === 'unified_resource' ? 'Enroll New Resource' : `Add ${agent}`}
-      </Button>
+      </ButtonPrimary>
     </Link>
   );
 }

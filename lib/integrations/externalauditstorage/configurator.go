@@ -36,7 +36,6 @@ import (
 	"github.com/gravitational/teleport"
 	"github.com/gravitational/teleport/api/types"
 	"github.com/gravitational/teleport/api/types/externalauditstorage"
-	"github.com/gravitational/teleport/entitlements"
 	"github.com/gravitational/teleport/lib/modules"
 	"github.com/gravitational/teleport/lib/services"
 )
@@ -183,7 +182,7 @@ func NewDraftConfigurator(ctx context.Context, ecaSvc ExternalAuditStorageGetter
 
 func newConfigurator(ctx context.Context, spec *externalauditstorage.ExternalAuditStorageSpec, integrationSvc services.IntegrationsGetter, alertService ClusterAlertService, optFns ...func(*Options)) (*Configurator, error) {
 	// ExternalAuditStorage is only available in Cloud Enterprise
-	if !modules.GetModules().Features().Cloud || !modules.GetModules().Features().GetEntitlement(entitlements.ExternalAuditStorage).Enabled {
+	if !modules.GetModules().Features().Cloud || !modules.GetModules().Features().ExternalAuditStorage {
 		return &Configurator{isUsed: false}, nil
 	}
 

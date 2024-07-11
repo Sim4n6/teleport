@@ -24,8 +24,6 @@ import { AuthType } from 'teleport/services/user';
 
 import { ResourceKind } from '../Shared/ResourceKind';
 
-import type { SamlServiceProviderPreset } from 'teleport/services/samlidp/types';
-
 import type {
   DiscoverDiscoveryConfigMethod,
   DiscoverEventResource,
@@ -69,6 +67,15 @@ export enum ServerLocation {
 export enum KubeLocation {
   SelfHosted,
   Aws,
+}
+
+/** SamlServiceProviderPreset defines SAML service provider preset types.
+ * Used to define custom or pre-defined configuration flow.
+ */
+export enum SamlServiceProviderPreset {
+  Unspecified = 'unspecified',
+  Grafana = 'grafana',
+  GcpWorkforce = 'gcp-workforce',
 }
 
 export interface ResourceSpec {

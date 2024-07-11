@@ -76,7 +76,7 @@ function ConnectorListItem({ name, id, onEdit, onDelete }) {
         </Text>
       </Flex>
       <ButtonPrimary mt="auto" size="medium" block onClick={onClickEdit}>
-        Edit Connector
+        EDIT CONNECTOR
       </ButtonPrimary>
     </ResponsiveConnector>
   );

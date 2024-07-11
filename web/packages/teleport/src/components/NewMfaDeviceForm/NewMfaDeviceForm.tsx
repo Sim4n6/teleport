@@ -186,7 +186,7 @@ export function NewMfaDeviceForm({
             {mfaType?.value === 'webauthn' && (
               <Box
                 border={1}
-                borderColor="interactive.tonal.neutral.2.background"
+                borderColor="interactive.tonal.neutral.2"
                 borderRadius={3}
                 p={3}
               >
@@ -214,7 +214,7 @@ export function NewMfaDeviceForm({
             {mfaType?.value === 'otp' && (
               <Flex
                 border={1}
-                borderColor="interactive.tonal.neutral.2.background"
+                borderColor="interactive.tonal.neutral.2"
                 borderRadius={3}
                 p={3}
                 gap={3}
@@ -232,7 +232,7 @@ export function NewMfaDeviceForm({
                 />
                 <Flex flexDirection="column">
                   <Box flex="1">
-                    <Text>
+                    <Text typography="body-2">
                       Scan the QR Code with any authenticator app and enter the
                       generated code.
                     </Text>
@@ -265,7 +265,7 @@ export function NewMfaDeviceForm({
             onClick={e => onBtnClick(e, validator)}
           >
             {mfaType.value === 'webauthn' && !credential
-              ? 'Create an MFA Method'
+              ? 'Create an MFA method'
               : submitButtonText}
           </ButtonPrimary>
         </OnboardCard>

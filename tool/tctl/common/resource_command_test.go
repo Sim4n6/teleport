@@ -44,7 +44,6 @@ import (
 	"github.com/gravitational/teleport/api/types"
 	"github.com/gravitational/teleport/api/types/discoveryconfig"
 	"github.com/gravitational/teleport/api/types/header"
-	"github.com/gravitational/teleport/entitlements"
 	"github.com/gravitational/teleport/integration/helpers"
 	"github.com/gravitational/teleport/lib/auth/authclient"
 	"github.com/gravitational/teleport/lib/config"
@@ -225,7 +224,7 @@ func TestDatabaseServerResource(t *testing.T) {
 
 	_, err = runResourceCommand(t, clt, []string{"get", wantServer, "--format=json"})
 	require.Error(t, err)
-	require.True(t, trace.IsNotFound(err))
+	require.IsType(t, &trace.NotFoundError{}, err.(*trace.TraceErr).OrigError())
 
 	// remove database server by discovered name.
 	_, err = runResourceCommand(t, clt, []string{"rm", wantServersDiscoveredName})
@@ -1055,7 +1054,7 @@ func (test *dynamicResourceTest[T]) run(t *testing.T) {
 	resources = mustDecodeJSON[[]T](t, buf)
 	require.Len(t, resources, 3)
 	require.Empty(t, cmp.Diff([]T{test.fooResource, test.fooBar1Resource, test.fooBar2Resource}, resources,
-		cmpopts.IgnoreFields(types.Metadata{}, "Revision", "Namespace"),
+		cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision", "Namespace"),
 	))
 
 	// Fetch specific resource.
@@ -1065,7 +1064,7 @@ func (test *dynamicResourceTest[T]) run(t *testing.T) {
 	resources = mustDecodeJSON[[]T](t, buf)
 	require.Len(t, resources, 1)
 	require.Empty(t, cmp.Diff([]T{test.fooResource}, resources,
-		cmpopts.IgnoreFields(types.Metadata{}, "Revision", "Namespace"),
+		cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision", "Namespace"),
 	))
 
 	// Remove a resource.
@@ -1078,7 +1077,7 @@ func (test *dynamicResourceTest[T]) run(t *testing.T) {
 	resources = mustDecodeJSON[[]T](t, buf)
 	require.Len(t, resources, 2)
 	require.Empty(t, cmp.Diff([]T{test.fooBar1Resource, test.fooBar2Resource}, resources,
-		cmpopts.IgnoreFields(types.Metadata{}, "Revision", "Namespace"),
+		cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision", "Namespace"),
 	))
 
 	if !test.runDiscoveredNameChecks {
@@ -1092,7 +1091,7 @@ func (test *dynamicResourceTest[T]) run(t *testing.T) {
 	resources = mustDecodeJSON[[]T](t, buf)
 	require.Len(t, resources, 2)
 	require.Empty(t, cmp.Diff([]T{test.fooBar1Resource, test.fooBar2Resource}, resources,
-		cmpopts.IgnoreFields(types.Metadata{}, "Revision", "Namespace"),
+		cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision", "Namespace"),
 	))
 
 	// Removing multiple resources ("foo-bar-1" and "foo-bar-2") by discovered name is an error.
@@ -1109,7 +1108,7 @@ func (test *dynamicResourceTest[T]) run(t *testing.T) {
 	resources = mustDecodeJSON[[]T](t, buf)
 	require.Len(t, resources, 1)
 	require.Empty(t, cmp.Diff([]T{test.fooBar1Resource}, resources,
-		cmpopts.IgnoreFields(types.Metadata{}, "Revision", "Namespace"),
+		cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision", "Namespace"),
 	))
 }
 
@@ -1348,7 +1347,7 @@ func requireGotDatabaseServers(t *testing.T, buf *bytes.Buffer, want ...types.Da
 		databases = append(databases, server.GetDatabase())
 	}
 	require.Empty(t, cmp.Diff(types.Databases(want).ToMap(), databases.ToMap(),
-		cmpopts.IgnoreFields(types.Metadata{}, "Namespace", "Expires"),
+		cmpopts.IgnoreFields(types.Metadata{}, "ID", "Namespace", "Expires"),
 	))
 }
 
@@ -1455,14 +1454,14 @@ version: v3`
 	require.Empty(t, cmp.Diff(
 		[]*types.GithubConnectorV3{&expected},
 		connectors,
-		cmpopts.IgnoreFields(types.Metadata{}, "Revision", "Namespace"),
+		cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision", "Namespace"),
 		cmpopts.IgnoreFields(types.GithubConnectorSpecV3{}, "ClientSecret"), // get retrieves the connector without secrets
 	))
 
 	// Explicitly change the revision and try creating the user with and without
 	// the force flag.
 	expected.SetRevision(uuid.NewString())
-	connectorBytes, err := services.MarshalGithubConnector(&expected, services.PreserveRevision())
+	connectorBytes, err := services.MarshalGithubConnector(&expected, services.PreserveResourceID())
 	require.NoError(t, err)
 	require.NoError(t, os.WriteFile(connectorYAMLPath, connectorBytes, 0644))
 
@@ -1539,13 +1538,13 @@ version: v7
 	require.Empty(t, cmp.Diff(
 		[]*types.RoleV6{&expected},
 		roles,
-		cmpopts.IgnoreFields(types.Metadata{}, "Revision"),
+		cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision"),
 	))
 
 	// Explicitly change the revision and try creating the role with and without
 	// the force flag.
 	expected.SetRevision(uuid.NewString())
-	connectorBytes, err := services.MarshalRole(&expected, services.PreserveRevision())
+	connectorBytes, err := services.MarshalRole(&expected, services.PreserveResourceID())
 	require.NoError(t, err)
 	require.NoError(t, os.WriteFile(roleYAMLPath, connectorBytes, 0644))
 
@@ -1593,13 +1592,13 @@ spec:
 	require.Empty(t, cmp.Diff(
 		[]*types.ServerInfoV1{&expected},
 		serverInfos,
-		cmpopts.IgnoreFields(types.Metadata{}, "Revision"),
+		cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision"),
 	))
 
 	// Explicitly change the revision and try creating the resource with and without
 	// the force flag.
 	expected.SetRevision(uuid.NewString())
-	newRevisionServerInfo, err := services.MarshalServerInfo(&expected, services.PreserveRevision())
+	newRevisionServerInfo, err := services.MarshalServerInfo(&expected, services.PreserveResourceID())
 	require.NoError(t, err)
 	err = os.WriteFile(serverInfoYAMLPath, newRevisionServerInfo, 0644)
 	require.NoError(t, err)
@@ -1642,7 +1641,7 @@ spec:
 	require.Empty(t, cmp.Diff(
 		[]*types.UserV2{&expected},
 		users,
-		cmpopts.IgnoreFields(types.Metadata{}, "Revision"),
+		cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision"),
 		cmpopts.IgnoreFields(types.UserSpecV2{}, "CreatedBy"),
 		cmpopts.IgnoreFields(types.UserV2{}, "Status"),
 	))
@@ -1650,7 +1649,7 @@ spec:
 	// Explicitly change the revision and try creating the user with and without
 	// the force flag.
 	expected.SetRevision(uuid.NewString())
-	connectorBytes, err := services.MarshalUser(&expected, services.PreserveRevision())
+	connectorBytes, err := services.MarshalUser(&expected, services.PreserveResourceID())
 	require.NoError(t, err)
 	require.NoError(t, os.WriteFile(userYAMLPath, connectorBytes, 0644))
 
@@ -1722,7 +1721,7 @@ version: v1
 
 	// Compare with baseline
 	cmpOpts := []cmp.Option{
-		protocmp.IgnoreFields(&headerv1.Metadata{}, "revision"),
+		protocmp.IgnoreFields(&headerv1.Metadata{}, "id", "revision"),
 		protocmp.Transform(),
 	}
 
@@ -1746,6 +1745,7 @@ func testCreateClusterNetworkingConfig(t *testing.T, clt *authclient.Client) {
 metadata:
   name: cluster-networking-config
 spec:
+  assist_command_execution_workers: 30
   client_idle_timeout: 0s
   idle_timeout_message: ""
   keep_alive_count_max: 300
@@ -1782,7 +1782,7 @@ version: v2
 	// Explicitly change the revision and try creating the cnc with and without
 	// the force flag.
 	expected.SetRevision(uuid.NewString())
-	raw, err := services.MarshalClusterNetworkingConfig(&expected, services.PreserveRevision())
+	raw, err := services.MarshalClusterNetworkingConfig(&expected, services.PreserveResourceID())
 	require.NoError(t, err)
 	require.NoError(t, os.WriteFile(cncYAMLPath, raw, 0644))
 
@@ -1832,7 +1832,7 @@ version: v2
 	// Explicitly change the revision and try creating the cap with and without
 	// the force flag.
 	expected.SetRevision(uuid.NewString())
-	raw, err := services.MarshalAuthPreference(&expected, services.PreserveRevision())
+	raw, err := services.MarshalAuthPreference(&expected, services.PreserveResourceID())
 	require.NoError(t, err)
 	require.NoError(t, os.WriteFile(capYAMLPath, raw, 0644))
 
@@ -1883,7 +1883,7 @@ version: v2
 	// Explicitly change the revision and try creating the src with and without
 	// the force flag.
 	expected.SetRevision(uuid.NewString())
-	raw, err := services.MarshalSessionRecordingConfig(&expected, services.PreserveRevision())
+	raw, err := services.MarshalSessionRecordingConfig(&expected, services.PreserveResourceID())
 	require.NoError(t, err)
 	require.NoError(t, os.WriteFile(srcYAMLPath, raw, 0644))
 
@@ -1952,7 +1952,7 @@ version: v3
 	require.Empty(t, cmp.Diff(
 		expectedAppServer,
 		appServers[0],
-		cmpopts.IgnoreFields(types.Metadata{}, "Revision", "Namespace"),
+		cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision", "Namespace"),
 	))
 }
 
@@ -2001,7 +2001,7 @@ version: v1
 
 	// Compare with baseline
 	cmpOpts := []cmp.Option{
-		protocmp.IgnoreFields(&headerv1.Metadata{}, "revision"),
+		protocmp.IgnoreFields(&headerv1.Metadata{}, "id", "revision"),
 		protocmp.Transform(),
 	}
 
@@ -2021,10 +2021,8 @@ func TestCreateEnterpriseResources(t *testing.T) {
 	modules.SetTestModules(t, &modules.TestModules{
 		TestBuildType: modules.BuildEnterprise,
 		TestFeatures: modules.Features{
-			Entitlements: map[entitlements.EntitlementKind]modules.EntitlementInfo{
-				entitlements.OIDC: {Enabled: true},
-				entitlements.SAML: {Enabled: true},
-			},
+			OIDC: true,
+			SAML: true,
 		},
 	})
 
@@ -2091,14 +2089,14 @@ spec:
 	require.Empty(t, cmp.Diff(
 		[]*types.OIDCConnectorV3{&expected},
 		connectors,
-		cmpopts.IgnoreFields(types.Metadata{}, "Revision", "Namespace"),
+		cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision", "Namespace"),
 		cmpopts.IgnoreFields(types.OIDCConnectorSpecV3{}, "ClientSecret"), // get retrieves the connector without secrets
 	))
 
 	// Explicitly change the revision and try creating the user with and without
 	// the force flag.
 	expected.SetRevision(uuid.NewString())
-	connectorBytes, err := services.MarshalOIDCConnector(&expected, services.PreserveRevision())
+	connectorBytes, err := services.MarshalOIDCConnector(&expected, services.PreserveResourceID())
 	require.NoError(t, err)
 	require.NoError(t, os.WriteFile(connectorYAMLPath, connectorBytes, 0644))
 
@@ -2168,14 +2166,14 @@ spec:
 	require.Empty(t, cmp.Diff(
 		[]*types.SAMLConnectorV2{&expected},
 		connectors,
-		cmpopts.IgnoreFields(types.Metadata{}, "Revision", "Namespace"),
+		cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision", "Namespace"),
 		cmpopts.IgnoreFields(types.SAMLConnectorSpecV2{}, "SigningKeyPair"), // get retrieves the connector without secrets
 	))
 
 	// Explicitly change the revision and try creating the user with and without
 	// the force flag.
 	expected.SetRevision(uuid.NewString())
-	connectorBytes, err := services.MarshalSAMLConnector(&expected, services.PreserveRevision())
+	connectorBytes, err := services.MarshalSAMLConnector(&expected, services.PreserveResourceID())
 	require.NoError(t, err)
 	require.NoError(t, os.WriteFile(connectorYAMLPath, connectorBytes, 0644))
 

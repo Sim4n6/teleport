@@ -18,7 +18,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import { ButtonBorder, Box, Flex, Text, Button } from 'design';
+import { ButtonBorder, Box, Flex, Text } from 'design';
 import * as Icons from 'design/Icon';
 import {
   FileTransferRequest,
@@ -43,7 +43,7 @@ export const FileTransferRequests = ({
 
   if (requests.length > 0) {
     return (
-      <Container>
+      <Container show={requests.length > 0}>
         <Flex justifyContent="space-between" alignItems="baseline">
           <Text fontSize={3} bold>
             File Transfer Requests
@@ -130,25 +130,18 @@ const ResponseForm = ({
         {getPendingText(request)}
       </Text>
       <Flex gap={2}>
-        <Button
-          fill="border"
-          intent="success"
+        <ButtonBorder
           disabled={request.approvers.includes(currentUser.username)}
           block
           onClick={() => onApprove(request.requestID, true)}
         >
           <Icons.Check size="small" mr={2} />
           Approve
-        </Button>
-        <Button
-          fill="border"
-          intent="danger"
-          block
-          onClick={() => onDeny(request.requestID, false)}
-        >
+        </ButtonBorder>
+        <ButtonBorder block onClick={() => onDeny(request.requestID, false)}>
           <Icons.Cross size="small" mr={2} />
           Deny
-        </Button>
+        </ButtonBorder>
       </Flex>
     </Box>
   );
@@ -161,7 +154,7 @@ const getPendingText = (request: FileTransferRequest) => {
   return `${request.requester} wants to upload ${request.filename} to ${request.location}`;
 };
 
-const Container = styled.div<{ backgroundColor?: string }>`
+const Container = styled.div`
   background: ${props =>
     props.backgroundColor || props.theme.colors.levels.surface};
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);

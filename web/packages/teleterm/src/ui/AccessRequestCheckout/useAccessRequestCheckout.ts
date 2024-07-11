@@ -21,27 +21,18 @@ import { Timestamp } from 'gen-proto-ts/google/protobuf/timestamp_pb';
 
 import useAttempt from 'shared/hooks/useAttemptNext';
 
-import {
-  getDryRunMaxDuration,
-  PendingListItem,
-} from 'shared/components/AccessRequests/NewRequest';
+import { getDryRunMaxDuration } from 'shared/components/AccessRequests/NewRequest';
 import { useSpecifiableFields } from 'shared/components/AccessRequests/NewRequest/useSpecifiableFields';
 
 import { CreateRequest } from 'shared/components/AccessRequests/Shared/types';
 
 import { useAppContext } from 'teleterm/ui/appContextProvider';
-import {
-  PendingAccessRequest,
-  extractResourceRequestProperties,
-  ResourceRequest,
-} from 'teleterm/ui/services/workspacesService/accessRequestsService';
+import { PendingAccessRequest } from 'teleterm/ui/services/workspacesService';
 import { retryWithRelogin } from 'teleterm/ui/utils';
 import {
   CreateAccessRequestRequest,
   AccessRequest as TeletermAccessRequest,
 } from 'teleterm/services/tshd/types';
-
-import { routing } from 'teleterm/ui/uri';
 
 import { ResourceKind } from '../DocumentAccessRequests/NewRequest/useNewRequest';
 
@@ -146,43 +137,26 @@ export default function useAccessRequestCheckout() {
   }, [showCheckout, hasExited, createRequestAttempt.status]);
 
   function getPendingAccessRequestsPerResource(
-    pendingRequest: PendingAccessRequest
-  ): PendingListItemWithOriginalItem[] {
-    const data: PendingListItemWithOriginalItem[] = [];
+    resourceIds: PendingAccessRequest
+  ) {
+    const data: {
+      kind: ResourceKind;
+      clusterName: string;
+      /** Identifier of the resource. Should be sent in requests. */
+      id: string;
+      /** Name of the resource, for presentation purposes only. */
+      name: string;
+    }[] = [];
     if (!workspaceAccessRequest) {
       return data;
     }
-
-    switch (pendingRequest.kind) {
-      case 'role': {
-        const clusterName =
-          ctx.clustersService.findCluster(rootClusterUri)?.name;
-        pendingRequest.roles.forEach(role => {
-          data.push({
-            kind: 'role',
-            id: role,
-            name: role,
-            clusterName,
-          });
-        });
-        break;
-      }
-      case 'resource': {
-        pendingRequest.resources.forEach(resourceRequest => {
-          const { kind, id, name } =
-            extractResourceRequestProperties(resourceRequest);
-          data.push({
-            kind,
-            id,
-            name,
-            originalItem: resourceRequest,
-            clusterName: ctx.clustersService.findClusterByResource(
-              resourceRequest.resource.uri
-            )?.name,
-          });
-        });
-      }
-    }
+    const clusterName = ctx.clustersService.findCluster(clusterUri)?.name;
+    const resourceKeys = Object.keys(resourceIds) as ResourceKind[];
+    resourceKeys.forEach(kind => {
+      Object.keys(resourceIds[kind]).forEach(id => {
+        data.push({ kind, id, name: resourceIds[kind][id], clusterName });
+      });
+    });
     return data;
   }
 
@@ -193,17 +167,12 @@ export default function useAccessRequestCheckout() {
     return workspaceAccessRequest.getCollapsed();
   }
 
-  async function toggleResource(
-    pendingListItem: PendingListItemWithOriginalItem
+  function toggleResource(
+    kind: ResourceKind,
+    resourceId: string,
+    resourceName: string
   ) {
-    if (pendingListItem.kind === 'role') {
-      await workspaceAccessRequest.addOrRemoveRole(pendingListItem.id);
-      return;
-    }
-
-    await workspaceAccessRequest.addOrRemoveResource(
-      pendingListItem.originalItem
-    );
+    workspaceAccessRequest.addOrRemoveResource(kind, resourceId, resourceName);
   }
 
   function getAssumedRequests() {
@@ -326,19 +295,12 @@ export default function useAccessRequestCheckout() {
     }
   }
 
-  const shouldShowClusterNameColumn =
-    pendingAccessRequest?.kind === 'resource' &&
-    Array.from(pendingAccessRequest.resources.values()).some(a =>
-      routing.isLeafCluster(a.resource.uri)
-    );
-
   return {
     showCheckout,
     isCollapsed,
     assumedRequests: getAssumedRequests(),
     toggleResource,
     data: getPendingAccessRequestsPerResource(pendingAccessRequest),
-    shouldShowClusterNameColumn,
     createRequest,
     reset,
     setHasExited,
@@ -367,14 +329,3 @@ export default function useAccessRequestCheckout() {
     onStartTimeChange,
   };
 }
-
-type PendingListItemWithOriginalItem = Omit<PendingListItem, 'kind'> &
-  (
-    | {
-        kind: Exclude<ResourceKind, 'role'>;
-        originalItem: ResourceRequest;
-      }
-    | {
-        kind: 'role';
-      }
-  );

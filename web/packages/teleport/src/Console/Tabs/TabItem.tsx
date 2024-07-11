@@ -79,7 +79,7 @@ function fromProps({ theme, active }) {
   return styles;
 }
 
-const StyledTabItem = styled(Flex)<{ active?: boolean }>`
+const StyledTabItem = styled(Flex)`
   max-width: 450px;
   height: 100%;
   ${fromProps}

@@ -19,7 +19,6 @@
 package service
 
 import (
-	"errors"
 	"log/slog"
 	"net"
 	"net/http"
@@ -29,11 +28,9 @@ import (
 	"github.com/gravitational/teleport"
 	apidefaults "github.com/gravitational/teleport/api/defaults"
 	"github.com/gravitational/teleport/api/types"
-	"github.com/gravitational/teleport/entitlements"
 	"github.com/gravitational/teleport/lib/authz"
 	kubeproxy "github.com/gravitational/teleport/lib/kube/proxy"
 	"github.com/gravitational/teleport/lib/labels"
-	"github.com/gravitational/teleport/lib/modules"
 	"github.com/gravitational/teleport/lib/multiplexer"
 	"github.com/gravitational/teleport/lib/reversetunnel"
 	"github.com/gravitational/teleport/lib/reversetunnelclient"
@@ -49,9 +46,7 @@ func (process *TeleportProcess) initKubernetes() {
 		if conn == nil {
 			return trace.Wrap(err)
 		}
-		features := process.GetClusterFeatures()
-		k8s := modules.GetProtoEntitlement(&features, entitlements.K8s)
-		if !k8s.Enabled {
+		if !process.GetClusterFeatures().Kubernetes {
 			logger.WarnContext(process.ExitContext(), "Warning: Kubernetes service not initialized because Teleport Auth Server is not licensed for Kubernetes Access. Please contact the cluster administrator to enable it.")
 			return nil
 		}
@@ -78,7 +73,7 @@ func (process *TeleportProcess) initKubernetesService(logger *slog.Logger, conn 
 		return trace.Wrap(err)
 	}
 
-	teleportClusterName := conn.ClusterName()
+	teleportClusterName := conn.ServerIdentity.ClusterName
 	proxyGetter := reversetunnel.NewConnectedProxyGetter()
 
 	// This service can run in 2 modes:
@@ -128,11 +123,11 @@ func (process *TeleportProcess) initKubernetesService(logger *slog.Logger, conn 
 			process.ExitContext(),
 			reversetunnel.AgentPoolConfig{
 				Component:            teleport.ComponentKube,
-				HostUUID:             conn.HostID(),
+				HostUUID:             conn.ServerIdentity.ID.HostUUID,
 				Resolver:             conn.TunnelProxyResolver(),
 				Client:               conn.Client,
 				AccessPoint:          accessPoint,
-				AuthMethods:          conn.ClientAuthMethods(),
+				HostSigner:           conn.ServerIdentity.KeySigner,
 				Cluster:              teleportClusterName,
 				Server:               shtl,
 				FIPS:                 process.Config.FIPS,
@@ -191,7 +186,7 @@ func (process *TeleportProcess) initKubernetesService(logger *slog.Logger, conn 
 	if err != nil {
 		return trace.Wrap(err)
 	}
-	tlsConfig, err := conn.ServerTLSConfig(cfg.CipherSuites)
+	tlsConfig, err := conn.ServerIdentity.TLSConfig(cfg.CipherSuites)
 	if err != nil {
 		return trace.Wrap(err)
 	}
@@ -260,7 +255,7 @@ func (process *TeleportProcess) initKubernetesService(logger *slog.Logger, conn 
 		process.BroadcastEvent(Event{Name: KubernetesReady, Payload: nil})
 		err := kubeServer.Serve(listener)
 		if err != nil {
-			if errors.Is(err, http.ErrServerClosed) {
+			if err == http.ErrServerClosed {
 				return nil
 			}
 			return trace.Wrap(err)

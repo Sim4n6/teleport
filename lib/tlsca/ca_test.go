@@ -38,7 +38,6 @@ import (
 	"github.com/gravitational/teleport"
 	"github.com/gravitational/teleport/api/constants"
 	apievents "github.com/gravitational/teleport/api/types/events"
-	"github.com/gravitational/teleport/api/utils/keys"
 	"github.com/gravitational/teleport/lib/fixtures"
 )
 
@@ -59,7 +58,7 @@ func TestPrincipals(t *testing.T) {
 		{
 			name: "FromCertAndSigner",
 			createFunc: func() (*CertAuthority, error) {
-				signer, err := keys.ParsePrivateKey([]byte(fixtures.TLSCAKeyPEM))
+				signer, err := ParsePrivateKeyPEM([]byte(fixtures.TLSCAKeyPEM))
 				if err != nil {
 					return nil, trace.Wrap(err)
 				}

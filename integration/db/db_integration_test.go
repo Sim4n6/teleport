@@ -37,7 +37,6 @@ import (
 
 	"github.com/gravitational/teleport"
 	"github.com/gravitational/teleport/api/types"
-	"github.com/gravitational/teleport/entitlements"
 	"github.com/gravitational/teleport/integration/helpers"
 	"github.com/gravitational/teleport/lib/auth"
 	"github.com/gravitational/teleport/lib/defaults"
@@ -109,11 +108,7 @@ func TestDatabaseAccessSeparateListeners(t *testing.T) {
 func (p *DatabasePack) testIPPinning(t *testing.T) {
 	modules.SetTestModules(t, &modules.TestModules{
 		TestBuildType: modules.BuildEnterprise,
-		TestFeatures: modules.Features{
-			Entitlements: map[entitlements.EntitlementKind]modules.EntitlementInfo{
-				entitlements.DB: {Enabled: true},
-			},
-		},
+		TestFeatures:  modules.Features{DB: true},
 	})
 
 	type testCase struct {

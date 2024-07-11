@@ -18,7 +18,7 @@
 
 import React, { useEffect, useState } from 'react';
 
-import { Alert, Box, Button, Flex, Link, Text } from 'design';
+import { Alert, Box, ButtonPrimary, Flex, Link, Text } from 'design';
 
 import {
   FeatureBox,
@@ -118,20 +118,9 @@ export function Roles(props: State) {
     <FeatureBox>
       <FeatureHeader alignItems="center">
         <FeatureHeaderTitle>Roles</FeatureHeaderTitle>
-        <Button
-          intent="primary"
-          fill={
-            serverSidePagination.attempt.status === 'success' &&
-            serverSidePagination.fetchedData.agents.length === 0
-              ? 'filled'
-              : 'border'
-          }
-          ml="auto"
-          width="240px"
-          onClick={handleCreate}
-        >
-          Create New Role
-        </Button>
+        <ButtonPrimary ml="auto" width="240px" onClick={handleCreate}>
+          CREATE NEW ROLE
+        </ButtonPrimary>
       </FeatureHeader>
       {serverSidePagination.attempt.status === 'failed' && (
         <Alert children={serverSidePagination.attempt.statusText} />

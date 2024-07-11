@@ -20,8 +20,6 @@ import { AwsRole } from 'shared/services/apps';
 
 import { ResourceLabel } from 'teleport/services/agents';
 
-import type { SamlServiceProviderPreset } from 'teleport/services/samlidp/types';
-
 export interface App {
   kind: 'app';
   id: string;
@@ -35,7 +33,6 @@ export interface App {
   fqdn: string;
   awsRoles: AwsRole[];
   awsConsole: boolean;
-  requiresRequest?: boolean;
   isCloudOrTcpEndpoint?: boolean;
   // addrWithProtocol can either be a public address or
   // if public address wasn't defined, fallback to uri
@@ -46,8 +43,6 @@ export interface App {
   samlApp: boolean;
   // samlAppSsoUrl is the URL that triggers IdP-initiated SSO for SAML Application;
   samlAppSsoUrl?: string;
-  // samlAppPreset is used to identify SAML service provider preset type.
-  samlAppPreset?: SamlServiceProviderPreset;
   // Integration is the integration name that must be used to access this Application.
   // Only applicable to AWS App Access.
   integration?: string;

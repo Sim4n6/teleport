@@ -20,15 +20,6 @@ import { ResourceLabel } from '../agents';
 
 export type JoinToken = {
   id: string;
-  // safeName is the name represented by "*". If the name is longer than 16 chars,
-  // the first 16 chars will be * and the rest of the token's chars will be visible
-  // ex. ****************asdf1234
-  safeName: string;
-  isStatic: boolean;
-  // the join method of the token
-  method: string;
-  // Roles are the roles granted to the token
-  roles: string[];
   expiry: Date;
   expiryText?: string;
   // suggestedLabels are labels that the resource should add when adding
@@ -39,8 +30,6 @@ export type JoinToken = {
   //
   // Extracted from suggestedLabels.
   internalResourceId?: string;
-  // yaml content of the resource
-  content: string;
 };
 
 // JoinRole defines built-in system roles and are roles associated with
@@ -64,17 +53,7 @@ export type JoinRole =
 // Same hard-corded value as the backend.
 // - 'token' is the default method, where nodes join the cluster by
 //   presenting a secret token.
-export type JoinMethod =
-  | 'token'
-  | 'ec2'
-  | 'iam'
-  | 'github'
-  | 'azure'
-  | 'gcp'
-  | 'circleci'
-  | 'gitlab'
-  | 'kubernetes'
-  | 'tpm';
+export type JoinMethod = 'token' | 'ec2' | 'iam' | 'github';
 
 // JoinRule is a rule that a joining node must match in order to use the
 // associated token.
@@ -87,7 +66,7 @@ export type JoinRule = {
 export type JoinTokenRequest = {
   // roles is a list of join roles, since there can be more than
   // one role associated with a token.
-  roles?: JoinRole[];
+  roles: JoinRole[];
   // rules is a list of allow rules associated with the join token
   // and the node using this token must match one of the rules.
   rules?: JoinRule[];
@@ -97,6 +76,4 @@ export type JoinTokenRequest = {
   // means adding the labels to `db_service.resources.labels`.
   suggestedAgentMatcherLabels?: ResourceLabel[];
   method?: JoinMethod;
-  // content is the yaml content of the joinToken to be created
-  content?: string;
 };

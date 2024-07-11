@@ -33,7 +33,6 @@ import (
 	clusterconfigpb "github.com/gravitational/teleport/api/gen/proto/go/teleport/clusterconfig/v1"
 	"github.com/gravitational/teleport/api/types"
 	apievents "github.com/gravitational/teleport/api/types/events"
-	"github.com/gravitational/teleport/entitlements"
 	"github.com/gravitational/teleport/lib/auth/clusterconfig/clusterconfigv1"
 	"github.com/gravitational/teleport/lib/authz"
 	"github.com/gravitational/teleport/lib/backend/memory"
@@ -1388,7 +1387,7 @@ func TestAuditEventsEmitted(t *testing.T) {
 		require.NoError(t, err, "creating test service")
 
 		t.Run("auth preference", func(t *testing.T) {
-			mfaUnchangedEvent := apievents.AuthPreferenceUpdate{
+			expectedEvent := &apievents.AuthPreferenceUpdate{
 				Metadata: apievents.Metadata{
 					Type: events.AuthPreferenceUpdateEvent,
 					Code: events.AuthPreferenceUpdateCode,
@@ -1400,20 +1399,13 @@ func TestAuditEventsEmitted(t *testing.T) {
 					User:     "llama",
 					UserKind: apievents.UserKind_USER_KIND_HUMAN,
 				},
-				AdminActionsMFA: apievents.AdminActionsMFAStatus_ADMIN_ACTIONS_MFA_STATUS_UNCHANGED,
 			}
-
-			mfaEnabledEvent := mfaUnchangedEvent
-			mfaEnabledEvent.AdminActionsMFA = apievents.AdminActionsMFAStatus_ADMIN_ACTIONS_MFA_STATUS_ENABLED
-
-			mfaDisabledEvent := mfaUnchangedEvent
-			mfaDisabledEvent.AdminActionsMFA = apievents.AdminActionsMFAStatus_ADMIN_ACTIONS_MFA_STATUS_DISABLED
 
 			p, err := env.ResetAuthPreference(ctx, &clusterconfigpb.ResetAuthPreferenceRequest{})
 			require.NoError(t, err)
 
 			evt := <-env.emitter.C()
-			require.Empty(t, cmp.Diff(&mfaUnchangedEvent, evt))
+			require.Empty(t, cmp.Diff(expectedEvent, evt))
 
 			p.SetLockingMode(constants.LockingModeStrict)
 
@@ -1421,32 +1413,13 @@ func TestAuditEventsEmitted(t *testing.T) {
 			require.NoError(t, err)
 
 			evt = <-env.emitter.C()
-			require.Empty(t, cmp.Diff(&mfaUnchangedEvent, evt))
+			require.Empty(t, cmp.Diff(expectedEvent, evt))
 
 			_, err = env.UpsertAuthPreference(ctx, &clusterconfigpb.UpsertAuthPreferenceRequest{AuthPreference: p})
 			require.NoError(t, err)
 
 			evt = <-env.emitter.C()
-			require.Empty(t, cmp.Diff(&mfaUnchangedEvent, evt))
-
-			p.Spec.SecondFactor = constants.SecondFactorWebauthn
-			p.Spec.Webauthn = &types.Webauthn{
-				RPID: "example.com",
-			}
-
-			p, err = env.UpdateAuthPreference(ctx, &clusterconfigpb.UpdateAuthPreferenceRequest{AuthPreference: p})
-			require.NoError(t, err)
-
-			evt = <-env.emitter.C()
-			require.Empty(t, cmp.Diff(&mfaEnabledEvent, evt))
-
-			p.Spec.SecondFactor = constants.SecondFactorOTP
-
-			_, err = env.UpsertAuthPreference(ctx, &clusterconfigpb.UpsertAuthPreferenceRequest{AuthPreference: p})
-			require.NoError(t, err)
-
-			evt = <-env.emitter.C()
-			require.Empty(t, cmp.Diff(&mfaDisabledEvent, evt))
+			require.Empty(t, cmp.Diff(expectedEvent, evt))
 		})
 
 		t.Run("cluster networking config", func(t *testing.T) {
@@ -1559,7 +1532,6 @@ func TestAuditEventsEmitted(t *testing.T) {
 					User:     "llama",
 					UserKind: apievents.UserKind_USER_KIND_HUMAN,
 				},
-				AdminActionsMFA: apievents.AdminActionsMFAStatus_ADMIN_ACTIONS_MFA_STATUS_UNCHANGED,
 			}
 
 			_, err := env.ResetAuthPreference(ctx, &clusterconfigpb.ResetAuthPreferenceRequest{})
@@ -1826,8 +1798,8 @@ func TestGetAccessGraphConfig(t *testing.T) {
 			testSetup: func(t *testing.T) {
 				m := modules.TestModules{
 					TestFeatures: modules.Features{
-						Entitlements: map[entitlements.EntitlementKind]modules.EntitlementInfo{
-							entitlements.Policy: {Enabled: true},
+						Policy: modules.PolicyFeature{
+							Enabled: true,
 						},
 					},
 				}
@@ -1850,8 +1822,8 @@ func TestGetAccessGraphConfig(t *testing.T) {
 			testSetup: func(t *testing.T) {
 				m := modules.TestModules{
 					TestFeatures: modules.Features{
-						Entitlements: map[entitlements.EntitlementKind]modules.EntitlementInfo{
-							entitlements.Policy: {Enabled: true},
+						Policy: modules.PolicyFeature{
+							Enabled: true,
 						},
 					},
 				}

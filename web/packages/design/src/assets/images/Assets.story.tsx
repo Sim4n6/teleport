@@ -24,7 +24,8 @@ import kubeLogo from "design/assets/images/kube-logo.svg";
 import sampleLogoLong from "design/assets/images/sample-logo-long.svg";
 import sampleLogoSquire from "design/assets/images/sample-logo-squire.svg";
 import secKeyGraphic from "design/assets/images/sec-key-graphic.svg";
-import teleportLogo from "design/assets/images/enterprise-light.svg";
+import teleportLogo from "design/assets/images/teleport-logo.svg";
+import teleportMedallion from "design/assets/images/teleport-medallion.svg";
 import {TeleportLogoII} from "design/assets/images/TeleportLogoII";
 import cloudCity from "design/assets/images/backgrounds/cloud-city.png"
 
@@ -49,6 +50,7 @@ export const ImageSVG = () => (
         <Image maxWidth="100px" maxHeight="100px" src={sampleLogoSquire} />
         <Image maxWidth="100px" maxHeight="100px" src={secKeyGraphic} />
         <Image maxWidth="100px" maxHeight="100px" src={teleportLogo} />
+        <Image maxWidth="100px" maxHeight="100px" src={teleportMedallion} />
     </div>
 );
 

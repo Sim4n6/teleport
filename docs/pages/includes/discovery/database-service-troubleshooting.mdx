@@ -24,7 +24,7 @@ troubleshooting.
 Teleport will choose one of those Database Service instances at random to proxy
 the connection and if one of them can't reach the database endpoint or lacks 
 permissions, then you will see random connection errors.
-{/* TODO(gavin): once we add healthchecks, we can remove this advice. HA shouldn't make connections randomly fail. */}
+{/* TODO(gavin): once we add health checks, we can remove this advice. HA shouldn't make connections randomly fail. */}
 
 Even if connection errors are consistent, you should scale down or reconfigure
 your Teleport Database Service instances such that only one matches the target `db`

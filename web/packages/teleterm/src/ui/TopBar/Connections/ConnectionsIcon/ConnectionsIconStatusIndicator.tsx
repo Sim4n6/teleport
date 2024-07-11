@@ -25,7 +25,7 @@ export const ConnectionsIconStatusIndicator: React.FC<Props> = props => {
   return <StyledStatus $connected={connected} {...styles} />;
 };
 
-const StyledStatus = styled(Box)<InternalProps>`
+const StyledStatus = styled<Props>(Box)`
   position: absolute;
   top: -4px;
   right: -4px;
@@ -49,8 +49,4 @@ const StyledStatus = styled(Box)<InternalProps>`
 
 type Props = {
   connected: boolean;
-};
-
-type InternalProps = {
-  $connected?: boolean;
 };

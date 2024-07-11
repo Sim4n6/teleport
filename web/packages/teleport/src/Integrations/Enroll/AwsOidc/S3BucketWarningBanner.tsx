@@ -1,6 +1,6 @@
 /**
  * Teleport
- * Copyright (C) 2024 Gravitational, Inc.
+ * Copyright (C) 2024  Gravitational, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -38,7 +38,7 @@ export const S3BucketWarningBanner = ({
         <BellIcon size={18} />
       </Box>
       <Flex gap={2}>
-        <Box flex={1}>
+        <Box>
           <Text mb={2}>
             It is recommended to use an S3 bucket to host the public keys.
           </Text>
@@ -56,13 +56,17 @@ export const S3BucketWarningBanner = ({
           }
         >
           {reviewing ? (
-            <Box>
-              <ButtonBorder onClick={onClose}>Ok</ButtonBorder>
-            </Box>
+            <ButtonBorder onClick={onClose} width="80px">
+              Ok
+            </ButtonBorder>
           ) : (
             <>
-              <ButtonBorder onClick={onContinue}>Continue</ButtonBorder>
-              <ButtonText onClick={onClose}>Cancel</ButtonText>
+              <ButtonBorder onClick={onContinue} width="130px">
+                Continue
+              </ButtonBorder>
+              <ButtonText onClick={onClose} width="100px">
+                Cancel
+              </ButtonText>
             </>
           )}
         </Flex>

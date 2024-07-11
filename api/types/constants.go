@@ -65,8 +65,6 @@ const (
 
 	// KindBot is a Machine ID bot resource
 	KindBot = "bot"
-	// KindBotInstance is an instance of a Machine ID bot
-	KindBotInstance = "bot_instance"
 
 	// KindHostCert is a host certificate
 	KindHostCert = "host_cert"
@@ -174,8 +172,6 @@ const (
 	// KindAppOrSAMLIdPServiceProvider represent an App Server resource or a SAML IdP Service Provider (SAML Application) resource.
 	// This is not a real resource stored in the backend, it is a pseudo resource used only to provide a common interface to
 	// the ListResources RPC in order to be able to list both AppServers and SAMLIdPServiceProviders in the same request.
-	//
-	// DEPRECATED: Use KindAppServer and KindSAMLIdPServiceProvider individually.
 	KindAppOrSAMLIdPServiceProvider = "app_server_or_saml_idp_sp"
 
 	// KindDatabaseServer is a database proxy server resource.
@@ -465,6 +461,10 @@ const (
 	// KindHeadlessAuthentication is a headless authentication resource.
 	KindHeadlessAuthentication = "headless_authentication"
 
+	// KindAssistant is used to program RBAC for
+	// Teleport Assist resources.
+	KindAssistant = "assistant"
+
 	// KindAccessGraph is the RBAC kind for access graph.
 	KindAccessGraph = "access_graph"
 
@@ -520,17 +520,6 @@ const (
 	KindUserLastSeenNotification = "user_last_seen_notification"
 	// KindUserNotificationState is a resource which tracks whether a user has clicked on or dismissed a notification.
 	KindUserNotificationState = "user_notification_state"
-
-	// KindAccessGraphSecretAuthorizedKey is a authorized key entry found in
-	// a Teleport SSH node type.
-	KindAccessGraphSecretAuthorizedKey = "access_graph_authorized_key"
-
-	// KindAccessGraphSecretPrivateKey is a private key entry found in
-	// a managed device.
-	KindAccessGraphSecretPrivateKey = "access_graph_private_key"
-
-	// KindVnetConfig is a resource which holds cluster-wide configuration for VNet.
-	KindVnetConfig = "vnet_config"
 
 	// V7 is the seventh version of resources.
 	V7 = "v7"
@@ -680,14 +669,6 @@ const (
 	// id found via automatic discovery, to avoid re-running
 	// installation commands on the node.
 	ProjectIDLabel = TeleportInternalLabelPrefix + "project-id"
-	// RegionLabel is used to identify virtual machines by region found
-	// via automatic discovery, to avoid re-running installation commands
-	// on the node.
-	RegionLabel = TeleportInternalLabelPrefix + "region"
-	// ResourceGroupLabel is used to identify virtual machines by resource-group found
-	// via automatic discovery, to avoid re-running installation commands
-	// on the node.
-	ResourceGroupLabel = TeleportInternalLabelPrefix + "resource-group"
 	// ZoneLabel is used to identify virtual machines by GCP zone
 	// found via automatic discovery, to avoid re-running installation
 	// commands on the node.
@@ -756,8 +737,6 @@ const (
 	ReqAnnotationApproveSchedulesLabel = "/schedules"
 	// ReqAnnotationNotifySchedulesLabel is the request annotation key at which notify schedules are stored for access plugins.
 	ReqAnnotationNotifySchedulesLabel = "/notify-services"
-	// ReqAnnotationTeamsLabel is the request annotation key at which teams are stored for access plugins.
-	ReqAnnotationTeamsLabel = "/teams"
 
 	// CloudAWS identifies that a resource was discovered in AWS.
 	CloudAWS = "AWS"
@@ -1004,9 +983,6 @@ const (
 	// OktaRoleNameLabel is the human readable name for a role sourced from Okta.
 	OktaRoleNameLabel = TeleportInternalLabelPrefix + "okta-role-name"
 
-	// PluginGenerationLabel is the label for the current generation of the plugin.
-	PluginGenerationLabel = TeleportInternalLabelPrefix + "plugin-generation"
-
 	// EntraTenantIDLabel is the label for the Entra tenant ID.
 	EntraTenantIDLabel = TeleportInternalLabelPrefix + "entra-tenant"
 
@@ -1022,34 +998,6 @@ const (
 
 	// EntraSAMAccountNameLabel is the label for user's on-premises sAMAccountName.
 	EntraSAMAccountNameLabel = TeleportInternalLabelPrefix + "entra-sam-account-name"
-)
-
-const (
-	// NotificationTitleLabel is the label which contains the title of the notification.
-	NotificationTitleLabel = TeleportInternalLabelPrefix + "title"
-	// NotificationClickedLabel is the label which contains whether the notification has been clicked on by the user.
-	NotificationClickedLabel = TeleportInternalLabelPrefix + "clicked"
-	// NotificationScope is the label which contains the scope of the notification, either "user" or "global"
-	NotificationScope = TeleportInternalLabelPrefix + "scope"
-
-	// NotificationDefaultInformationalSubKind is the default subkind for an informational notification.
-	NotificationDefaultInformationalSubKind = "default-informational"
-	// NotificationDefaultWarningSubKind is the default subkind for a warning notification.
-	NotificationDefaultWarningSubKind = "default-warning"
-
-	// NotificationUserCreatedInformationalSubKind is the subkind for a user-created informational notification.
-	NotificationUserCreatedInformationalSubKind = "user-created-informational"
-	// NotificationUserCreatedWarningSubKind is the subkind for a user-created warning notification.
-	NotificationUserCreatedWarningSubKind = "user-created-warning"
-
-	// NotificationAccessRequestPendingSubKind is the subkind for a notification for an access request pending review.
-	NotificationAccessRequestPendingSubKind = "access-request-pending"
-	// NotificationAccessRequestApprovedSubKind is the subkind for a notification for a user's access request being approved.
-	NotificationAccessRequestApprovedSubKind = "access-request-approved"
-	// NotificationAccessRequestDeniedSubKind is the subkind for a notification for a user's access request being denied.
-	NotificationAccessRequestDeniedSubKind = "access-request-denied"
-	// NotificationAccessRequestPromotedSubKind is the subkind for a notification for a user's access request being promoted to an access list.
-	NotificationAccessRequestPromotedSubKind = "access-request-promoted"
 )
 
 const (

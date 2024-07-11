@@ -243,7 +243,7 @@ func (a *App) onPendingRequest(ctx context.Context, req types.AccessRequest) err
 		return nil
 	}
 	// Don't show the error if the annotation is just missing.
-	if errors.Is(trace.Unwrap(notifyErr), errMissingAnnotation) {
+	if trace.Unwrap(notifyErr) == errMissingAnnotation {
 		notifyErr = nil
 	}
 
@@ -275,34 +275,9 @@ func (a *App) onDeletedRequest(ctx context.Context, reqID string) error {
 	return a.resolveAlert(ctx, reqID, Resolution{Tag: ResolvedExpired})
 }
 
-// Get services to notify from both annotations: /notify-services and /teams
-// Return error if both are empty
-func (a *App) getNotifyServiceNames(ctx context.Context, req types.AccessRequest) ([]string, error) {
-	log := logger.Get(ctx)
-
-	var servicesNames []string
-
-	scheduleAnnotationKey := types.TeleportNamespace + types.ReqAnnotationNotifySchedulesLabel
-	schedules, err := common.GetServiceNamesFromAnnotations(req, scheduleAnnotationKey)
-	if err != nil {
-		log.Debugf("No schedules to notifiy in %s", scheduleAnnotationKey)
-	} else {
-		servicesNames = append(servicesNames, schedules...)
-	}
-
-	teamAnnotationKey := types.TeleportNamespace + types.ReqAnnotationTeamsLabel
-	teams, err := common.GetServiceNamesFromAnnotations(req, teamAnnotationKey)
-	if err != nil {
-		log.Debugf("No teams to notifiy in %s", teamAnnotationKey)
-	} else {
-		servicesNames = append(servicesNames, teams...)
-	}
-
-	if len(servicesNames) == 0 {
-		return nil, trace.NotFound("no services to notify")
-	}
-
-	return servicesNames, nil
+func (a *App) getNotifyServiceNames(req types.AccessRequest) ([]string, error) {
+	annotationKey := types.TeleportNamespace + types.ReqAnnotationNotifySchedulesLabel
+	return common.GetServiceNamesFromAnnotations(req, annotationKey)
 }
 
 func (a *App) getOnCallServiceNames(req types.AccessRequest) ([]string, error) {
@@ -313,8 +288,8 @@ func (a *App) getOnCallServiceNames(req types.AccessRequest) ([]string, error) {
 func (a *App) tryNotifyService(ctx context.Context, req types.AccessRequest) (bool, error) {
 	log := logger.Get(ctx)
 
-	serviceNames, err := a.getNotifyServiceNames(ctx, req)
-	if err != nil || len(serviceNames) == 0 {
+	serviceNames, err := a.getNotifyServiceNames(req)
+	if err != nil {
 		log.Debugf("Skipping the notification: %s", err)
 		return false, trace.Wrap(errMissingAnnotation)
 	}
@@ -344,8 +319,12 @@ func (a *App) tryNotifyService(ctx context.Context, req types.AccessRequest) (bo
 	}
 
 	if isNew {
-		if err = a.createAlert(ctx, reqID, reqData); err != nil {
-			return isNew, trace.Wrap(err, "creating Opsgenie alert")
+		for _, serviceName := range serviceNames {
+			alertCtx, _ := logger.WithField(ctx, "opsgenie_service_name", serviceName)
+
+			if err = a.createAlert(alertCtx, serviceName, reqID, reqData); err != nil {
+				return isNew, trace.Wrap(err, "creating Opsgenie alert")
+			}
 		}
 
 		if reqReviews := req.GetReviews(); len(reqReviews) > 0 {
@@ -358,7 +337,7 @@ func (a *App) tryNotifyService(ctx context.Context, req types.AccessRequest) (bo
 }
 
 // createAlert posts an alert with request information.
-func (a *App) createAlert(ctx context.Context, reqID string, reqData RequestData) error {
+func (a *App) createAlert(ctx context.Context, serviceID, reqID string, reqData RequestData) error {
 	data, err := a.opsgenie.CreateAlert(ctx, reqID, reqData)
 	if err != nil {
 		return trace.Wrap(err)

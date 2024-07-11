@@ -44,7 +44,6 @@ import (
 	"github.com/gravitational/teleport/api/types/accesslist"
 	"github.com/gravitational/teleport/api/types/header"
 	"github.com/gravitational/teleport/api/utils/sshutils"
-	"github.com/gravitational/teleport/entitlements"
 	"github.com/gravitational/teleport/lib/auth/authclient"
 	"github.com/gravitational/teleport/lib/auth/testauthority"
 	"github.com/gravitational/teleport/lib/backend/memory"
@@ -234,127 +233,6 @@ func waitForAccessRequests(t *testing.T, ctx context.Context, getter services.Ac
 			require.FailNow(t, "timeout waiting for access request condition to pass")
 		}
 	}
-}
-
-// TestAccessRequestResourceRBACLimits verifies the special constraint conditions put on resource-level access
-// request permissions (create/update) to mitigate their power.
-func TestAccessRequestResourceRBACLimits(t *testing.T) {
-	const (
-		staticRoleName  = "static-role"
-		dynamicRoleName = "dynamic-role"
-		userName        = "alice@example.com"
-		otherUserName   = "bob@example.com"
-	)
-
-	t.Parallel()
-
-	clock := clockwork.NewFakeClock()
-
-	authServer, err := NewTestAuthServer(TestAuthServerConfig{
-		Dir:   t.TempDir(),
-		Clock: clock,
-	})
-	require.NoError(t, err)
-	defer authServer.Close()
-
-	tlsServer, err := authServer.NewTestTLSServer()
-	require.NoError(t, err)
-	defer tlsServer.Close()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	staticRole, err := types.NewRole(staticRoleName, types.RoleSpecV6{
-		Allow: types.RoleConditions{
-			Request: &types.AccessRequestConditions{
-				Roles: []string{dynamicRoleName},
-			},
-			Rules: []types.Rule{
-				types.NewRule(types.KindAccessRequest, services.RW()),
-			},
-		},
-	})
-	require.NoError(t, err)
-
-	dynamicRole, err := types.NewRole(dynamicRoleName, types.RoleSpecV6{})
-	require.NoError(t, err)
-
-	_, err = tlsServer.Auth().UpsertRole(ctx, staticRole)
-	require.NoError(t, err)
-
-	_, err = tlsServer.Auth().UpsertRole(ctx, dynamicRole)
-	require.NoError(t, err)
-
-	user, err := types.NewUser(userName)
-	require.NoError(t, err)
-
-	user.SetRoles([]string{staticRoleName})
-	_, err = tlsServer.Auth().UpsertUser(ctx, user)
-	require.NoError(t, err)
-
-	otherUser, err := types.NewUser(otherUserName)
-	require.NoError(t, err)
-
-	otherUser.SetRoles([]string{staticRoleName})
-	_, err = tlsServer.Auth().UpsertUser(ctx, otherUser)
-	require.NoError(t, err)
-
-	clt, err := tlsServer.NewClient(TestUser(userName))
-	require.NoError(t, err)
-	defer clt.Close()
-
-	// try to create a pre-approved request for self
-	req, err := services.NewAccessRequest(userName, dynamicRoleName)
-	require.NoError(t, err)
-
-	req.SetState(types.RequestState_APPROVED)
-	_, err = clt.CreateAccessRequestV2(ctx, req)
-	require.Error(t, err)
-
-	// verify that we got the expected rejection
-	require.Equal(t, "cannot create access request for self in non-pending state", err.Error())
-
-	// verify that creating pre-approved requests for others still works
-	// (note: we'd like to eventually deprecate ability too).
-	req, err = services.NewAccessRequest(otherUserName, dynamicRoleName)
-	require.NoError(t, err)
-
-	req.SetState(types.RequestState_APPROVED)
-
-	_, err = clt.CreateAccessRequestV2(ctx, req)
-	require.NoError(t, err)
-
-	// create a pending request for self
-	req, err = services.NewAccessRequest(userName, dynamicRoleName)
-	require.NoError(t, err)
-
-	req.SetState(types.RequestState_PENDING)
-	req, err = clt.CreateAccessRequestV2(ctx, req)
-	require.NoError(t, err)
-
-	// attempt to self-approve
-	err = clt.SetAccessRequestState(ctx, types.AccessRequestUpdate{
-		RequestID: req.GetName(),
-		State:     types.RequestState_APPROVED,
-	})
-	require.Error(t, err)
-
-	// verify that we got the expected rejection
-	require.Equal(t, "directly updating the state of your own access requests is not permitted", err.Error())
-
-	req, err = services.NewAccessRequest(otherUserName, dynamicRoleName)
-	require.NoError(t, err)
-
-	req.SetState(types.RequestState_PENDING)
-	req, err = clt.CreateAccessRequestV2(ctx, req)
-	require.NoError(t, err)
-
-	// approve other
-	err = clt.SetAccessRequestState(ctx, types.AccessRequestUpdate{
-		RequestID: req.GetName(),
-		State:     types.RequestState_APPROVED,
-	})
-	require.NoError(t, err)
 }
 
 // TestListAccessRequests tests some basic functionality of the ListAccessRequests API, including access-control,
@@ -1544,9 +1422,7 @@ func TestUpdateAccessRequestWithAdditionalReviewers(t *testing.T) {
 
 	modules.SetTestModules(t, &modules.TestModules{
 		TestFeatures: modules.Features{
-			Entitlements: map[entitlements.EntitlementKind]modules.EntitlementInfo{
-				entitlements.Identity: {Enabled: true},
-			},
+			IdentityGovernanceSecurity: true,
 		},
 	})
 

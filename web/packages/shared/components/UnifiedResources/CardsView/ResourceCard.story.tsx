@@ -22,7 +22,7 @@ import { Meta, StoryObj } from '@storybook/react';
 import styled from 'styled-components';
 
 import { ButtonBorder } from 'design';
-import { gap, GapProps } from 'design/system';
+import { gap } from 'design/system';
 
 import { apps } from 'teleport/Apps/fixtures';
 import { databases } from 'teleport/Databases/fixtures';
@@ -88,7 +88,7 @@ const meta: Meta<typeof ResourceCard> = {
   title: 'Shared/UnifiedResources/Items',
 };
 
-const Grid = styled.div<GapProps>`
+const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
   ${gap}

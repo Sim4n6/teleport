@@ -17,12 +17,11 @@ limitations under the License.
 package events
 
 import (
-	"context"
 	"encoding/json"
-	"log/slog"
 	"reflect"
 
 	"github.com/gravitational/trace"
+	log "github.com/sirupsen/logrus"
 )
 
 // MustToOneOf converts audit event to OneOf
@@ -632,10 +631,6 @@ func ToOneOf(in AuditEvent) (*OneOf, error) {
 		out.Event = &OneOf_OktaAccessListSync{
 			OktaAccessListSync: e,
 		}
-	case *OktaUserSync:
-		out.Event = &OneOf_OktaUserSync{
-			OktaUserSync: e,
-		}
 	case *SPIFFESVIDIssued:
 		out.Event = &OneOf_SPIFFESVIDIssued{
 			SPIFFESVIDIssued: e,
@@ -668,10 +663,6 @@ func ToOneOf(in AuditEvent) (*OneOf, error) {
 		out.Event = &OneOf_SpannerRPC{
 			SpannerRPC: e,
 		}
-	case *DatabaseSessionCommandResult:
-		out.Event = &OneOf_DatabaseSessionCommandResult{
-			DatabaseSessionCommandResult: e,
-		}
 	case *DiscoveryConfigCreate:
 		out.Event = &OneOf_DiscoveryConfigCreate{
 			DiscoveryConfigCreate: e,
@@ -690,7 +681,7 @@ func ToOneOf(in AuditEvent) (*OneOf, error) {
 		}
 
 	default:
-		slog.ErrorContext(context.Background(), "Attempted to convert dynamic event of unknown type into protobuf event.", "event_type", in.GetType())
+		log.Errorf("Attempted to convert dynamic event of unknown type \"%v\" into protobuf event.", in.GetType())
 		unknown := &Unknown{}
 		unknown.Type = UnknownEvent
 		unknown.Code = UnknownCode

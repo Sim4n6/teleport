@@ -997,7 +997,7 @@ func TestValidateRole(t *testing.T) {
 				"parsing allow.db_names expression",
 				"parsing allow.db_users expression",
 				"parsing allow.host_groups expression",
-				"parsing allow.host_sudoers expression",
+				"parsing allow.host_sudeoers expression",
 				"parsing allow.desktop_groups expression",
 				"parsing allow.impersonate.users expression",
 				"parsing allow.impersonate.roles expression",
@@ -1011,7 +1011,7 @@ func TestValidateRole(t *testing.T) {
 				"parsing deny.db_names expression",
 				"parsing deny.db_users expression",
 				"parsing deny.host_groups expression",
-				"parsing deny.host_sudoers expression",
+				"parsing deny.host_sudeoers expression",
 				"parsing deny.desktop_groups expression",
 				"parsing deny.impersonate.users expression",
 				"parsing deny.impersonate.roles expression",
@@ -5700,26 +5700,11 @@ func TestCheckAccessToSAMLIdP(t *testing.T) {
 			},
 		},
 	}
-	roleSAMLAllowedMFARequired := &types.RoleV6{
-		Metadata: types.Metadata{Name: "roleSAMLAllowedMFARequired", Namespace: apidefaults.Namespace},
-		Spec: types.RoleSpecV6{
-			Options: types.RoleOptions{
-				RequireMFAType: types.RequireMFAType_SESSION,
-				MaxSessionTTL:  types.Duration(2 * time.Hour),
-				IDP: &types.IdPOptions{
-					SAML: &types.IdPSAMLOptions{
-						Enabled: types.NewBoolOption(true),
-					},
-				},
-			},
-		},
-	}
 
 	testCases := []struct {
 		name                string
 		roles               RoleSet
 		authPrefSamlEnabled bool
-		state               AccessState
 		errAssertionFunc    require.ErrorAssertionFunc
 	}{
 		{
@@ -5770,51 +5755,6 @@ func TestCheckAccessToSAMLIdP(t *testing.T) {
 				require.ErrorIs(t, err, trace.AccessDenied("SAML IdP is disabled at the cluster level"))
 			},
 		},
-		// Per-session MFA checks
-		{
-			name:                "MFA required by cluster or all roles, mfa verified",
-			roles:               RoleSet{roleSAMLAllowed},
-			authPrefSamlEnabled: true,
-			state: AccessState{
-				MFARequired: MFARequiredAlways,
-				MFAVerified: true,
-			},
-			errAssertionFunc: require.NoError,
-		},
-		{
-			name:                "MFA required by cluster or all roles, mfa not verified",
-			roles:               RoleSet{roleSAMLAllowed},
-			authPrefSamlEnabled: true,
-			state: AccessState{
-				MFARequired: MFARequiredAlways,
-				MFAVerified: false,
-			},
-			errAssertionFunc: func(tt require.TestingT, err error, i ...interface{}) {
-				require.ErrorIs(t, err, ErrSessionMFARequired)
-			},
-		},
-		{
-			name:                "MFA required by cluster or all roles, mfa verified",
-			roles:               RoleSet{roleSAMLAllowed},
-			authPrefSamlEnabled: true,
-			state: AccessState{
-				MFARequired: MFARequiredPerRole,
-				MFAVerified: true,
-			},
-			errAssertionFunc: require.NoError,
-		},
-		{
-			name:                "MFA required by some roles, mfa not verified",
-			roles:               RoleSet{roleSAMLAllowed, roleSAMLAllowedMFARequired},
-			authPrefSamlEnabled: true,
-			state: AccessState{
-				MFARequired: MFARequiredPerRole,
-				MFAVerified: false,
-			},
-			errAssertionFunc: func(tt require.TestingT, err error, i ...interface{}) {
-				require.ErrorIs(t, err, ErrSessionMFARequired)
-			},
-		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -5826,7 +5766,7 @@ func TestCheckAccessToSAMLIdP(t *testing.T) {
 				},
 			})
 			require.NoError(t, err)
-			tc.errAssertionFunc(t, tc.roles.CheckAccessToSAMLIdP(authPref, tc.state))
+			tc.errAssertionFunc(t, tc.roles.CheckAccessToSAMLIdP(authPref))
 		})
 	}
 }

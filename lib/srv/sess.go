@@ -168,6 +168,7 @@ func NewSessionRegistry(cfg SessionRegistryConfig) (*SessionRegistry, error) {
 		return nil, trace.Wrap(err)
 	}
 
+	sudoers := cfg.Srv.GetHostSudoers()
 	return &SessionRegistry{
 		SessionRegistryConfig: cfg,
 		log: log.WithFields(log.Fields{
@@ -175,7 +176,7 @@ func NewSessionRegistry(cfg SessionRegistryConfig) (*SessionRegistry, error) {
 		}),
 		sessions: make(map[rsession.ID]*session),
 		users:    cfg.Srv.GetHostUsers(),
-		sudoers:  cfg.Srv.GetHostSudoers(),
+		sudoers:  sudoers,
 		sessionsByUser: &userSessions{
 			sessionsByUser: make(map[string]int),
 		},
@@ -263,7 +264,7 @@ func (s *SessionRegistry) TryWriteSudoersFile(ctx *ServerContext) error {
 }
 
 func (s *SessionRegistry) TryCreateHostUser(ctx *ServerContext) error {
-	if !ctx.srv.GetCreateHostUser() || s.users == nil {
+	if !ctx.srv.GetCreateHostUser() {
 		s.log.Debug("Not creating host user: node has disabled host user creation.")
 		return nil // not an error to not be able to create host users
 	}
@@ -906,19 +907,18 @@ func (s *session) haltTerminal() {
 // prematurely can result in missing audit events, session recordings, and other
 // unexpected errors.
 func (s *session) Close() error {
+	s.Stop()
+
 	s.BroadcastMessage("Closing session...")
 	s.log.Infof("Closing session")
 
-	// Remove session parties and close client connections. Since terminals
-	// might await for all the parties to be released, we must close them first.
-	// Closing the parties will cause their SSH channel to be closed, meaning
-	// any goroutine reading from it will be released.
+	serverSessions.Dec()
+
+	// Remove session parties and close client connections.
 	for _, p := range s.getParties() {
 		p.Close()
 	}
 
-	s.Stop()
-	serverSessions.Dec()
 	s.registry.removeSession(s)
 
 	// Complete the session recording

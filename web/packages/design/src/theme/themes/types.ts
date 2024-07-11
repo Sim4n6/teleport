@@ -20,17 +20,6 @@ import { fonts } from '../fonts';
 import { blueGrey } from '../palette';
 import typography, { fontSizes, fontWeights } from '../typography';
 
-export type TextAndBackgroundColors = {
-  text: string;
-  background: string;
-};
-
-type InteractiveColorGroup = {
-  default: TextAndBackgroundColors;
-  hover: TextAndBackgroundColors;
-  active: TextAndBackgroundColors;
-};
-
 export type ThemeColors = {
   /**
     Colors in `levels` are used to reflect the perceived depth of elements in the UI.
@@ -63,23 +52,17 @@ export type ThemeColors = {
    * Interactive colors are used to highlight different actions or states
    * based on intent.
    *
-   * For example, primary would be used for as selected states.
+   * For example, primary would be used for as selected states,
+   * or hover over primary intent actions.
    */
   interactive: {
-    solid: {
-      primary: InteractiveColorGroup;
-      success: InteractiveColorGroup;
-      accent: InteractiveColorGroup;
-      danger: InteractiveColorGroup;
-      alert: InteractiveColorGroup;
-    };
     tonal: {
-      primary: TextAndBackgroundColors[];
-      neutral: TextAndBackgroundColors[];
-      success: TextAndBackgroundColors[];
-      danger: TextAndBackgroundColors[];
-      alert: TextAndBackgroundColors[];
-      informational: TextAndBackgroundColors[];
+      primary: string[];
+      neutral: string[];
+      success: string[];
+      danger: string[];
+      alert: string[];
+      informational: string[];
     };
   };
 
@@ -104,7 +87,6 @@ export type ThemeColors = {
     textDisabled: string;
     bgDisabled: string;
 
-    /** @deprecated Use `interactive.solid.primary` instead. */
     primary: {
       text: string;
       default: string;
@@ -112,7 +94,6 @@ export type ThemeColors = {
       active: string;
     };
 
-    /** @deprecated Use `interactive.tonal.neutral` instead. */
     secondary: {
       default: string;
       hover: string;
@@ -126,7 +107,6 @@ export type ThemeColors = {
       border: string;
     };
 
-    /** @deprecated Use `interactive.solid.danger` instead. */
     warning: {
       text: string;
       default: string;
@@ -136,7 +116,6 @@ export type ThemeColors = {
 
     trashButton: { default: string; hover: string };
 
-    /** @deprecated Use `interactive.solid.accent` instead. */
     link: {
       default: string;
       hover: string;
@@ -150,28 +129,23 @@ export type ThemeColors = {
 
   progressBarColor: string;
 
-  /** @deprecated Use `interactive.solid.danger` instead. */
   error: {
     main: string;
     hover: string;
     active: string;
   };
-
-  /** @deprecated Use `interactive.solid.alert` instead. */
   warning: {
     main: string;
     hover: string;
     active: string;
   };
 
-  /** @deprecated Use `interactive.solid.success` instead. */
   success: {
     main: string;
     hover: string;
     active: string;
   };
 
-  /** @deprecated Use `interactive.solid.accent` instead. */
   accent: {
     main: string;
     hover: string;
@@ -312,6 +286,7 @@ type VisualisationColors = {
 
 export type SharedStyles = {
   sidebarWidth: number;
+  dockedAssistWidth: number;
   boxShadow: string[];
   breakpoints: {
     mobile: number;

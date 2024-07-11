@@ -8,8 +8,7 @@ exports[`another session active 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -18,49 +17,29 @@ exports[`another session active 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: #9F85FF;
   color: #000000;
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  background: #9F85FF;
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
+  padding: 0px 24px;
   margin-right: 16px;
 }
 
-.c10:focus-visible,
-.teleport-button__force-focus-visible .c10 {
-  background-color: #9F85FF;
-  color: #000000;
-  border-color: #000000;
-  border-radius: 2px;
-  outline: 2px solid #9F85FF;
-}
-
 .c10:hover,
-.teleport-button__force-hover .c10 {
-  background-color: #B29DFF;
-  border-color: transparent;
-  color: #000000;
-  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.20), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12);
+.c10:focus {
+  background: #B29DFF;
 }
 
-.c10:active,
-.teleport-button__force-active .c10 {
-  background-color: #C5B6FF;
-  border-color: transparent;
-  color: #000000;
+.c10:active {
+  background: #C5B6FF;
 }
 
 .c10:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -71,8 +50,7 @@ exports[`another session active 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -81,48 +59,28 @@ exports[`another session active 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0.07);
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
-}
-
-.c11:focus-visible,
-.teleport-button__force-focus-visible .c11 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
+  padding: 0px 24px;
 }
 
 .c11:hover,
-.teleport-button__force-hover .c11 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c11:focus {
+  background: rgba(255,255,255,0.13);
 }
 
-.c11:active,
-.teleport-button__force-active .c11 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c11:active {
+  background: rgba(255,255,255,0.18);
 }
 
 .c11:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -248,13 +206,13 @@ exports[`another session active 1`] = `
       >
         <button
           class="c10"
-          fill="filled"
+          kind="primary"
         >
           Abort
         </button>
         <button
           class="c11"
-          fill="filled"
+          kind="secondary"
         >
           Continue
         </button>
@@ -272,8 +230,7 @@ exports[`connected settings false 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -282,50 +239,30 @@ exports[`connected settings false 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: #9F85FF;
   color: #000000;
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  background: #9F85FF;
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
+  padding: 0px 24px;
   padding-left: 8px;
   padding-right: 8px;
 }
 
-.c9:focus-visible,
-.teleport-button__force-focus-visible .c9 {
-  background-color: #9F85FF;
-  color: #000000;
-  border-color: #000000;
-  border-radius: 2px;
-  outline: 2px solid #9F85FF;
-}
-
 .c9:hover,
-.teleport-button__force-hover .c9 {
-  background-color: #B29DFF;
-  border-color: transparent;
-  color: #000000;
-  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.20), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12);
+.c9:focus {
+  background: #B29DFF;
 }
 
-.c9:active,
-.teleport-button__force-active .c9 {
-  background-color: #C5B6FF;
-  border-color: transparent;
-  color: #000000;
+.c9:active {
+  background: #C5B6FF;
 }
 
 .c9:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -527,7 +464,7 @@ exports[`connected settings false 1`] = `
           </div>
           <button
             class="c9 c10"
-            fill="filled"
+            kind="primary"
             title="Warnings"
           >
             <div
@@ -610,8 +547,7 @@ exports[`connected settings true 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -620,50 +556,30 @@ exports[`connected settings true 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: #9F85FF;
   color: #000000;
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  background: #9F85FF;
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
+  padding: 0px 24px;
   padding-left: 8px;
   padding-right: 8px;
 }
 
-.c9:focus-visible,
-.teleport-button__force-focus-visible .c9 {
-  background-color: #9F85FF;
-  color: #000000;
-  border-color: #000000;
-  border-radius: 2px;
-  outline: 2px solid #9F85FF;
-}
-
 .c9:hover,
-.teleport-button__force-hover .c9 {
-  background-color: #B29DFF;
-  border-color: transparent;
-  color: #000000;
-  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.20), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12);
+.c9:focus {
+  background: #B29DFF;
 }
 
-.c9:active,
-.teleport-button__force-active .c9 {
-  background-color: #C5B6FF;
-  border-color: transparent;
-  color: #000000;
+.c9:active {
+  background: #C5B6FF;
 }
 
 .c9:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -865,7 +781,7 @@ exports[`connected settings true 1`] = `
           </div>
           <button
             class="c9 c10"
-            fill="filled"
+            kind="primary"
             title="Warnings"
           >
             <div
@@ -948,8 +864,7 @@ exports[`connection error 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -958,49 +873,29 @@ exports[`connection error 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0.07);
   min-height: 40px;
-  font-size: 14px;
-  line-height: 20px;
-  letter-spacing: 0.175px;
+  font-size: 12px;
+  padding: 0px 40px;
   width: 30%;
 }
 
-.c11:focus-visible,
-.teleport-button__force-focus-visible .c11 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
-}
-
 .c11:hover,
-.teleport-button__force-hover .c11 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c11:focus {
+  background: rgba(255,255,255,0.13);
 }
 
-.c11:active,
-.teleport-button__force-active .c11 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c11:active {
+  background: rgba(255,255,255,0.18);
 }
 
 .c11:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -1153,7 +1048,7 @@ exports[`connection error 1`] = `
       >
         <button
           class="c11"
-          fill="filled"
+          kind="secondary"
           width="30%"
         >
           Refresh
@@ -1172,8 +1067,7 @@ exports[`disconnected 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -1182,50 +1076,30 @@ exports[`disconnected 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: #9F85FF;
   color: #000000;
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  background: #9F85FF;
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
+  padding: 0px 24px;
   padding-left: 8px;
   padding-right: 8px;
 }
 
-.c9:focus-visible,
-.teleport-button__force-focus-visible .c9 {
-  background-color: #9F85FF;
-  color: #000000;
-  border-color: #000000;
-  border-radius: 2px;
-  outline: 2px solid #9F85FF;
-}
-
 .c9:hover,
-.teleport-button__force-hover .c9 {
-  background-color: #B29DFF;
-  border-color: transparent;
-  color: #000000;
-  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.20), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12);
+.c9:focus {
+  background: #B29DFF;
 }
 
-.c9:active,
-.teleport-button__force-active .c9 {
-  background-color: #C5B6FF;
-  border-color: transparent;
-  color: #000000;
+.c9:active {
+  background: #C5B6FF;
 }
 
 .c9:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -1427,7 +1301,7 @@ exports[`disconnected 1`] = `
           </div>
           <button
             class="c9 c10"
-            fill="filled"
+            kind="primary"
             title="Warnings"
           >
             <div
@@ -1510,8 +1384,7 @@ exports[`fetch error 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -1520,49 +1393,29 @@ exports[`fetch error 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0.07);
   min-height: 40px;
-  font-size: 14px;
-  line-height: 20px;
-  letter-spacing: 0.175px;
+  font-size: 12px;
+  padding: 0px 40px;
   width: 30%;
 }
 
-.c11:focus-visible,
-.teleport-button__force-focus-visible .c11 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
-}
-
 .c11:hover,
-.teleport-button__force-hover .c11 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c11:focus {
+  background: rgba(255,255,255,0.13);
 }
 
-.c11:active,
-.teleport-button__force-active .c11 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c11:active {
+  background: rgba(255,255,255,0.18);
 }
 
 .c11:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -1715,7 +1568,7 @@ exports[`fetch error 1`] = `
       >
         <button
           class="c11"
-          fill="filled"
+          kind="secondary"
           width="30%"
         >
           Refresh
@@ -1734,8 +1587,7 @@ exports[`fetch processing 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -1744,50 +1596,30 @@ exports[`fetch processing 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: #9F85FF;
   color: #000000;
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  background: #9F85FF;
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
+  padding: 0px 24px;
   padding-left: 8px;
   padding-right: 8px;
 }
 
-.c9:focus-visible,
-.teleport-button__force-focus-visible .c9 {
-  background-color: #9F85FF;
-  color: #000000;
-  border-color: #000000;
-  border-radius: 2px;
-  outline: 2px solid #9F85FF;
-}
-
 .c9:hover,
-.teleport-button__force-hover .c9 {
-  background-color: #B29DFF;
-  border-color: transparent;
-  color: #000000;
-  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.20), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12);
+.c9:focus {
+  background: #B29DFF;
 }
 
-.c9:active,
-.teleport-button__force-active .c9 {
-  background-color: #C5B6FF;
-  border-color: transparent;
-  color: #000000;
+.c9:active {
+  background: #C5B6FF;
 }
 
 .c9:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -1995,7 +1827,7 @@ exports[`fetch processing 1`] = `
           </div>
           <button
             class="c9 c10"
-            fill="filled"
+            kind="primary"
             title="Warnings"
           >
             <div
@@ -2081,8 +1913,7 @@ exports[`processing 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -2091,50 +1922,30 @@ exports[`processing 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: #9F85FF;
   color: #000000;
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  background: #9F85FF;
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
+  padding: 0px 24px;
   padding-left: 8px;
   padding-right: 8px;
 }
 
-.c9:focus-visible,
-.teleport-button__force-focus-visible .c9 {
-  background-color: #9F85FF;
-  color: #000000;
-  border-color: #000000;
-  border-radius: 2px;
-  outline: 2px solid #9F85FF;
-}
-
 .c9:hover,
-.teleport-button__force-hover .c9 {
-  background-color: #B29DFF;
-  border-color: transparent;
-  color: #000000;
-  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.20), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12);
+.c9:focus {
+  background: #B29DFF;
 }
 
-.c9:active,
-.teleport-button__force-active .c9 {
-  background-color: #C5B6FF;
-  border-color: transparent;
-  color: #000000;
+.c9:active {
+  background: #C5B6FF;
 }
 
 .c9:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -2342,7 +2153,7 @@ exports[`processing 1`] = `
           </div>
           <button
             class="c9 c10"
-            fill="filled"
+            kind="primary"
             title="Warnings"
           >
             <div
@@ -2428,8 +2239,7 @@ exports[`tdp processing 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -2438,50 +2248,30 @@ exports[`tdp processing 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: #9F85FF;
   color: #000000;
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  background: #9F85FF;
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
+  padding: 0px 24px;
   padding-left: 8px;
   padding-right: 8px;
 }
 
-.c9:focus-visible,
-.teleport-button__force-focus-visible .c9 {
-  background-color: #9F85FF;
-  color: #000000;
-  border-color: #000000;
-  border-radius: 2px;
-  outline: 2px solid #9F85FF;
-}
-
 .c9:hover,
-.teleport-button__force-hover .c9 {
-  background-color: #B29DFF;
-  border-color: transparent;
-  color: #000000;
-  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.20), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12);
+.c9:focus {
+  background: #B29DFF;
 }
 
-.c9:active,
-.teleport-button__force-active .c9 {
-  background-color: #C5B6FF;
-  border-color: transparent;
-  color: #000000;
+.c9:active {
+  background: #C5B6FF;
 }
 
 .c9:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -2689,7 +2479,7 @@ exports[`tdp processing 1`] = `
           </div>
           <button
             class="c9 c10"
-            fill="filled"
+            kind="primary"
             title="Warnings"
           >
             <div
@@ -2775,8 +2565,7 @@ exports[`unintended disconnect 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -2785,49 +2574,29 @@ exports[`unintended disconnect 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0.07);
   min-height: 40px;
-  font-size: 14px;
-  line-height: 20px;
-  letter-spacing: 0.175px;
+  font-size: 12px;
+  padding: 0px 40px;
   width: 30%;
 }
 
-.c11:focus-visible,
-.teleport-button__force-focus-visible .c11 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
-}
-
 .c11:hover,
-.teleport-button__force-hover .c11 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c11:focus {
+  background: rgba(255,255,255,0.13);
 }
 
-.c11:active,
-.teleport-button__force-active .c11 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c11:active {
+  background: rgba(255,255,255,0.18);
 }
 
 .c11:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -2980,7 +2749,7 @@ exports[`unintended disconnect 1`] = `
       >
         <button
           class="c11"
-          fill="filled"
+          kind="secondary"
           width="30%"
         >
           Refresh
@@ -2999,8 +2768,7 @@ exports[`webauthn prompt 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -3009,50 +2777,30 @@ exports[`webauthn prompt 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: #9F85FF;
   color: #000000;
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  background: #9F85FF;
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
+  padding: 0px 24px;
   margin-right: 16px;
   width: 130px;
 }
 
-.c11:focus-visible,
-.teleport-button__force-focus-visible .c11 {
-  background-color: #9F85FF;
-  color: #000000;
-  border-color: #000000;
-  border-radius: 2px;
-  outline: 2px solid #9F85FF;
-}
-
 .c11:hover,
-.teleport-button__force-hover .c11 {
-  background-color: #B29DFF;
-  border-color: transparent;
-  color: #000000;
-  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.20), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12);
+.c11:focus {
+  background: #B29DFF;
 }
 
-.c11:active,
-.teleport-button__force-active .c11 {
-  background-color: #C5B6FF;
-  border-color: transparent;
-  color: #000000;
+.c11:active {
+  background: #C5B6FF;
 }
 
 .c11:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -3063,8 +2811,7 @@ exports[`webauthn prompt 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -3073,48 +2820,28 @@ exports[`webauthn prompt 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0.07);
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
-}
-
-.c12:focus-visible,
-.teleport-button__force-focus-visible .c12 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
+  padding: 0px 24px;
 }
 
 .c12:hover,
-.teleport-button__force-hover .c12 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c12:focus {
+  background: rgba(255,255,255,0.13);
 }
 
-.c12:active,
-.teleport-button__force-active .c12 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c12:active {
+  background: rgba(255,255,255,0.18);
 }
 
 .c12:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -3253,14 +2980,14 @@ exports[`webauthn prompt 1`] = `
       >
         <button
           class="c11"
-          fill="filled"
+          kind="primary"
           width="130px"
         >
           OK
         </button>
         <button
           class="c12"
-          fill="filled"
+          kind="secondary"
         >
           Cancel
         </button>

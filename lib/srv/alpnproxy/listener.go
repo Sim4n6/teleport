@@ -29,7 +29,6 @@ import (
 	"github.com/gravitational/trace"
 
 	"github.com/gravitational/teleport/api/constants"
-	"github.com/gravitational/teleport/api/utils/keys"
 	"github.com/gravitational/teleport/lib/tlsca"
 	"github.com/gravitational/teleport/lib/utils"
 )
@@ -246,11 +245,7 @@ func (r *CertGenListener) generateCertFor(host string) (*tls.Certificate, error)
 		return nil, trace.Wrap(err)
 	}
 
-	keyPem, err := keys.MarshalPrivateKey(certKey)
-	if err != nil {
-		return nil, trace.Wrap(err)
-	}
-	cert, err := tls.X509KeyPair(certPem, keyPem)
+	cert, err := tls.X509KeyPair(certPem, tlsca.MarshalPrivateKeyPEM(certKey))
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}

@@ -91,28 +91,41 @@ func (k *PrivateKey) PrivateKeyPEM() []byte {
 	return k.keyPEM
 }
 
-// TLSCertificate parses the given TLS certificate(s) paired with the private
-// key to return a tls.Certificate, ready to be used in a TLS handshake.
+// TLSCertificate parses the given TLS certificate(s) paired with the private key
+// to rerturn a tls.Certificate, ready to be used in a TLS handshake.
 func (k *PrivateKey) TLSCertificate(certPEMBlock []byte) (tls.Certificate, error) {
-	return TLSCertificateForSigner(k.Signer, certPEMBlock)
-}
-
-// TLSCertificate parses the given TLS certificate(s) paired with the given
-// signer to return a tls.Certificate, ready to be used in a TLS handshake.
-func TLSCertificateForSigner(signer crypto.Signer, certPEMBlock []byte) (tls.Certificate, error) {
 	cert := tls.Certificate{
-		PrivateKey: signer,
+		PrivateKey: k.Signer,
 	}
 
-	// Parse the certificate and verify it is valid.
-	x509Cert, rawCerts, err := X509Certificate(certPEMBlock)
+	var skippedBlockTypes []string
+	for {
+		var certDERBlock *pem.Block
+		certDERBlock, certPEMBlock = pem.Decode(certPEMBlock)
+		if certDERBlock == nil {
+			break
+		}
+		if certDERBlock.Type == "CERTIFICATE" {
+			cert.Certificate = append(cert.Certificate, certDERBlock.Bytes)
+		} else {
+			skippedBlockTypes = append(skippedBlockTypes, certDERBlock.Type)
+		}
+	}
+
+	if len(cert.Certificate) == 0 {
+		if len(skippedBlockTypes) == 0 {
+			return tls.Certificate{}, trace.BadParameter("tls: failed to find any PEM data in certificate input")
+		}
+		return tls.Certificate{}, trace.BadParameter("tls: failed to find \"CERTIFICATE\" PEM block in certificate input after skipping PEM blocks of the following types: %v", skippedBlockTypes)
+	}
+
+	// Check that the certificate's public key matches this private key.
+	x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
 	if err != nil {
 		return tls.Certificate{}, trace.Wrap(err)
 	}
-	cert.Certificate = rawCerts
 
-	// Check that the certificate's public key matches this private key.
-	if keyPub, ok := signer.Public().(cryptoPublicKeyI); !ok {
+	if keyPub, ok := k.Public().(cryptoPublicKeyI); !ok {
 		return tls.Certificate{}, trace.BadParameter("private key does not contain a valid public key")
 	} else if !keyPub.Equal(x509Cert.PublicKey) {
 		return tls.Certificate{}, trace.BadParameter("private key does not match certificate's public key")
@@ -125,7 +138,7 @@ func TLSCertificateForSigner(signer crypto.Signer, certPEMBlock []byte) (tls.Cer
 func (k *PrivateKey) PPKFile() ([]byte, error) {
 	rsaKey, ok := k.Signer.(*rsa.PrivateKey)
 	if !ok {
-		return nil, trace.BadParameter("only RSA keys are supported for PPK files, found private key of type %T", k.Signer)
+		return nil, trace.BadParameter("cannot use private key of type %T as rsa.PrivateKey", k)
 	}
 	ppkFile, err := ppk.ConvertToPPK(rsaKey, k.MarshalSSHPublicKey())
 	if err != nil {
@@ -134,18 +147,16 @@ func (k *PrivateKey) PPKFile() ([]byte, error) {
 	return ppkFile, nil
 }
 
-// SoftwarePrivateKeyPEM returns the PEM encoding of the private key. If the key
-// is not a raw software RSA, ECDSA, or Ed25519 key, then an error will be returned.
+// RSAPrivateKeyPEM returns a PEM encoded RSA private key for the given key.
+// If the given key is not an RSA key, then an error will be returned.
 //
-// This is used by some integrations which currently only support raw software
-// private keys as opposed to hardware keys (yubikeys), like Kubernetes,
-// MongoDB, and PPK files for windows.
-func (k *PrivateKey) SoftwarePrivateKeyPEM() ([]byte, error) {
-	switch k.Signer.(type) {
-	case *rsa.PrivateKey, *ecdsa.PrivateKey, *ed25519.PrivateKey:
-		return k.keyPEM, nil
+// This is used by some integrations which currently only support raw RSA private keys,
+// like Kubernetes, MongoDB, and PPK files for windows.
+func (k *PrivateKey) RSAPrivateKeyPEM() ([]byte, error) {
+	if _, ok := k.Signer.(*rsa.PrivateKey); !ok {
+		return nil, trace.BadParameter("cannot get rsa key PEM for private key of type %T", k.Signer)
 	}
-	return nil, trace.BadParameter("cannot get software key PEM for private key of type %T", k.Signer)
+	return k.keyPEM, nil
 }
 
 // LoadPrivateKey returns the PrivateKey for the given key file.
@@ -299,55 +310,27 @@ func X509KeyPair(certPEMBlock, keyPEMBlock []byte) (tls.Certificate, error) {
 	return tlsCert, nil
 }
 
-// AssertSoftwarePrivateKey returns nil if the given private key PEM looks like a
-// raw software private key as opposed to a hardware key (yubikey).
-// This function does a similar check to ParsePrivateKey, followed by
-// key.SoftwarePrivateKeyPEM() without parsing the private fully into a
-// crypto.Signer. This reduces the time it takes to check if a private key is
-// a software private key and improves the performance compared to
-// ParsePrivateKey by a factor of 20.
-func AssertSoftwarePrivateKey(privKey []byte) error {
+// IsRSAPrivateKey returns true if the given private key is an RSA private key.
+// This function does a similar check to ParsePrivateKey, followed by key.RSAPrivateKeyPEM()
+// without parsing the private fully into a crypto.Signer.
+// This reduces the time it takes to check if a private key is an RSA private key
+// and improves the performance compared to ParsePrivateKey by a factor of 20.
+func IsRSAPrivateKey(privKey []byte) bool {
 	block, _ := pem.Decode(privKey)
 	if block == nil {
-		return trace.BadParameter("no valid PEM block found")
+		return false
 	}
 	switch block.Type {
-	case PKCS1PrivateKeyType, PKCS8PrivateKeyType, ECPrivateKeyType:
-		return nil
-	}
-	return trace.BadParameter("found PEM block with type %q, only the following types are supported: %v",
-		block.Type, []string{PKCS1PrivateKeyType, PKCS8PrivateKeyType, ECPrivateKeyType})
-}
-
-// X509Certificate takes a PEM-encoded file containing one or more certificates, extracts all certificates, and parses
-// the Leaf certificate (the first one in the chain). If you are loading both a certificate and a private key, you
-// should use X509KeyPair instead.
-func X509Certificate(certPEMBlock []byte) (*x509.Certificate, [][]byte, error) {
-	var skippedBlockTypes []string
-	var rawCerts [][]byte
-	for {
-		var certDERBlock *pem.Block
-		certDERBlock, certPEMBlock = pem.Decode(certPEMBlock)
-		if certDERBlock == nil {
-			break
+	case PKCS1PrivateKeyType:
+		return true
+	case PKCS8PrivateKeyType:
+		priv, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+		if err != nil {
+			return false
 		}
-		if certDERBlock.Type == "CERTIFICATE" {
-			rawCerts = append(rawCerts, certDERBlock.Bytes)
-		} else {
-			skippedBlockTypes = append(skippedBlockTypes, certDERBlock.Type)
-		}
+		_, ok := priv.(*rsa.PrivateKey)
+		return ok
+	default:
+		return false
 	}
-
-	if len(rawCerts) == 0 {
-		if len(skippedBlockTypes) == 0 {
-			return nil, nil, trace.BadParameter("tls: failed to find any PEM data in certificate input")
-		}
-		return nil, nil, trace.BadParameter("tls: failed to find \"CERTIFICATE\" PEM block in certificate input after skipping PEM blocks of the following types: %v", skippedBlockTypes)
-	}
-
-	x509Cert, err := x509.ParseCertificate(rawCerts[0])
-	if err != nil {
-		return nil, rawCerts, trace.Wrap(err, "failed to parse certificate")
-	}
-	return x509Cert, rawCerts, nil
 }

@@ -32,7 +32,7 @@ export function AccessDurationRequest({
   onMaxDurationChange(s: Option<number>): void;
 }) {
   return (
-    <LabelInput color="text.slightlyMuted">
+    <LabelInput typography="body2" color="text.slightlyMuted">
       <Flex alignItems="center">
         <Text mr={1}>Access Duration</Text>
         <ToolTipInfo>
@@ -41,6 +41,7 @@ export function AccessDurationRequest({
           requested.
         </ToolTipInfo>
       </Flex>
+
       <Select
         options={maxDurationOptions}
         onChange={onMaxDurationChange}

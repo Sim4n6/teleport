@@ -19,9 +19,8 @@
 import FieldInput from 'shared/components/FieldInput';
 import styled from 'styled-components';
 import React, { forwardRef } from 'react';
-import { FieldInputProps } from 'shared/components/FieldInput';
 
-export const ConfigFieldInput = styled(FieldInput)`
+export const ConfigFieldInput: typeof FieldInput = styled(FieldInput)`
   input {
     background: inherit;
     font-size: 14px;
@@ -29,7 +28,9 @@ export const ConfigFieldInput = styled(FieldInput)`
   }
 `;
 
-const ConfigFieldInputWithoutStepper = styled(ConfigFieldInput)`
+const ConfigFieldInputWithoutStepper: typeof ConfigFieldInput = styled(
+  ConfigFieldInput
+)`
   input {
     ::-webkit-inner-spin-button {
       -webkit-appearance: none;
@@ -43,7 +44,7 @@ const ConfigFieldInputWithoutStepper = styled(ConfigFieldInput)`
   }
 `;
 
-export const PortFieldInput = forwardRef<HTMLInputElement, FieldInputProps>(
+export const PortFieldInput: typeof ConfigFieldInput = forwardRef(
   (props, ref) => (
     <ConfigFieldInputWithoutStepper
       type="number"

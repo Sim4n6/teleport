@@ -21,8 +21,7 @@ package jwt
 
 import (
 	"crypto"
-	"crypto/ecdsa"
-	"crypto/ed25519"
+	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
@@ -40,8 +39,10 @@ import (
 	"github.com/gravitational/trace"
 	"github.com/jonboulle/clockwork"
 
+	"github.com/gravitational/teleport/api/constants"
 	"github.com/gravitational/teleport/api/types"
 	"github.com/gravitational/teleport/api/types/wrappers"
+	"github.com/gravitational/teleport/lib/utils"
 )
 
 // Config defines the clock and PEM encoded bytes of a public and private
@@ -55,6 +56,9 @@ type Config struct {
 
 	// PrivateKey is used to sign and verify tokens.
 	PrivateKey crypto.Signer
+
+	// Algorithm is algorithm used to sign JWT tokens.
+	Algorithm jose.SignatureAlgorithm
 
 	// ClusterName is the name of the cluster that will be signing the JWT tokens.
 	ClusterName string
@@ -71,6 +75,9 @@ func (c *Config) CheckAndSetDefaults() error {
 
 	if c.PrivateKey == nil && c.PublicKey == nil {
 		return trace.BadParameter("public or private key is required")
+	}
+	if c.Algorithm == "" {
+		return trace.BadParameter("algorithm is required")
 	}
 	if c.ClusterName == "" {
 		return trace.BadParameter("cluster name is required")
@@ -152,19 +159,13 @@ func (k *Key) signAny(claims any, opts *jose.SignerOptions) (string, error) {
 	// Create a signer with configured private key and algorithm.
 	var signer interface{}
 	switch k.config.PrivateKey.(type) {
-	case *rsa.PrivateKey, *ecdsa.PrivateKey, ed25519.PrivateKey:
+	case *rsa.PrivateKey:
 		signer = k.config.PrivateKey
 	default:
 		signer = cryptosigner.Opaque(k.config.PrivateKey)
 	}
-
-	algorithm, err := joseAlgorithm(k.config.PrivateKey.Public())
-	if err != nil {
-		return "", trace.Wrap(err)
-	}
-
 	signingKey := jose.SigningKey{
-		Algorithm: algorithm,
+		Algorithm: k.config.Algorithm,
 		Key:       signer,
 	}
 
@@ -182,18 +183,6 @@ func (k *Key) signAny(claims any, opts *jose.SignerOptions) (string, error) {
 		return "", trace.Wrap(err)
 	}
 	return token, nil
-}
-
-func joseAlgorithm(pub crypto.PublicKey) (jose.SignatureAlgorithm, error) {
-	switch pub.(type) {
-	case *rsa.PublicKey:
-		return jose.RS256, nil
-	case *ecdsa.PublicKey:
-		return jose.ES256, nil
-	case ed25519.PublicKey:
-		return jose.EdDSA, nil
-	}
-	return "", trace.BadParameter("unsupported public key type %T", pub)
 }
 
 func (k *Key) Sign(p SignParams) (string, error) {
@@ -277,10 +266,11 @@ func (k *Key) SignEntraOIDC(p SignParams) (string, error) {
 
 	// Azure expect a `kid` header to be present and non-empty,
 	// unlike e.g. AWS which accepts an empty `kid` string value.
-	kid, err := KeyID(k.config.PublicKey)
-	if err != nil {
-		return "", trace.Wrap(err)
+	publicKey, ok := k.config.PublicKey.(*rsa.PublicKey)
+	if !ok {
+		return "", trace.BadParameter("expected an RSA public key")
 	}
+	kid := KeyID(publicKey)
 	opts := (&jose.SignerOptions{}).
 		WithHeader(jose.HeaderKey("kid"), kid)
 	return k.sign(claims, opts)
@@ -559,6 +549,22 @@ type Claims struct {
 
 	// Traits returns the traits assigned to the user within Teleport.
 	Traits wrappers.Traits `json:"traits"`
+}
+
+// GenerateKeyPair generates and return a PEM encoded private and public
+// key in the format used by this package.
+func GenerateKeyPair() ([]byte, []byte, error) {
+	privateKey, err := rsa.GenerateKey(rand.Reader, constants.RSAKeySize)
+	if err != nil {
+		return nil, nil, trace.Wrap(err)
+	}
+
+	public, private, err := utils.MarshalPrivateKey(privateKey)
+	if err != nil {
+		return nil, nil, trace.Wrap(err)
+	}
+
+	return public, private, nil
 }
 
 // CheckNotBefore ensures the token was not issued in the future.

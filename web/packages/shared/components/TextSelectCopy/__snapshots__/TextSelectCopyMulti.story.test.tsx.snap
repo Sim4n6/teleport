@@ -46,8 +46,7 @@ exports[`render multi bash texts 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -56,48 +55,28 @@ exports[`render multi bash texts 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0.07);
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
-}
-
-.c10:focus-visible,
-.teleport-button__force-focus-visible .c10 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
+  padding: 0px 24px;
 }
 
 .c10:hover,
-.teleport-button__force-hover .c10 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c10:focus {
+  background: rgba(255,255,255,0.13);
 }
 
-.c10:active,
-.teleport-button__force-active .c10 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c10:active {
+  background: rgba(255,255,255,0.18);
 }
 
 .c10:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -207,7 +186,7 @@ exports[`render multi bash texts 1`] = `
           >
             <button
               class="c10 c11"
-              fill="filled"
+              kind="secondary"
             >
               <div
                 class="c12 icon-container"
@@ -285,7 +264,7 @@ exports[`render multi bash texts 1`] = `
           >
             <button
               class="c10 c11"
-              fill="filled"
+              kind="secondary"
             >
               <div
                 class="c12 icon-container"
@@ -363,7 +342,7 @@ exports[`render multi bash texts 1`] = `
           >
             <button
               class="c10 c11"
-              fill="filled"
+              kind="secondary"
             >
               <div
                 class="c12 icon-container"
@@ -463,8 +442,7 @@ exports[`render multi bash texts with comment 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -473,48 +451,28 @@ exports[`render multi bash texts with comment 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0.07);
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
-}
-
-.c11:focus-visible,
-.teleport-button__force-focus-visible .c11 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
+  padding: 0px 24px;
 }
 
 .c11:hover,
-.teleport-button__force-hover .c11 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c11:focus {
+  background: rgba(255,255,255,0.13);
 }
 
-.c11:active,
-.teleport-button__force-active .c11 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c11:active {
+  background: rgba(255,255,255,0.18);
 }
 
 .c11:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -634,7 +592,7 @@ exports[`render multi bash texts with comment 1`] = `
           >
             <button
               class="c11 c12"
-              fill="filled"
+              kind="secondary"
             >
               <div
                 class="c13 icon-container"
@@ -712,7 +670,7 @@ exports[`render multi bash texts with comment 1`] = `
           >
             <button
               class="c11 c12"
-              fill="filled"
+              kind="secondary"
             >
               <div
                 class="c13 icon-container"
@@ -801,7 +759,7 @@ https://apt.releases.teleport.dev/stable/v10" \\
           >
             <button
               class="c11 c12"
-              fill="filled"
+              kind="secondary"
             >
               <div
                 class="c13 icon-container"
@@ -895,8 +853,7 @@ exports[`render non bash single text 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -905,48 +862,28 @@ exports[`render non bash single text 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0.07);
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
-}
-
-.c10:focus-visible,
-.teleport-button__force-focus-visible .c10 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
+  padding: 0px 24px;
 }
 
 .c10:hover,
-.teleport-button__force-hover .c10 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c10:focus {
+  background: rgba(255,255,255,0.13);
 }
 
-.c10:active,
-.teleport-button__force-active .c10 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c10:active {
+  background: rgba(255,255,255,0.18);
 }
 
 .c10:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -1051,7 +988,7 @@ exports[`render non bash single text 1`] = `
           >
             <button
               class="c10 c11"
-              fill="filled"
+              kind="secondary"
             >
               <div
                 class="c12 icon-container"
@@ -1145,8 +1082,7 @@ exports[`render single bash text 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -1155,48 +1091,28 @@ exports[`render single bash text 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0.07);
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
-}
-
-.c10:focus-visible,
-.teleport-button__force-focus-visible .c10 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
+  padding: 0px 24px;
 }
 
 .c10:hover,
-.teleport-button__force-hover .c10 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c10:focus {
+  background: rgba(255,255,255,0.13);
 }
 
-.c10:active,
-.teleport-button__force-active .c10 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c10:active {
+  background: rgba(255,255,255,0.18);
 }
 
 .c10:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -1306,7 +1222,7 @@ exports[`render single bash text 1`] = `
           >
             <button
               class="c10 c11"
-              fill="filled"
+              kind="secondary"
             >
               <div
                 class="c12 icon-container"
@@ -1400,8 +1316,7 @@ exports[`render single bash text with comment 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -1410,48 +1325,28 @@ exports[`render single bash text with comment 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0.07);
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
-}
-
-.c11:focus-visible,
-.teleport-button__force-focus-visible .c11 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
+  padding: 0px 24px;
 }
 
 .c11:hover,
-.teleport-button__force-hover .c11 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c11:focus {
+  background: rgba(255,255,255,0.13);
 }
 
-.c11:active,
-.teleport-button__force-active .c11 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c11:active {
+  background: rgba(255,255,255,0.18);
 }
 
 .c11:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -1570,7 +1465,7 @@ exports[`render single bash text with comment 1`] = `
           >
             <button
               class="c11 c12"
-              fill="filled"
+              kind="secondary"
             >
               <div
                 class="c13 icon-container"

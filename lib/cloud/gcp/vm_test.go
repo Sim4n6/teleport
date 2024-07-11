@@ -264,7 +264,7 @@ func TestRunCommand(t *testing.T) {
 func TestGetInstance(t *testing.T) {
 	ctx := context.Background()
 	mux := http.NewServeMux()
-	mux.HandleFunc("/compute/v1/projects/{project}/zones/{zone}/instances/{id}", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/compute/v1/projects/TestProject/zones/TestZone/instances/llama", func(w http.ResponseWriter, r *http.Request) {
 		out, err := json.Marshal(&computepb.Instance{
 			Name:        googleapi.String("Test"),
 			Zone:        googleapi.String("TestZone"),

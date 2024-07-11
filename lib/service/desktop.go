@@ -20,7 +20,6 @@ package service
 
 import (
 	"crypto/tls"
-	"errors"
 	"log/slog"
 	"net"
 	"net/http"
@@ -117,12 +116,12 @@ func (process *TeleportProcess) initWindowsDesktopServiceRegistered(logger *slog
 			process.ExitContext(),
 			reversetunnel.AgentPoolConfig{
 				Component:            teleport.ComponentWindowsDesktop,
-				HostUUID:             conn.HostID(),
+				HostUUID:             conn.ServerIdentity.ID.HostUUID,
 				Resolver:             conn.TunnelProxyResolver(),
 				Client:               conn.Client,
 				AccessPoint:          accessPoint,
-				AuthMethods:          conn.ClientAuthMethods(),
-				Cluster:              conn.ClusterName(),
+				HostSigner:           conn.ServerIdentity.KeySigner,
+				Cluster:              conn.ServerIdentity.Cert.Extensions[utils.CertExtensionAuthority],
 				Server:               shtl,
 				FIPS:                 process.Config.FIPS,
 				ConnectedProxyGetter: proxyGetter,
@@ -153,24 +152,24 @@ func (process *TeleportProcess) initWindowsDesktopServiceRegistered(logger *slog
 		return trace.Wrap(err)
 	}
 
-	clusterName := conn.ClusterName()
+	clusterName := conn.ServerIdentity.Cert.Extensions[utils.CertExtensionAuthority]
 
 	authorizer, err := authz.NewAuthorizer(authz.AuthorizerOpts{
 		ClusterName: clusterName,
 		AccessPoint: accessPoint,
 		LockWatcher: lockWatcher,
 		Logger:      process.log.WithField(teleport.ComponentKey, teleport.Component(teleport.ComponentWindowsDesktop, process.id)),
+		// Device authorization breaks browser-based access.
 		DeviceAuthorization: authz.DeviceAuthorizationOpts{
-			// Ignore the global device_trust.mode toggle, but allow role-based
-			// settings to be applied.
 			DisableGlobalMode: true,
+			DisableRoleMode:   true,
 		},
 	})
 	if err != nil {
 		return trace.Wrap(err)
 	}
 
-	tlsConfig, err := conn.ServerTLSConfig(cfg.CipherSuites)
+	tlsConfig, err := conn.ServerIdentity.TLSConfig(cfg.CipherSuites)
 	if err != nil {
 		return trace.Wrap(err)
 	}
@@ -212,7 +211,7 @@ func (process *TeleportProcess) initWindowsDesktopServiceRegistered(logger *slog
 
 	srv, err := desktop.NewWindowsService(desktop.WindowsServiceConfig{
 		DataDir:      process.Config.DataDir,
-		Logger:       process.logger.With(teleport.ComponentKey, teleport.Component(teleport.ComponentWindowsDesktop, process.id)),
+		Log:          process.log.WithField(teleport.ComponentKey, teleport.Component(teleport.ComponentWindowsDesktop, process.id)),
 		Clock:        process.Clock,
 		Authorizer:   authorizer,
 		Emitter:      conn.Client,
@@ -274,7 +273,7 @@ func (process *TeleportProcess) initWindowsDesktopServiceRegistered(logger *slog
 
 		err = srv.Serve(mux.TLS())
 		if err != nil {
-			if errors.Is(err, http.ErrServerClosed) {
+			if err == http.ErrServerClosed {
 				return nil
 			}
 			return trace.Wrap(err)

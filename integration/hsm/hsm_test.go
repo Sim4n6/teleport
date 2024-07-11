@@ -36,7 +36,6 @@ import (
 	"github.com/gravitational/teleport/api/breaker"
 	"github.com/gravitational/teleport/api/client"
 	"github.com/gravitational/teleport/api/types"
-	"github.com/gravitational/teleport/entitlements"
 	"github.com/gravitational/teleport/lib/auth/authclient"
 	"github.com/gravitational/teleport/lib/auth/keystore"
 	"github.com/gravitational/teleport/lib/auth/state"
@@ -57,9 +56,7 @@ func TestMain(m *testing.M) {
 	modules.SetModules(&modules.TestModules{
 		TestBuildType: modules.BuildEnterprise,
 		TestFeatures: modules.Features{
-			Entitlements: map[entitlements.EntitlementKind]modules.EntitlementInfo{
-				entitlements.HSM: {Enabled: true},
-			},
+			HSM: true,
 		},
 	})
 
@@ -70,7 +67,6 @@ func newHSMAuthConfig(t *testing.T, storageConfig *backend.Config, log utils.Log
 	config := newAuthConfig(t, log)
 	config.Auth.StorageConfig = *storageConfig
 	config.Auth.KeyStore = keystore.HSMTestConfig(t)
-	config.Auth.Preference.SetSignatureAlgorithmSuite(types.SignatureAlgorithmSuite_SIGNATURE_ALGORITHM_SUITE_HSM_V1)
 	return config
 }
 
@@ -81,9 +77,9 @@ func etcdBackendConfig(t *testing.T) *backend.Config {
 		Params: backend.Params{
 			"peers":         []string{etcdTestEndpoint()},
 			"prefix":        prefix,
-			"tls_key_file":  "../../fixtures/etcdcerts/client-key.pem",
-			"tls_cert_file": "../../fixtures/etcdcerts/client-cert.pem",
-			"tls_ca_file":   "../../fixtures/etcdcerts/ca-cert.pem",
+			"tls_key_file":  "../../examples/etcd/certs/client-key.pem",
+			"tls_cert_file": "../../examples/etcd/certs/client-cert.pem",
+			"tls_ca_file":   "../../examples/etcd/certs/ca-cert.pem",
 		},
 	}
 	t.Cleanup(func() {

@@ -44,19 +44,17 @@ func (c *clientSet) Discovery() discovery.DiscoveryInterface {
 	return c
 }
 
-var fakeAPIResource = metav1.APIResourceList{
-	GroupVersion: "extensions/v1beta1",
-	APIResources: []metav1.APIResource{
-		{
-			Name:       "ingresses",
-			Kind:       "Ingress",
-			Namespaced: true,
-		},
-	},
-}
-
 func (c *clientSet) ServerGroupsAndResources() ([]*metav1.APIGroup, []*metav1.APIResourceList, error) {
 	return nil, []*metav1.APIResourceList{
-		&fakeAPIResource,
+		{
+			GroupVersion: "extensions/v1beta1",
+			APIResources: []metav1.APIResource{
+				{
+					Name:       "ingresses",
+					Kind:       "Ingress",
+					Namespaced: true,
+				},
+			},
+		},
 	}, nil
 }

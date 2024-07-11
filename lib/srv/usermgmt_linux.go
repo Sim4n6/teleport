@@ -22,7 +22,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"os/exec"
 	"os/user"
 	"path/filepath"
 	"strconv"
@@ -49,16 +48,6 @@ type HostSudoersProvisioningBackend struct {
 
 // newHostUsersBackend initializes a new OS specific HostUsersBackend
 func newHostUsersBackend() (HostUsersBackend, error) {
-	var missing []string
-	for _, requiredBin := range []string{"usermod", "useradd", "getent", "groupadd", "visudo"} {
-		if _, err := exec.LookPath(requiredBin); err != nil {
-			missing = append(missing, requiredBin)
-		}
-	}
-	if len(missing) != 0 {
-		return nil, trace.NotFound("missing required binaries: %s", strings.Join(missing, ","))
-	}
-
 	return &HostUsersProvisioningBackend{}, nil
 }
 

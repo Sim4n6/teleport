@@ -20,11 +20,10 @@ package common
 
 import (
 	"fmt"
-	"log/slog"
 	"strings"
-	"time"
 
 	"github.com/gravitational/trace"
+	"github.com/sirupsen/logrus"
 
 	"github.com/gravitational/teleport/api/types"
 	"github.com/gravitational/teleport/lib/authz"
@@ -59,7 +58,7 @@ type Session struct {
 	// StartupParameters define initial connection parameters such as date style.
 	StartupParameters map[string]string
 	// Log is the logger with session specific fields.
-	Log *slog.Logger
+	Log logrus.FieldLogger
 	// LockTargets is a list of lock targets applicable to this session.
 	LockTargets []types.LockTarget
 	// AuthContext is the identity context of the user.
@@ -128,9 +127,4 @@ func (c *Session) CheckUsernameForAutoUserProvisioning() error {
 
 	return trace.AccessDenied("please use your Teleport username (%q) to connect instead of %q",
 		c.Identity.Username, c.DatabaseUser)
-}
-
-// GetExpiry returns the expiry time of current session.
-func (c *Session) GetExpiry() time.Time {
-	return c.Identity.Expires
 }

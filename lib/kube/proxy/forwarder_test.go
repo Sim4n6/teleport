@@ -28,7 +28,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
 	"sort"
 	"sync/atomic"
 	"testing"
@@ -52,7 +51,6 @@ import (
 	"github.com/gravitational/teleport/api/client/proto"
 	"github.com/gravitational/teleport/api/types"
 	apievents "github.com/gravitational/teleport/api/types/events"
-	"github.com/gravitational/teleport/entitlements"
 	"github.com/gravitational/teleport/lib/auth/authclient"
 	"github.com/gravitational/teleport/lib/auth/testauthority"
 	"github.com/gravitational/teleport/lib/authz"
@@ -60,7 +58,6 @@ import (
 	"github.com/gravitational/teleport/lib/defaults"
 	"github.com/gravitational/teleport/lib/fixtures"
 	testingkubemock "github.com/gravitational/teleport/lib/kube/proxy/testing/kube_server"
-	"github.com/gravitational/teleport/lib/modules"
 	"github.com/gravitational/teleport/lib/reversetunnelclient"
 	"github.com/gravitational/teleport/lib/services"
 	"github.com/gravitational/teleport/lib/services/local"
@@ -89,15 +86,8 @@ var (
 
 func fakeClusterFeatures() proto.Features {
 	return proto.Features{
-		Entitlements: map[string]*proto.EntitlementInfo{
-			string(entitlements.K8s): {Enabled: true},
-		},
+		Kubernetes: true,
 	}
-}
-
-func TestMain(m *testing.M) {
-	modules.SetInsecureTestMode(true)
-	os.Exit(m.Run())
 }
 
 func TestAuthenticate(t *testing.T) {
@@ -1490,18 +1480,14 @@ func TestKubernetesLicenseEnforcement(t *testing.T) {
 		{
 			name: "kubernetes agent is licensed",
 			features: proto.Features{
-				Entitlements: map[string]*proto.EntitlementInfo{
-					string(entitlements.K8s): {Enabled: true},
-				},
+				Kubernetes: true,
 			},
 			assertErrFunc: require.NoError,
 		},
 		{
 			name: "kubernetes isn't licensed",
 			features: proto.Features{
-				Entitlements: map[string]*proto.EntitlementInfo{
-					string(entitlements.K8s): {Enabled: false},
-				},
+				Kubernetes: false,
 			},
 			assertErrFunc: func(tt require.TestingT, err error, i ...interface{}) {
 				require.Error(tt, err)

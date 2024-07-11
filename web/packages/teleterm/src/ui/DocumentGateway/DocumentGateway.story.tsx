@@ -163,12 +163,3 @@ export function Processing() {
     />
   );
 }
-
-export function PortProcessing() {
-  return (
-    <DocumentGateway
-      {...onlineDocumentGatewayProps}
-      changePortAttempt={makeProcessingAttempt()}
-    />
-  );
-}

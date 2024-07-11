@@ -277,10 +277,13 @@ const (
 	// ComponentAthena represents athena clients.
 	ComponentAthena = "athena"
 
-	// ComponentProxySecureGRPC represents a secure gRPC server running on Proxy (used for Kube).
+	// ComponentProxySecureGRPC represents secure gRPC server running on Proxy (used for Kube).
 	ComponentProxySecureGRPC = "proxy:secure-grpc"
 
-	// VerboseLogsEnvVar forces all logs to be verbose (down to DEBUG level)
+	// ComponentAssist represents Teleport Assist
+	ComponentAssist = "assist"
+
+	// VerboseLogEnvVar forces all logs to be verbose (down to DEBUG level)
 	VerboseLogsEnvVar = "TELEPORT_DEBUG"
 
 	// IterationsEnvVar sets tests iterations to run
@@ -303,7 +306,7 @@ const (
 	DataDirParameterName = "data_dir"
 
 	// KeepAliveReqType is a SSH request type to keep the connection alive. A client and
-	// a server keep pinging each other with it.
+	// a server keep pining each other with it.
 	KeepAliveReqType = "keepalive@openssh.com"
 
 	// ClusterDetailsReqType is the name of a global request which returns cluster details like
@@ -410,10 +413,6 @@ const (
 
 	// MinimumEtcdVersion is the minimum version of etcd supported by Teleport
 	MinimumEtcdVersion = "3.3.0"
-
-	// EnvVarAllowNoSecondFactor is used to allow disabling second factor auth
-	// todo(lxea): DELETE IN 17
-	EnvVarAllowNoSecondFactor = "TELEPORT_ALLOW_NO_SECOND_FACTOR"
 )
 
 const (
@@ -503,10 +502,6 @@ const (
 	// CertExtensionBotName indicates the name of the Machine ID bot this
 	// certificate was issued to, if any.
 	CertExtensionBotName = "bot-name@goteleport.com"
-	// CertExtensionBotInstanceID indicates the unique identifier of this
-	// Machine ID bot instance, if any. This identifier is persisted through
-	// certificate renewals.
-	CertExtensionBotInstanceID = "bot-instance-id@goteleport.com"
 
 	// CertCriticalOptionSourceAddress is a critical option that defines IP addresses (in CIDR notation)
 	// from which this certificate is accepted for authentication.
@@ -675,10 +670,6 @@ const (
 	// resources.
 	PresetRequireTrustedDeviceRoleName = "require-trusted-device"
 
-	// PresetTerraformProviderRoleName is a name of a default role that allows the Terraform provider
-	// to configure all its supported Teleport resources.
-	PresetTerraformProviderRoleName = "terraform-provider"
-
 	// SystemAutomaticAccessApprovalRoleName names a preset role that may
 	// automatically approve any Role Access Request
 	SystemAutomaticAccessApprovalRoleName = "@teleport-access-approver"
@@ -765,7 +756,7 @@ const (
 	EnvSSHSessionReason = "TELEPORT_SESSION_REASON"
 
 	// EnvSSHSessionInvited is an environment variable listing people invited to a session.
-	EnvSSHSessionInvited = "TELEPORT_SESSION_INVITED_USERS"
+	EnvSSHSessionInvited = "TELEPORT_SESSION_JOIN_MODE"
 
 	// EnvSSHSessionDisplayParticipantRequirements is set to true or false to indicate if participant
 	// requirement information should be printed.
@@ -867,10 +858,6 @@ const (
 	// until a domain name stops resolving. Its main use is to ensure no
 	// auth instances are still running the previous major version.
 	WaitSubCommand = "wait"
-
-	// VnetAdminSetupSubCommand is the sub-command tsh vnet uses to perform
-	// a setup as a privileged user.
-	VnetAdminSetupSubCommand = "vnet-admin-setup"
 )
 
 const (

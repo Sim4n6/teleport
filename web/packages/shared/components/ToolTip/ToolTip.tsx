@@ -97,13 +97,13 @@ export const ToolTipInfo: React.FC<
   );
 };
 
-const StyledOnHover = styled(Text)<{ $maxWidth: number }>`
+const StyledOnHover = styled(Text)`
   color: ${props => props.theme.colors.text.main};
   background-color: ${props => props.theme.colors.tooltip.background};
   max-width: ${p => p.$maxWidth}px;
 `;
 
-const InfoIcon = styled(Icons.Info)<{ $muteIconColor?: boolean }>`
+const InfoIcon = styled(Icons.Info)`
   height: 18px;
   width: 18px;
   color: ${p => (p.$muteIconColor ? p.theme.colors.text.disabled : 'inherit')};

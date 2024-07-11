@@ -23,15 +23,12 @@ package botfs
 
 import (
 	"context"
-	"errors"
 	"io"
 	"io/fs"
 	"os"
 	"os/user"
 	"path/filepath"
-	"strconv"
 	"sync"
-	"syscall"
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/gravitational/trace"
@@ -95,14 +92,14 @@ func openSymlinksMode(path string, mode OpenMode, symlinksMode SymlinksMode) (*o
 	switch symlinksMode {
 	case SymlinksSecure:
 		file, err = openSecure(path, mode)
-		if errors.Is(err, unix.ENOSYS) {
+		if err == unix.ENOSYS {
 			return nil, trace.Errorf("openSecure failed due to missing syscall; configure `symlinks: insecure` for %q", path)
 		} else if err != nil {
 			return nil, trace.Wrap(err)
 		}
 	case SymlinksTrySecure:
 		file, err = openSecure(path, mode)
-		if errors.Is(err, unix.ENOSYS) {
+		if err == unix.ENOSYS {
 			missingSyscallWarning.Do(func() {
 				log.DebugContext(
 					context.TODO(),
@@ -146,7 +143,7 @@ func createSecure(path string, isDir bool) error {
 	}
 
 	f, err := openSecure(path, WriteMode)
-	if errors.Is(err, unix.ENOSYS) {
+	if err == unix.ENOSYS {
 		// bubble up the original error for comparison
 		return err
 	} else if err != nil {
@@ -178,7 +175,7 @@ func Create(path string, isDir bool, symlinksMode SymlinksMode) error {
 	switch symlinksMode {
 	case SymlinksSecure:
 		if err := createSecure(path, isDir); err != nil {
-			if errors.Is(err, unix.ENOSYS) {
+			if err == unix.ENOSYS {
 				return trace.Errorf("createSecure failed due to missing syscall; configure `symlinks: insecure` for %q", path)
 			}
 
@@ -191,7 +188,7 @@ func Create(path string, isDir bool, symlinksMode SymlinksMode) error {
 			return nil
 		}
 
-		if !errors.Is(err, unix.ENOSYS) {
+		if err != unix.ENOSYS {
 			// Something else went wrong, fail.
 			return trace.Wrap(err)
 		}
@@ -475,33 +472,4 @@ func HasSecureWriteSupport() bool {
 	}
 
 	return true
-}
-
-// GetOwner attempts to retrieve the owner of the given file. This is not
-// supported on all platforms and will return a trace.NotImplemented in that
-// case.
-func GetOwner(fileInfo fs.FileInfo) (*user.User, error) {
-	info, ok := fileInfo.Sys().(*syscall.Stat_t)
-	if !ok {
-		return nil, trace.NotImplemented("Cannot verify file ownership on this platform.")
-	}
-
-	user, err := user.LookupId(strconv.Itoa(int(info.Uid)))
-	if err != nil {
-		return nil, trace.Wrap(err)
-	}
-
-	return user, nil
-}
-
-// IsOwnedBy checks that the file at the given path is owned by the given user.
-// Returns a trace.NotImplemented() on unsupported platforms.
-func IsOwnedBy(fileInfo fs.FileInfo, user *user.User) (bool, error) {
-	info, ok := fileInfo.Sys().(*syscall.Stat_t)
-	if !ok {
-		return false, trace.Errorf("unexpected type of file info on Linux: %T", fileInfo.Sys())
-	}
-
-	// Our files are 0600, so don't bother checking gid.
-	return strconv.Itoa(int(info.Uid)) == user.Uid, nil
 }

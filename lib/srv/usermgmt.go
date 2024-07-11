@@ -43,7 +43,7 @@ func NewHostUsers(ctx context.Context, storage *local.PresenceService, uuid stri
 	//nolint:staticcheck // SA4023. False positive on macOS.
 	backend, err := newHostUsersBackend()
 	switch {
-	case trace.IsNotImplemented(err), trace.IsNotFound(err):
+	case trace.IsNotImplemented(err):
 		log.Debugf("Skipping host user management: %v", err)
 		return nil
 	case err != nil: //nolint:staticcheck // linter fails on non-linux system as only linux implementation returns useful values.
@@ -319,9 +319,7 @@ func (u *HostUserManagement) UpsertUser(name string, ui *services.HostUsersInfo)
 
 	var home string
 	if ui.Mode != types.CreateHostUserMode_HOST_USER_MODE_INSECURE_DROP {
-		//nolint:staticcheck // SA4023. False positive on macOS.
 		home, err = readDefaultHome(name)
-		//nolint:staticcheck // SA4023. False positive on macOS.
 		if err != nil {
 			return nil, trace.Wrap(err)
 		}
@@ -496,15 +494,9 @@ func (u *HostUserManagement) UserCleanup() {
 	cleanupTicker := time.NewTicker(time.Minute * 5)
 	defer cleanupTicker.Stop()
 	for {
-		err := u.DeleteAllUsers()
-		switch {
-		case trace.IsNotFound(err):
-			log.Debugf("Error during temporary user cleanup: %s, stopping cleanup job", err)
-			return
-		case err != nil:
+		if err := u.DeleteAllUsers(); err != nil {
 			log.Error("Error during temporary user cleanup: ", err)
 		}
-
 		select {
 		case <-cleanupTicker.C:
 		case <-u.ctx.Done():
@@ -522,7 +514,7 @@ func (u *HostUserManagement) Shutdown() {
 func (u *HostUserManagement) UserExists(username string) error {
 	_, err := u.backend.Lookup(username)
 	if err != nil {
-		if errors.Is(err, user.UnknownUserError(username)) {
+		if err == user.UnknownUserError(username) {
 			return trace.NotFound("User not found: %s", err)
 		}
 		return trace.Wrap(err)

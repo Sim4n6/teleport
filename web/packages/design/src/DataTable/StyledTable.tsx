@@ -18,9 +18,9 @@
 
 import styled from 'styled-components';
 
-import { borderRadius, BorderRadiusProps } from 'design/system';
+import { borderRadius } from 'design/system';
 
-export const StyledTable = styled.table<BorderRadiusProps>`
+export const StyledTable = styled.table`
   border-collapse: collapse;
   border-spacing: 0;
   border-style: hidden;
@@ -38,7 +38,7 @@ export const StyledTable = styled.table<BorderRadiusProps>`
 
     &:first-child {
       // should match padding-left on StyledInput to align Search content to Table content
-      padding-left: ${props => props.theme.space[4]}px;
+      padding-left: ${props => props.theme.space[4]}px
     }
 
     &:last-child {
@@ -72,8 +72,7 @@ export const StyledTable = styled.table<BorderRadiusProps>`
   tbody tr {
     transition: all 150ms;
     position: relative;
-    border-top: ${props => props.theme.borders[2]}
-      ${props => props.theme.colors.spotBackground[0]};
+    border-top: ${props => props.theme.borders[2]} ${props => props.theme.colors.spotBackground[0]};
 
     :hover {
       border-top: ${props => props.theme.borders[2]} rgba(0, 0, 0, 0);
@@ -101,7 +100,7 @@ export const StyledTable = styled.table<BorderRadiusProps>`
     ${borderRadius}
 `;
 
-export const StyledPanel = styled.nav`
+export const StyledPanel = styled.nav<{ showTopBorder: boolean }>`
   display: flex;
   flex-shrink: 0;
   align-items: center;

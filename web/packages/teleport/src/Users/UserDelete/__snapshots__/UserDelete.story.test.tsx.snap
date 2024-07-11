@@ -24,8 +24,7 @@ exports[`confirm state 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -34,49 +33,29 @@ exports[`confirm state 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: #FF6257;
   color: #000000;
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  background: #FF6257;
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
+  padding: 0px 24px;
   margin-right: 16px;
 }
 
-.c12:focus-visible,
-.teleport-button__force-focus-visible .c12 {
-  background-color: #FF6257;
-  color: #000000;
-  border-color: #000000;
-  border-radius: 2px;
-  outline: 2px solid #FF6257;
-}
-
 .c12:hover,
-.teleport-button__force-hover .c12 {
-  background-color: #FF8179;
-  border-color: transparent;
-  color: #000000;
-  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.20), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12);
+.c12:focus {
+  background: #FF8179;
 }
 
-.c12:active,
-.teleport-button__force-active .c12 {
-  background-color: #FFA19A;
-  border-color: transparent;
-  color: #000000;
+.c12:active {
+  background: #FFA19A;
 }
 
 .c12:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -87,8 +66,7 @@ exports[`confirm state 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -97,48 +75,28 @@ exports[`confirm state 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0.07);
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
-}
-
-.c13:focus-visible,
-.teleport-button__force-focus-visible .c13 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
+  padding: 0px 24px;
 }
 
 .c13:hover,
-.teleport-button__force-hover .c13 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c13:focus {
+  background: rgba(255,255,255,0.13);
 }
 
-.c13:active,
-.teleport-button__force-active .c13 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c13:active {
+  background: rgba(255,255,255,0.18);
 }
 
 .c13:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -272,13 +230,13 @@ exports[`confirm state 1`] = `
       >
         <button
           class="c12"
-          fill="filled"
+          kind="warning"
         >
           I understand, delete user
         </button>
         <button
           class="c13"
-          fill="filled"
+          kind="secondary"
         >
           Cancel
         </button>
@@ -333,8 +291,7 @@ exports[`failed state 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -343,49 +300,29 @@ exports[`failed state 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: #FF6257;
   color: #000000;
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  background: #FF6257;
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
+  padding: 0px 24px;
   margin-right: 16px;
 }
 
-.c13:focus-visible,
-.teleport-button__force-focus-visible .c13 {
-  background-color: #FF6257;
-  color: #000000;
-  border-color: #000000;
-  border-radius: 2px;
-  outline: 2px solid #FF6257;
-}
-
 .c13:hover,
-.teleport-button__force-hover .c13 {
-  background-color: #FF8179;
-  border-color: transparent;
-  color: #000000;
-  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.20), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12);
+.c13:focus {
+  background: #FF8179;
 }
 
-.c13:active,
-.teleport-button__force-active .c13 {
-  background-color: #FFA19A;
-  border-color: transparent;
-  color: #000000;
+.c13:active {
+  background: #FFA19A;
 }
 
 .c13:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -396,8 +333,7 @@ exports[`failed state 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -406,48 +342,28 @@ exports[`failed state 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0.07);
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
-}
-
-.c14:focus-visible,
-.teleport-button__force-focus-visible .c14 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
+  padding: 0px 24px;
 }
 
 .c14:hover,
-.teleport-button__force-hover .c14 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c14:focus {
+  background: rgba(255,255,255,0.13);
 }
 
-.c14:active,
-.teleport-button__force-active .c14 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c14:active {
+  background: rgba(255,255,255,0.18);
 }
 
 .c14:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -587,13 +503,13 @@ exports[`failed state 1`] = `
       >
         <button
           class="c13"
-          fill="filled"
+          kind="warning"
         >
           I understand, delete user
         </button>
         <button
           class="c14"
-          fill="filled"
+          kind="secondary"
         >
           Cancel
         </button>
@@ -627,8 +543,7 @@ exports[`processing state 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -637,49 +552,29 @@ exports[`processing state 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: #FF6257;
   color: #000000;
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  background: #FF6257;
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
+  padding: 0px 24px;
   margin-right: 16px;
 }
 
-.c12:focus-visible,
-.teleport-button__force-focus-visible .c12 {
-  background-color: #FF6257;
-  color: #000000;
-  border-color: #000000;
-  border-radius: 2px;
-  outline: 2px solid #FF6257;
-}
-
 .c12:hover,
-.teleport-button__force-hover .c12 {
-  background-color: #FF8179;
-  border-color: transparent;
-  color: #000000;
-  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.20), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12);
+.c12:focus {
+  background: #FF8179;
 }
 
-.c12:active,
-.teleport-button__force-active .c12 {
-  background-color: #FFA19A;
-  border-color: transparent;
-  color: #000000;
+.c12:active {
+  background: #FFA19A;
 }
 
 .c12:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -690,8 +585,7 @@ exports[`processing state 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -700,48 +594,28 @@ exports[`processing state 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0.07);
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
-}
-
-.c13:focus-visible,
-.teleport-button__force-focus-visible .c13 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
+  padding: 0px 24px;
 }
 
 .c13:hover,
-.teleport-button__force-hover .c13 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c13:focus {
+  background: rgba(255,255,255,0.13);
 }
 
-.c13:active,
-.teleport-button__force-active .c13 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c13:active {
+  background: rgba(255,255,255,0.18);
 }
 
 .c13:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -876,13 +750,13 @@ exports[`processing state 1`] = `
         <button
           class="c12"
           disabled=""
-          fill="filled"
+          kind="warning"
         >
           I understand, delete user
         </button>
         <button
           class="c13"
-          fill="filled"
+          kind="secondary"
         >
           Cancel
         </button>

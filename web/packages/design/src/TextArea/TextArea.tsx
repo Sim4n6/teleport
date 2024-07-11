@@ -16,23 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import styled, { CSSObject } from 'styled-components';
-import {
-  space,
-  width,
-  color,
-  height,
-  ColorProps,
-  SpaceProps,
-  WidthProps,
-  HeightProps,
-} from 'styled-system';
+import React, { CSSProperties } from 'react';
+import styled from 'styled-components';
+import { space, width, color, height } from 'styled-system';
 
-export interface TextAreaProps
-  extends ColorProps,
-    SpaceProps,
-    WidthProps,
-    HeightProps {
+export interface TextAreaProps extends React.ComponentPropsWithRef<'textarea'> {
   hasError?: boolean;
   resizable?: boolean;
 
@@ -40,7 +28,7 @@ export interface TextAreaProps
   [key: string]: any;
 }
 
-export const TextArea = styled.textarea<TextAreaProps>`
+export const TextArea: React.FC<TextAreaProps> = styled.textarea`
   appearance: none;
   border: 1px solid ${props => props.theme.colors.text.muted};
   border-radius: 4px;
@@ -74,12 +62,7 @@ export const TextArea = styled.textarea<TextAreaProps>`
     border-color: ${props => props.theme.colors.text.disabled};
   }
 
-  ${color}
-  ${space}
-  ${width}
-  ${height}
-  ${error}
-  ${resize}
+  ${color} ${space} ${width} ${height} ${error} ${resize};
 `;
 
 function error({
@@ -100,6 +83,8 @@ function error({
   };
 }
 
-function resize({ resizable }: Pick<TextAreaProps, 'resizable'>): CSSObject {
+function resize({
+  resizable,
+}: Pick<TextAreaProps, 'resizable'>): CSSProperties {
   return { resize: resizable ? 'vertical' : 'none' };
 }

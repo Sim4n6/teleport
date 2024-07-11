@@ -22,7 +22,6 @@ import styled, { useTheme } from 'styled-components';
 import { Moon, Sun, ChevronDown, Logout as LogoutIcon } from 'design/Icon';
 import { Text } from 'design';
 import { useRefClickOutside } from 'shared/hooks/useRefClickOutside';
-import { getCurrentTheme, getNextTheme } from 'design/ThemeProvider';
 
 import { Theme } from 'gen-proto-ts/teleport/userpreferences/v1/theme_pb';
 
@@ -40,11 +39,9 @@ import {
   STARTING_TRANSITION_DELAY,
   INCREMENT_TRANSITION_DELAY,
 } from 'teleport/components/Dropdown';
-import { DeviceTrustIcon } from 'teleport/TopBar/DeviceTrustIcon';
 
 interface UserMenuNavProps {
   username: string;
-  iconSize: number;
 }
 
 const Container = styled.div`
@@ -72,6 +69,7 @@ const Username = styled(Text)`
   color: ${props => props.theme.colors.text.main};
   font-size: 14px;
   font-weight: 400;
+  padding-right: 40px;
   display: none;
   @media screen and (min-width: ${p => p.theme.breakpoints.large}px) {
     display: inline-flex;
@@ -99,9 +97,8 @@ const StyledAvatar = styled.div`
   min-width: 24px;
 `;
 
-const Arrow = styled.div<{ open?: boolean }>`
+const Arrow = styled.div`
   line-height: 0;
-  padding-left: 32px;
 
   svg {
     transform: ${p => (p.open ? 'rotate(-180deg)' : 'none')};
@@ -114,7 +111,7 @@ const Arrow = styled.div<{ open?: boolean }>`
   }
 `;
 
-export function UserMenuNav({ username, iconSize }: UserMenuNavProps) {
+export function UserMenuNav({ username }: UserMenuNavProps) {
   const [open, setOpen] = useState(false);
   const theme = useTheme();
 
@@ -125,10 +122,11 @@ export function UserMenuNav({ username, iconSize }: UserMenuNavProps) {
   const ctx = useTeleport();
   const clusterId = ctx.storeUser.getClusterId();
   const features = useFeatures();
-  const currentTheme = getCurrentTheme(preferences.theme);
-  const nextTheme = getNextTheme(preferences.theme);
 
   const onThemeChange = () => {
+    const nextTheme =
+      preferences.theme === Theme.LIGHT ? Theme.DARK : Theme.LIGHT;
+
     updatePreferences({ theme: nextTheme });
     setOpen(false);
   };
@@ -161,11 +159,10 @@ export function UserMenuNav({ username, iconSize }: UserMenuNavProps) {
 
   return (
     <Container ref={ref}>
-      <UserInfo onClick={() => setOpen(!open)}>
+      <UserInfo onClick={() => setOpen(!open)} open={open}>
         <StyledAvatar>{initial}</StyledAvatar>
 
         <Username>{username}</Username>
-        <DeviceTrustIcon iconSize={iconSize} />
 
         <Arrow open={open}>
           <ChevronDown size="medium" />
@@ -182,9 +179,10 @@ export function UserMenuNav({ username, iconSize }: UserMenuNavProps) {
           <DropdownItem open={open} $transitionDelay={transitionDelay}>
             <DropdownItemButton onClick={onThemeChange}>
               <DropdownItemIcon>
-                {currentTheme === Theme.DARK ? <Sun /> : <Moon />}
+                {preferences.theme === Theme.DARK ? <Sun /> : <Moon />}
               </DropdownItemIcon>
-              Switch to {currentTheme === Theme.DARK ? 'Light' : 'Dark'} Theme
+              Switch to {preferences.theme === Theme.DARK ? 'Light' : 'Dark'}{' '}
+              Theme
             </DropdownItemButton>
           </DropdownItem>
         )}

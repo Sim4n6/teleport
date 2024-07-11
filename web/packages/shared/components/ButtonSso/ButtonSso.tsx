@@ -18,10 +18,9 @@
 
 import React, { forwardRef } from 'react';
 import styled from 'styled-components';
+import Button from 'design/Button';
 import { darken, lighten } from 'design/theme/utils/colorManipulator';
 import * as Icons from 'design/Icon';
-
-import { Button } from 'design/Button';
 
 import { AuthProviderType } from 'shared/services';
 
@@ -30,7 +29,7 @@ const ButtonSso = forwardRef<HTMLInputElement, Props>((props: Props, ref) => {
   const { color, Icon } = getSSOIcon(ssoType);
 
   return (
-    <StyledButton size="extra-large" color={color} block {...rest} ref={ref}>
+    <StyledButton color={color} block {...rest} ref={ref}>
       {Boolean(Icon) && (
         <IconBox>
           <Icon data-testid="icon" color="white" />

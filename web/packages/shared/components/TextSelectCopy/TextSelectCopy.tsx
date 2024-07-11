@@ -58,7 +58,7 @@ export function TextSelectCopy({
     onCopy && onCopy();
   }
 
-  const boxStyles: React.CSSProperties =
+  const boxStyles =
     bash && !allowMultiline
       ? {
           overflow: 'auto',

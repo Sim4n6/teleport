@@ -109,8 +109,7 @@ exports[`loaded approved role based request state 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -119,49 +118,30 @@ exports[`loaded approved role based request state 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: transparent;
-  color: rgba(255,255,255,0.54);
-  border-color: rgba(255,255,255,0.54);
-  border-width: 1.5px;
-  padding: 0 6.5px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0);
+  border: 1px solid rgba(255,255,255,0.36);
+  font-size: 10px;
   min-height: 24px;
-  font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
+  padding: 0px 16px;
   width: 60px;
 }
 
-.c15:focus-visible,
-.teleport-button__force-focus-visible .c15 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
-}
-
 .c15:hover,
-.teleport-button__force-hover .c15 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c15:focus {
+  background: rgba(255,255,255,0.07);
 }
 
-.c15:active,
-.teleport-button__force-active .c15 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c15:active {
+  background: rgba(255,255,255,0.13);
 }
 
 .c15:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -172,8 +152,7 @@ exports[`loaded approved role based request state 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -182,49 +161,29 @@ exports[`loaded approved role based request state 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: #9F85FF;
   color: #000000;
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  background: #9F85FF;
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
+  padding: 0px 24px;
   margin-top: 24px;
 }
 
-.c29:focus-visible,
-.teleport-button__force-focus-visible .c29 {
-  background-color: #9F85FF;
-  color: #000000;
-  border-color: #000000;
-  border-radius: 2px;
-  outline: 2px solid #9F85FF;
-}
-
 .c29:hover,
-.teleport-button__force-hover .c29 {
-  background-color: #B29DFF;
-  border-color: transparent;
-  color: #000000;
-  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.20), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12);
+.c29:focus {
+  background: #B29DFF;
 }
 
-.c29:active,
-.teleport-button__force-active .c29 {
-  background-color: #C5B6FF;
-  border-color: transparent;
-  color: #000000;
+.c29:active {
+  background: #C5B6FF;
 }
 
 .c29:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -483,6 +442,7 @@ exports[`loaded approved role based request state 1`] = `
             <span
               class="c7"
               font-size="0"
+              font-weight="bold"
               kind="success"
               style="font-weight: bold;"
             >
@@ -541,7 +501,7 @@ exports[`loaded approved role based request state 1`] = `
           >
             <button
               class="c15"
-              fill="border"
+              kind="border"
               width="60px"
             >
               Delete
@@ -716,7 +676,7 @@ exports[`loaded approved role based request state 1`] = `
       </div>
       <button
         class="c29"
-        fill="filled"
+        kind="primary"
       >
         Assume Roles
       </button>
@@ -746,6 +706,7 @@ exports[`loaded approved role based request state 1`] = `
         <span
           class="c38"
           font-size="0"
+          font-weight="bold"
           kind="success"
           style="min-height: 10px; min-width: 10px;"
           width="10px"
@@ -764,6 +725,7 @@ exports[`loaded approved role based request state 1`] = `
         <span
           class="c39"
           font-size="0"
+          font-weight="bold"
           kind="warning"
           style="min-height: 10px; min-width: 10px;"
           width="10px"
@@ -782,6 +744,7 @@ exports[`loaded approved role based request state 1`] = `
         <span
           class="c38"
           font-size="0"
+          font-weight="bold"
           kind="success"
           style="min-height: 10px; min-width: 10px;"
           width="10px"
@@ -912,8 +875,7 @@ exports[`loaded denied role based request state 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -922,49 +884,30 @@ exports[`loaded denied role based request state 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: transparent;
-  color: rgba(255,255,255,0.54);
-  border-color: rgba(255,255,255,0.54);
-  border-width: 1.5px;
-  padding: 0 6.5px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0);
+  border: 1px solid rgba(255,255,255,0.36);
+  font-size: 10px;
   min-height: 24px;
-  font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
+  padding: 0px 16px;
   width: 60px;
 }
 
-.c15:focus-visible,
-.teleport-button__force-focus-visible .c15 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
-}
-
 .c15:hover,
-.teleport-button__force-hover .c15 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c15:focus {
+  background: rgba(255,255,255,0.07);
 }
 
-.c15:active,
-.teleport-button__force-active .c15 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c15:active {
+  background: rgba(255,255,255,0.13);
 }
 
 .c15:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -1223,6 +1166,7 @@ exports[`loaded denied role based request state 1`] = `
             <span
               class="c7"
               font-size="0"
+              font-weight="bold"
               kind="danger"
               style="font-weight: bold;"
             >
@@ -1275,7 +1219,7 @@ exports[`loaded denied role based request state 1`] = `
           >
             <button
               class="c15"
-              fill="border"
+              kind="border"
               width="60px"
             >
               Delete
@@ -1455,6 +1399,7 @@ exports[`loaded denied role based request state 1`] = `
         <span
           class="c37"
           font-size="0"
+          font-weight="bold"
           kind="danger"
           style="min-height: 10px; min-width: 10px;"
           width="10px"
@@ -1473,6 +1418,7 @@ exports[`loaded denied role based request state 1`] = `
         <span
           class="c38"
           font-size="0"
+          font-weight="bold"
           kind="warning"
           style="min-height: 10px; min-width: 10px;"
           width="10px"
@@ -1612,8 +1558,7 @@ exports[`loaded pending role based request state 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -1622,49 +1567,30 @@ exports[`loaded pending role based request state 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: transparent;
-  color: rgba(255,255,255,0.54);
-  border-color: rgba(255,255,255,0.54);
-  border-width: 1.5px;
-  padding: 0 6.5px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0);
+  border: 1px solid rgba(255,255,255,0.36);
+  font-size: 10px;
   min-height: 24px;
-  font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
+  padding: 0px 16px;
   width: 60px;
 }
 
-.c18:focus-visible,
-.teleport-button__force-focus-visible .c18 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
-}
-
 .c18:hover,
-.teleport-button__force-hover .c18 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c18:focus {
+  background: rgba(255,255,255,0.07);
 }
 
-.c18:active,
-.teleport-button__force-active .c18 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c18:active {
+  background: rgba(255,255,255,0.13);
 }
 
 .c18:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -1675,8 +1601,7 @@ exports[`loaded pending role based request state 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -1685,48 +1610,28 @@ exports[`loaded pending role based request state 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: #9F85FF;
   color: #000000;
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  background: #9F85FF;
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
-}
-
-.c44:focus-visible,
-.teleport-button__force-focus-visible .c44 {
-  background-color: #9F85FF;
-  color: #000000;
-  border-color: #000000;
-  border-radius: 2px;
-  outline: 2px solid #9F85FF;
+  padding: 0px 24px;
 }
 
 .c44:hover,
-.teleport-button__force-hover .c44 {
-  background-color: #B29DFF;
-  border-color: transparent;
-  color: #000000;
-  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.20), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12);
+.c44:focus {
+  background: #B29DFF;
 }
 
-.c44:active,
-.teleport-button__force-active .c44 {
-  background-color: #C5B6FF;
-  border-color: transparent;
-  color: #000000;
+.c44:active {
+  background: #C5B6FF;
 }
 
 .c44:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -2073,6 +1978,7 @@ exports[`loaded pending role based request state 1`] = `
             <span
               class="c7"
               font-size="0"
+              font-weight="bold"
               kind="warning"
               style="font-weight: bold;"
             >
@@ -2126,7 +2032,7 @@ exports[`loaded pending role based request state 1`] = `
             </div>
             <button
               class="c18"
-              fill="border"
+              kind="border"
               width="60px"
             >
               Delete
@@ -2293,6 +2199,7 @@ exports[`loaded pending role based request state 1`] = `
               >
                 <label
                   class="c41"
+                  font-size="0"
                 >
                   Message
                   <textarea
@@ -2304,7 +2211,7 @@ exports[`loaded pending role based request state 1`] = `
               </div>
               <button
                 class="c44"
-                fill="filled"
+                kind="primary"
               >
                 Submit Review
               </button>
@@ -2338,6 +2245,7 @@ exports[`loaded pending role based request state 1`] = `
         <span
           class="c53"
           font-size="0"
+          font-weight="bold"
           kind="warning"
           style="min-height: 10px; min-width: 10px;"
           width="10px"
@@ -2356,6 +2264,7 @@ exports[`loaded pending role based request state 1`] = `
         <span
           class="c53"
           font-size="0"
+          font-weight="bold"
           kind="warning"
           style="min-height: 10px; min-width: 10px;"
           width="10px"
@@ -2504,8 +2413,7 @@ exports[`loaded pending search based request state 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -2514,49 +2422,30 @@ exports[`loaded pending search based request state 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: transparent;
-  color: rgba(255,255,255,0.54);
-  border-color: rgba(255,255,255,0.54);
-  border-width: 1.5px;
-  padding: 0 6.5px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0);
+  border: 1px solid rgba(255,255,255,0.36);
+  font-size: 10px;
   min-height: 24px;
-  font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
+  padding: 0px 16px;
   width: 60px;
 }
 
-.c18:focus-visible,
-.teleport-button__force-focus-visible .c18 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
-}
-
 .c18:hover,
-.teleport-button__force-hover .c18 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c18:focus {
+  background: rgba(255,255,255,0.07);
 }
 
-.c18:active,
-.teleport-button__force-active .c18 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c18:active {
+  background: rgba(255,255,255,0.13);
 }
 
 .c18:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -2567,8 +2456,7 @@ exports[`loaded pending search based request state 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -2577,48 +2465,28 @@ exports[`loaded pending search based request state 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: #9F85FF;
   color: #000000;
-  border-color: transparent;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  background: #9F85FF;
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
-}
-
-.c48:focus-visible,
-.teleport-button__force-focus-visible .c48 {
-  background-color: #9F85FF;
-  color: #000000;
-  border-color: #000000;
-  border-radius: 2px;
-  outline: 2px solid #9F85FF;
+  padding: 0px 24px;
 }
 
 .c48:hover,
-.teleport-button__force-hover .c48 {
-  background-color: #B29DFF;
-  border-color: transparent;
-  color: #000000;
-  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.20), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12);
+.c48:focus {
+  background: #B29DFF;
 }
 
-.c48:active,
-.teleport-button__force-active .c48 {
-  background-color: #C5B6FF;
-  border-color: transparent;
-  color: #000000;
+.c48:active {
+  background: #C5B6FF;
 }
 
 .c48:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -3067,6 +2935,7 @@ exports[`loaded pending search based request state 1`] = `
             <span
               class="c7"
               font-size="0"
+              font-weight="bold"
               kind="warning"
               style="font-weight: bold;"
             >
@@ -3120,7 +2989,7 @@ exports[`loaded pending search based request state 1`] = `
             </div>
             <button
               class="c18"
-              fill="border"
+              kind="border"
               width="60px"
             >
               Delete
@@ -3393,6 +3262,7 @@ exports[`loaded pending search based request state 1`] = `
               >
                 <label
                   class="c45"
+                  font-size="0"
                 >
                   Message
                   <textarea
@@ -3404,7 +3274,7 @@ exports[`loaded pending search based request state 1`] = `
               </div>
               <button
                 class="c48"
-                fill="filled"
+                kind="primary"
               >
                 Submit Review
               </button>
@@ -3438,6 +3308,7 @@ exports[`loaded pending search based request state 1`] = `
         <span
           class="c57"
           font-size="0"
+          font-weight="bold"
           kind="warning"
           style="min-height: 10px; min-width: 10px;"
           width="10px"
@@ -3456,6 +3327,7 @@ exports[`loaded pending search based request state 1`] = `
         <span
           class="c57"
           font-size="0"
+          font-weight="bold"
           kind="warning"
           style="min-height: 10px; min-width: 10px;"
           width="10px"

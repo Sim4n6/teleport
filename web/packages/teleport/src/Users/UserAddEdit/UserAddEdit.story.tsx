@@ -51,6 +51,7 @@ export const Edit = () => {
       setConfiguredTraits={setConfiguredTraits}
     />
   );
+  return <UserAddEdit {...props} attempt={{ status: '' }} />;
 };
 
 export const Processing = () => {

@@ -137,12 +137,7 @@ const RelativeContainer = styled.div`
   height: 100%;
 `;
 
-const TabContent = styled.div<{
-  dragging?: boolean;
-  active?: boolean;
-  // TODO(bl-nero): is this really used? Perhaps remove it.
-  canDrag?: boolean;
-}>`
+const TabContent = styled.div`
   display: flex;
   z-index: 1; // covers shadow from the top
   align-items: center;

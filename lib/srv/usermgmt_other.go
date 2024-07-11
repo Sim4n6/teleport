@@ -35,7 +35,6 @@ func newHostSudoersBackend(_ string) (HostSudoersBackend, error) {
 	return nil, trace.NotImplemented("Host user creation management is only supported on linux")
 }
 
-//nolint:staticcheck // intended to always return an error for non-linux builds
 func readDefaultHome(user string) (string, error) {
 	return "", trace.NotImplemented("readDefaultHome is only supported on linux")
 }

@@ -27,7 +27,6 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/gravitational/teleport/api/types"
-	"github.com/gravitational/teleport/api/utils/keys"
 	"github.com/gravitational/teleport/integration/helpers"
 	"github.com/gravitational/teleport/lib/auth/native"
 	"github.com/gravitational/teleport/lib/services"
@@ -92,7 +91,7 @@ func ProxyClient(cfg ProxyConfig) (*kubernetes.Clientset, *rest.Config, error) {
 	if err != nil {
 		return nil, nil, trace.Wrap(err)
 	}
-	priv, err := keys.ParsePrivateKey(privPEM)
+	priv, err := tlsca.ParsePrivateKeyPEM(privPEM)
 	if err != nil {
 		return nil, nil, trace.Wrap(err)
 	}

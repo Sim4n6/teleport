@@ -44,6 +44,7 @@ export function AdditionalOptions({
   return (
     <>
       <Flex
+        borderBottom={1}
         mt={1}
         mb={2}
         pb={2}
@@ -67,7 +68,7 @@ export function AdditionalOptions({
       {expanded && (
         <Box data-testid="reviewers">
           {pendingRequestTtlOptions.length > 0 && (
-            <LabelInput color="text.slightlyMuted" mb={3}>
+            <LabelInput typography="body2" color="text.slightlyMuted" mb={3}>
               <Flex alignItems="center">
                 <Text mr={1}>Request expires if not reviewed in</Text>
                 <ToolTipInfo>
@@ -84,7 +85,7 @@ export function AdditionalOptions({
               />
             </LabelInput>
           )}
-          <LabelInput color="text.slightlyMuted">
+          <LabelInput typography="body2" color="text.slightlyMuted">
             <Flex alignItems="center">
               <Text mr={1}>Access Request Lifetime</Text>
               <ToolTipInfo>

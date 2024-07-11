@@ -27,10 +27,10 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"time"
 
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/gravitational/trace"
+	"github.com/jonboulle/clockwork"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/gravitational/teleport"
@@ -195,8 +195,6 @@ func TryRun(commands []CLICommand, args []string) error {
 	if cfg.TeleportHome != "" {
 		cfg.TeleportHome = filepath.Clean(cfg.TeleportHome)
 	}
-
-	cfg.Debug = ccf.Debug
 
 	// configure all commands with Teleport configuration (they share 'cfg')
 	clientConfig, err := ApplyConfig(&ccf, cfg)
@@ -433,7 +431,7 @@ func LoadConfigFromProfile(ccf *GlobalCLIFlags, cfg *servicecfg.Config) (*authcl
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
-	if profile.IsExpired(time.Now()) {
+	if profile.IsExpired(clockwork.NewRealClock()) {
 		return nil, trace.BadParameter("your credentials have expired, please login using `tsh login`")
 	}
 

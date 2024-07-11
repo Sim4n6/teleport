@@ -105,8 +105,8 @@ type AgentPoolConfig struct {
 	// AccessPoint is a lightweight access point
 	// that can optionally cache some values
 	AccessPoint authclient.AccessCache
-	// AuthMethods contains SSH credentials that this pool connects as.
-	AuthMethods []ssh.AuthMethod
+	// HostSigner is a host signer this agent presents itself as
+	HostSigner ssh.Signer
 	// HostUUID is a unique ID of this host
 	HostUUID string
 	// LocalCluster is a cluster name this client is a member of.
@@ -151,8 +151,8 @@ func (cfg *AgentPoolConfig) CheckAndSetDefaults() error {
 	if cfg.AccessPoint == nil {
 		return trace.BadParameter("missing 'AccessPoint' parameter")
 	}
-	if len(cfg.AuthMethods) == 0 {
-		return trace.BadParameter("missing 'AuthMethods' parameter")
+	if cfg.HostSigner == nil {
+		return trace.BadParameter("missing 'HostSigner' parameter")
 	}
 	if len(cfg.HostUUID) == 0 {
 		return trace.BadParameter("missing 'HostUUID' parameter")
@@ -455,7 +455,7 @@ func (p *AgentPool) newAgent(ctx context.Context, tracker *track.Tracker, lease 
 	dialer := &agentDialer{
 		client:      p.Client,
 		fips:        p.FIPS,
-		authMethods: p.AuthMethods,
+		authMethods: []ssh.AuthMethod{ssh.PublicKeys(p.HostSigner)},
 		options:     options,
 		username:    p.HostUUID,
 		log:         p.log,

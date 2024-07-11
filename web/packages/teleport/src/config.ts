@@ -18,7 +18,6 @@
 
 import { generatePath } from 'react-router';
 import { mergeDeep } from 'shared/utils/highbar';
-import { IncludedResourceMode } from 'shared/components/UnifiedResources';
 
 import generateResourcePath from './generateResourcePath';
 
@@ -38,12 +37,9 @@ import type { ParticipantMode } from 'teleport/services/session';
 import type { YamlSupportedResourceKind } from './services/yaml/types';
 
 const cfg = {
-  /**
-   * @deprecated use cfg.edition instead
-   */
   isEnterprise: false,
-  edition: 'oss',
   isCloud: false,
+  assistEnabled: false,
   automaticUpgrades: false,
   automaticUpgradesTargetVersion: '',
   // isDashboard is used generally when we want to hide features that can't be hidden by RBAC in
@@ -98,38 +94,8 @@ const cfg = {
     AccessRequestMonthlyRequestLimit: 0,
   },
 
-  // default entitlements to false
-  entitlements: {
-    hsm: { enabled: false, limit: 0 },
-    oidc: { enabled: false, limit: 0 },
-    assist: { enabled: false, limit: 0 },
-    app: { enabled: false, limit: 0 },
-    db: { enabled: false, limit: 0 },
-    desktop: { enabled: false, limit: 0 },
-    accessMonitoring: { enabled: false, limit: 0 },
-    customTheme: { enabled: false, limit: 0 },
-    featureHiding: { enabled: false, limit: 0 },
-    policy: { enabled: false, limit: 0 },
-    identity: { enabled: false, limit: 0 },
-    deviceTrust: { enabled: false, limit: 0 },
-    k8s: { enabled: false, limit: 0 },
-    usageReporting: { enabled: false, limit: 0 },
-    upsellAlert: { enabled: false, limit: 0 },
-    saml: { enabled: false, limit: 0 },
-    cloudAuditLogRetention: { enabled: false, limit: 0 },
-    externalAuditStorage: { enabled: false, limit: 0 },
-    joinActiveSessions: { enabled: false, limit: 0 },
-    mobileDeviceManagement: { enabled: false, limit: 0 },
-    accessRequests: { enabled: false, limit: 0 },
-    accessLists: { enabled: false, limit: 0 },
-    sessionLocks: { enabled: false, limit: 0 },
-    oktaUserSync: { enabled: false, limit: 0 },
-    oktaSCIM: { enabled: false, limit: 0 },
-  },
-
   ui: {
     scrollbackLines: 1000,
-    showResources: 'requestable',
   },
 
   auth: {
@@ -159,6 +125,8 @@ const cfg = {
     root: '/web',
     discover: '/web/discover',
     accessRequest: '/web/accessrequest',
+    assistBase: '/web/assist/',
+    assist: '/web/assist/:conversationId?',
     apps: '/web/cluster/:clusterId/apps',
     appLauncher: '/web/launch/:fqdn/:clusterId?/:publicAddr?/:arn?',
     support: '/web/support',
@@ -167,9 +135,7 @@ const cfg = {
     accountPassword: '/web/account/password',
     accountMfaDevices: '/web/account/twofactor',
     roles: '/web/roles',
-    joinTokens: '/web/tokens',
     deviceTrust: `/web/devices`,
-    deviceTrustAuthorize: '/web/device/authorize/:id?/:token?',
     sso: '/web/sso',
     cluster: '/web/cluster/:clusterId/',
     clusters: '/web/clusters',
@@ -189,8 +155,6 @@ const cfg = {
     consoleNodes: '/web/cluster/:clusterId/console/nodes',
     consoleConnect: '/web/cluster/:clusterId/console/node/:serverId/:login',
     consoleSession: '/web/cluster/:clusterId/console/session/:sid',
-    kubeExec: '/web/cluster/:clusterId/console/kube/exec/:kubeId/',
-    kubeExecSession: '/web/cluster/:clusterId/console/kube/exec/:sid',
     player: '/web/cluster/:clusterId/session/:sid', // ?recordingType=ssh|desktop|k8s&durationMs=1234
     login: '/web/login',
     loginSuccess: '/web/msg/info/login_success',
@@ -243,7 +207,7 @@ const cfg = {
     passwordTokenPath: '/v1/webapi/users/password/token/:tokenId?',
     changeUserPasswordPath: '/v1/webapi/users/password',
     unifiedResourcesPath:
-      '/v1/webapi/sites/:clusterId/resources?searchAsRoles=:searchAsRoles?&limit=:limit?&startKey=:startKey?&kinds=:kinds?&query=:query?&search=:search?&sort=:sort?&pinnedOnly=:pinnedOnly?&includedResourceMode=:includedResourceMode?',
+      '/v1/webapi/sites/:clusterId/resources?searchAsRoles=:searchAsRoles?&limit=:limit?&startKey=:startKey?&kinds=:kinds?&query=:query?&search=:search?&sort=:sort?&pinnedOnly=:pinnedOnly?',
     nodesPath:
       '/v1/webapi/sites/:clusterId/nodes?searchAsRoles=:searchAsRoles?&limit=:limit?&startKey=:startKey?&query=:query?&search=:search?&sort=:sort?',
     nodesPathNoParams: '/v1/webapi/sites/:clusterId/nodes',
@@ -263,13 +227,11 @@ const cfg = {
     desktopIsActive: '/v1/webapi/sites/:clusterId/desktops/:desktopName/active',
     ttyWsAddr:
       'wss://:fqdn/v1/webapi/sites/:clusterId/connect/ws?params=:params&traceparent=:traceparent',
-    ttyKubeExecWsAddr:
-      'wss://:fqdn/v1/webapi/sites/:clusterId/kube/exec/ws?params=:params&traceparent=:traceparent',
     ttyPlaybackWsAddr:
       'wss://:fqdn/v1/webapi/sites/:clusterId/ttyplayback/:sid?access_token=:token', // TODO(zmb3): get token out of URL
     activeAndPendingSessionsPath: '/v1/webapi/sites/:clusterId/sessions',
 
-    // TODO(zmb3): remove this when Assist is no longer using it
+    // TODO(zmb3): remove this for v15
     sshPlaybackPrefix: '/v1/webapi/sites/:clusterId/sessions/:sid', // prefix because this is eventually concatenated with "/stream" or "/events"
     kubernetesPath:
       '/v1/webapi/sites/:clusterId/kubernetes?searchAsRoles=:searchAsRoles?&limit=:limit?&startKey=:startKey?&query=:query?&search=:search?&sort=:sort?',
@@ -287,8 +249,6 @@ const cfg = {
     connectMyComputerLoginsPath: '/v1/webapi/connectmycomputer/logins',
 
     joinTokenPath: '/v1/webapi/token',
-    joinTokenYamlPath: '/v1/webapi/token/yaml',
-    joinTokensPath: '/v1/webapi/tokens',
     dbScriptPath: '/scripts/:token/install-database.sh',
     nodeScriptPath: '/scripts/:token/install-node.sh',
     appNodeScriptPath: '/scripts/:token/install-app.sh?name=:name&uri=:uri',
@@ -318,6 +278,11 @@ const cfg = {
     locksPathWithUuid: '/v1/webapi/sites/:clusterId/locks/:uuid',
 
     dbSign: 'v1/webapi/sites/:clusterId/sign/db',
+
+    installADDSPath: '/v1/webapi/scripts/desktop-access/install-ad-ds.ps1',
+    installADCSPath: '/v1/webapi/scripts/desktop-access/install-ad-cs.ps1',
+    configureADPath:
+      '/v1/webapi/scripts/desktop-access/configure/:token/configure-ad.ps1',
 
     captureUserEventPath: '/v1/webapi/capture',
     capturePreUserEventPath: '/v1/webapi/precapture',
@@ -375,6 +340,16 @@ const cfg = {
     userGroupsListPath:
       '/v1/webapi/sites/:clusterId/user-groups?searchAsRoles=:searchAsRoles?&limit=:limit?&startKey=:startKey?&query=:query?&search=:search?&sort=:sort?',
 
+    assistConversationsPath: '/v1/webapi/assistant/conversations',
+    assistSetConversationTitlePath:
+      '/v1/webapi/assistant/conversations/:conversationId/title',
+    assistGenerateSummaryPath: '/v1/webapi/assistant/title/summary',
+    assistConversationWebSocketPath:
+      'wss://:hostname/v1/webapi/sites/:clusterId/assistant/ws',
+    assistConversationHistoryPath:
+      '/v1/webapi/assistant/conversations/:conversationId',
+    assistExecuteCommandWebSocketPath:
+      'wss://:hostname/v1/webapi/command/:clusterId/execute/ws',
     userPreferencesPath: '/v1/webapi/user/preferences',
     userClusterPreferencesPath: '/v1/webapi/user/preferences/:clusterId',
 
@@ -390,10 +365,7 @@ const cfg = {
       '/webapi/scripts/integrations/configure/gcp-workforce-saml.sh?orgId=:orgId&poolName=:poolName&poolProviderName=:poolProviderName',
 
     notificationsPath:
-      '/v1/webapi/sites/:clusterId/notifications?limit=:limit?&startKey=:startKey?',
-    notificationLastSeenTimePath:
-      '/v1/webapi/sites/:clusterId/lastseennotification',
-    notificationStatePath: '/v1/webapi/sites/:clusterId/notificationstate',
+      '/v1/webapi/sites/:clusterId/notifications?limit=:limit?&userNotificationsStartKey=:userNotificationsStartKey?&globalNotificationsStartKey=:globalNotificationsStartKey?',
 
     yaml: {
       parse: '/v1/webapi/yaml/parse/:kind',
@@ -488,10 +460,6 @@ const cfg = {
     return cfg.auth.authType;
   },
 
-  getDeviceTrustAuthorizeRoute(id: string, token: string) {
-    return generatePath(cfg.routes.deviceTrustAuthorize, { id, token });
-  },
-
   getSsoUrl(providerUrl, providerName, redirect) {
     return cfg.baseUrl + generatePath(providerUrl, { redirect, providerName });
   },
@@ -520,20 +488,8 @@ const cfg = {
     return generatePath(cfg.routes.desktops, { clusterId });
   },
 
-  getJoinTokensRoute() {
-    return cfg.routes.joinTokens;
-  },
-
-  getJoinTokensUrl() {
-    return cfg.api.joinTokensPath;
-  },
-
   getJoinTokenUrl() {
     return cfg.api.joinTokenPath;
-  },
-
-  getJoinTokenYamlUrl() {
-    return cfg.api.joinTokenYamlPath;
   },
 
   getNodeScriptUrl(token: string) {
@@ -559,6 +515,18 @@ const cfg = {
 
   getDbScriptUrl(token: string) {
     return cfg.baseUrl + generatePath(cfg.api.dbScriptPath, { token });
+  },
+
+  getConfigureADUrl(token: string) {
+    return cfg.baseUrl + generatePath(cfg.api.configureADPath, { token });
+  },
+
+  getInstallADDSPath() {
+    return cfg.baseUrl + cfg.api.installADDSPath;
+  },
+
+  getInstallADCSPath() {
+    return cfg.baseUrl + cfg.api.installADCSPath;
   },
 
   getAppNodeScriptUrl(token: string, name: string, uri: string) {
@@ -607,30 +575,12 @@ const cfg = {
     });
   },
 
-  getKubeExecConnectRoute(params: UrlKubeExecParams) {
-    return generatePath(cfg.routes.kubeExec, { ...params });
-  },
-
   getDesktopRoute({ clusterId, username, desktopName }) {
     return generatePath(cfg.routes.desktop, {
       clusterId,
       desktopName,
       username,
     });
-  },
-
-  getKubeExecSessionRoute(
-    { clusterId, sid }: UrlParams,
-    mode?: ParticipantMode
-  ) {
-    const basePath = generatePath(cfg.routes.kubeExecSession, {
-      clusterId,
-      sid,
-    });
-    if (mode) {
-      return `${basePath}?mode=${mode}`;
-    }
-    return basePath;
   },
 
   getSshSessionRoute({ clusterId, sid }: UrlParams, mode?: ParticipantMode) {
@@ -727,7 +677,7 @@ const cfg = {
   },
 
   getSshPlaybackPrefixUrl({ clusterId, sid }: UrlParams) {
-    // TODO(zmb3): remove this when Assist is no longer using it
+    // TODO(zmb3): remove
     return generatePath(cfg.api.sshPlaybackPrefix, { clusterId, sid });
   },
 
@@ -985,6 +935,73 @@ const cfg = {
     return cfg.ui;
   },
 
+  getAssistSetConversationTitleUrl(conversationId: string) {
+    return generatePath(cfg.api.assistSetConversationTitlePath, {
+      conversationId,
+    });
+  },
+
+  getAssistConversationWebSocketUrl(
+    hostname: string,
+    clusterId: string,
+    conversationId: string
+  ) {
+    const searchParams = new URLSearchParams();
+
+    searchParams.set('conversation_id', conversationId);
+
+    return (
+      generatePath(cfg.api.assistConversationWebSocketPath, {
+        hostname,
+        clusterId,
+      }) + `?${searchParams.toString()}`
+    );
+  },
+
+  getAssistActionWebSocketUrl(
+    hostname: string,
+    clusterId: string,
+    action: string
+  ) {
+    const searchParams = new URLSearchParams();
+
+    searchParams.set('action', action);
+
+    return (
+      generatePath(cfg.api.assistConversationWebSocketPath, {
+        hostname,
+        clusterId,
+      }) + `?${searchParams.toString()}`
+    );
+  },
+
+  getAssistConversationHistoryUrl(conversationId: string) {
+    return generatePath(cfg.api.assistConversationHistoryPath, {
+      conversationId,
+    });
+  },
+
+  getAssistExecuteCommandUrl(
+    hostname: string,
+    clusterId: string,
+    params: Record<string, string>
+  ) {
+    const searchParams = new URLSearchParams();
+
+    searchParams.set('params', JSON.stringify(params));
+
+    return (
+      generatePath(cfg.api.assistExecuteCommandWebSocketPath, {
+        hostname,
+        clusterId,
+      }) + `?${searchParams.toString()}`
+    );
+  },
+
+  getAssistConversationUrl(conversationId: string) {
+    return generatePath(cfg.routes.assist, { conversationId });
+  },
+
   getAccessRequestUrl(requestId?: string) {
     return generatePath(cfg.api.accessRequestPath, { requestId });
   },
@@ -1129,14 +1146,6 @@ const cfg = {
     return generatePath(cfg.api.notificationsPath, { ...params });
   },
 
-  getNotificationLastSeenUrl(clusterId: string) {
-    return generatePath(cfg.api.notificationLastSeenTimePath, { clusterId });
-  },
-
-  getNotificationStateUrl(clusterId: string) {
-    return generatePath(cfg.api.notificationStatePath, { clusterId });
-  },
-
   init(backendConfig = {}) {
     mergeDeep(this, backendConfig);
   },
@@ -1173,11 +1182,6 @@ export interface UrlSshParams {
   sid?: string;
   mode?: ParticipantMode;
   clusterId: string;
-}
-
-export interface UrlKubeExecParams {
-  clusterId: string;
-  kubeId: string;
 }
 
 export interface UrlSessionRecordingsParams {
@@ -1233,7 +1237,6 @@ export interface UrlResourcesParams {
   startKey?: string;
   searchAsRoles?: 'yes' | '';
   pinnedOnly?: boolean;
-  includedResourceMode?: IncludedResourceMode;
   // TODO(bl-nero): Remove this once filters are expressed as advanced search.
   kinds?: string[];
 }
@@ -1272,9 +1275,8 @@ export interface UrlGcpWorkforceConfigParam {
 export interface UrlNotificationParams {
   clusterId: string;
   limit?: number;
-  startKey?: string;
+  userNotificationsStartKey?: string;
+  globalNotificationsStartKey?: string;
 }
 
 export default cfg;
-
-export type TeleportEdition = 'ent' | 'community' | 'oss';

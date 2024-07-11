@@ -165,6 +165,18 @@ export function LabelsInput({
           e.preventDefault();
           addLabel();
         }}
+        css={`
+          text-transform: none;
+          font-weight: normal;
+          &:disabled {
+            .icon-add {
+              opacity: 0.35;
+            }
+            pointer-events: none;
+          }
+          &:hover {
+          }
+        `}
         disabled={disableBtns}
         gap={1}
       >

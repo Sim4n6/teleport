@@ -42,9 +42,11 @@ import (
 	"github.com/gravitational/teleport/api/constants"
 	"github.com/gravitational/teleport/api/types"
 	apiutils "github.com/gravitational/teleport/api/utils"
-	"github.com/gravitational/teleport/api/utils/keys"
+	"github.com/gravitational/teleport/lib/ai"
+	"github.com/gravitational/teleport/lib/ai/embedding"
 	"github.com/gravitational/teleport/lib/auth/accesspoint"
 	"github.com/gravitational/teleport/lib/auth/authclient"
+	"github.com/gravitational/teleport/lib/auth/keystore"
 	"github.com/gravitational/teleport/lib/auth/native"
 	"github.com/gravitational/teleport/lib/auth/state"
 	authority "github.com/gravitational/teleport/lib/auth/testauthority"
@@ -52,7 +54,6 @@ import (
 	"github.com/gravitational/teleport/lib/backend"
 	"github.com/gravitational/teleport/lib/backend/memory"
 	"github.com/gravitational/teleport/lib/cache"
-	"github.com/gravitational/teleport/lib/cryptosuites"
 	"github.com/gravitational/teleport/lib/defaults"
 	"github.com/gravitational/teleport/lib/events"
 	"github.com/gravitational/teleport/lib/events/eventstest"
@@ -88,6 +89,8 @@ type TestAuthServerConfig struct {
 	TraceClient otlptrace.Client
 	// AuthPreferenceSpec is custom initial AuthPreference spec for the test.
 	AuthPreferenceSpec *types.AuthPreferenceSpecV2
+	// Embedder is required to enable the assist in the auth server.
+	Embedder embedding.Embedder
 	// CacheEnabled enables the primary auth server cache.
 	CacheEnabled bool
 	// RunWhileLockedRetryInterval is the interval to retry the run while locked
@@ -114,6 +117,9 @@ func (cfg *TestAuthServerConfig) CheckAndSetDefaults() error {
 			Type:         constants.Local,
 			SecondFactor: constants.SecondFactorOff,
 		}
+	}
+	if cfg.Embedder == nil {
+		cfg.Embedder = &noopEmbedder{}
 	}
 	return nil
 }
@@ -204,6 +210,14 @@ func WithClock(clock clockwork.Clock) ServerOption {
 	}
 }
 
+// WithEmbedder is a functional server option that sets the server's embedder.
+func WithEmbedder(embedder embedding.Embedder) ServerOption {
+	return func(s *Server) error {
+		s.embedder = embedder
+		return nil
+	}
+}
+
 // TestAuthServer is auth server using local filesystem backend
 // and test certificate authority key generation that speeds up
 // keygen by using the same private key
@@ -275,13 +289,6 @@ func NewTestAuthServer(cfg TestAuthServerConfig) (*TestAuthServer, error) {
 		return nil, trace.Wrap(err)
 	}
 
-	clusterName, err := services.NewClusterNameWithRandomID(types.ClusterNameSpecV2{
-		ClusterName: cfg.ClusterName,
-	})
-	if err != nil {
-		return nil, trace.Wrap(err)
-	}
-
 	srv.AuthServer, err = NewServer(&InitConfig{
 		Backend:                srv.Backend,
 		Authority:              authority.NewWithClock(cfg.Clock),
@@ -292,12 +299,17 @@ func NewTestAuthServer(cfg TestAuthServerConfig) (*TestAuthServer, error) {
 		SkipPeriodicOperations: true,
 		Emitter:                emitter,
 		TraceClient:            cfg.TraceClient,
-		Clock:                  cfg.Clock,
-		ClusterName:            clusterName,
-		HostUUID:               uuid.New().String(),
-		AccessLists:            accessLists,
+		KeyStoreConfig: keystore.Config{
+			Software: keystore.SoftwareConfig{
+				RSAKeyPairSource: authority.New().GenerateKeyPair,
+			},
+		},
+		EmbeddingRetriever: ai.NewSimpleRetriever(),
+		HostUUID:           uuid.New().String(),
+		AccessLists:        accessLists,
 	},
 		WithClock(cfg.Clock),
+		WithEmbedder(cfg.Embedder),
 	)
 	if err != nil {
 		return nil, trace.Wrap(err)
@@ -341,6 +353,12 @@ func NewTestAuthServer(cfg TestAuthServerConfig) (*TestAuthServer, error) {
 		return nil, trace.Wrap(err)
 	}
 
+	clusterName, err := services.NewClusterNameWithRandomID(types.ClusterNameSpecV2{
+		ClusterName: cfg.ClusterName,
+	})
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
 	err = srv.AuthServer.SetClusterName(clusterName)
 	if err != nil {
 		return nil, trace.Wrap(err)
@@ -355,17 +373,9 @@ func NewTestAuthServer(cfg TestAuthServerConfig) (*TestAuthServer, error) {
 		return nil, trace.Wrap(err)
 	}
 
-	token, err := types.NewProvisionTokenFromSpec("static-token", time.Unix(0, 0).UTC(), types.ProvisionTokenSpecV2{
-		Roles: types.SystemRoles{types.RoleNode},
-	})
-	if err != nil {
-		return nil, trace.Wrap(err)
-	}
 	// set static tokens
 	staticTokens, err := types.NewStaticTokens(types.StaticTokensSpecV2{
-		StaticTokens: []types.ProvisionTokenV1{
-			*token.V1(),
-		},
+		StaticTokens: []types.ProvisionTokenV1{},
 	})
 	if err != nil {
 		return nil, trace.Wrap(err)
@@ -457,7 +467,7 @@ func NewTestAuthServer(cfg TestAuthServerConfig) (*TestAuthServer, error) {
 
 	userNotificationCache, err := services.NewUserNotificationCache(services.NotificationCacheConfig{
 		Events: srv.AuthServer.Services,
-		Getter: srv.AuthServer.Cache,
+		Getter: srv.AuthServer.Services,
 	})
 	if err != nil {
 		return nil, trace.Wrap(err)
@@ -467,7 +477,7 @@ func NewTestAuthServer(cfg TestAuthServerConfig) (*TestAuthServer, error) {
 
 	globalNotificationCache, err := services.NewGlobalNotificationCache(services.NotificationCacheConfig{
 		Events: srv.AuthServer.Services,
-		Getter: srv.AuthServer.Cache,
+		Getter: srv.AuthServer.Services,
 	})
 	if err != nil {
 		return nil, trace.Wrap(err)
@@ -517,7 +527,7 @@ func (a *TestAuthServer) GenerateUserCert(key []byte, username string, ttl time.
 		user:          userState,
 		ttl:           ttl,
 		compatibility: compatibility,
-		sshPublicKey:  key,
+		publicKey:     key,
 		checker:       checker,
 		traits:        userState.GetTraits(),
 	})
@@ -546,27 +556,15 @@ func PrivateKeyToPublicKeyTLS(privateKey []byte) (tlsPublicKey []byte, err error
 // returns private public key pair
 func generateCertificate(authServer *Server, identity TestIdentity) ([]byte, []byte, error) {
 	ctx := context.TODO()
-
-	key, err := cryptosuites.GenerateKeyWithAlgorithm(cryptosuites.ECDSAP256)
+	priv, pub, err := native.GenerateKeyPair()
 	if err != nil {
 		return nil, nil, trace.Wrap(err)
 	}
 
-	privateKeyPEM, err := keys.MarshalPrivateKey(key)
+	tlsPublicKey, err := PrivateKeyToPublicKeyTLS(priv)
 	if err != nil {
 		return nil, nil, trace.Wrap(err)
 	}
-
-	tlsPublicKeyPEM, err := keys.MarshalPublicKey(key.Public())
-	if err != nil {
-		return nil, nil, trace.Wrap(err)
-	}
-
-	sshPublicKey, err := ssh.NewPublicKey(key.Public())
-	if err != nil {
-		return nil, nil, trace.Wrap(err)
-	}
-	sshPublicKeyPEM := ssh.MarshalAuthorizedKey(sshPublicKey)
 
 	clusterName, err := authServer.GetClusterName()
 	if err != nil {
@@ -593,7 +591,7 @@ func generateCertificate(authServer *Server, identity TestIdentity) ([]byte, []b
 		}
 
 		certs, err := authServer.generateUserCert(ctx, certRequest{
-			tlsPublicKey:     tlsPublicKeyPEM,
+			publicKey:        pub,
 			user:             userState,
 			ttl:              identity.TTL,
 			usage:            identity.AcceptedUsage,
@@ -607,34 +605,34 @@ func generateCertificate(authServer *Server, identity TestIdentity) ([]byte, []b
 		if err != nil {
 			return nil, nil, trace.Wrap(err)
 		}
-		return certs.TLS, privateKeyPEM, nil
+		return certs.TLS, priv, nil
 	case authz.BuiltinRole:
 		certs, err := authServer.GenerateHostCerts(ctx,
 			&proto.HostCertsRequest{
 				HostID:       id.Username,
 				NodeName:     id.Username,
 				Role:         id.Role,
-				PublicTLSKey: tlsPublicKeyPEM,
-				PublicSSHKey: sshPublicKeyPEM,
+				PublicTLSKey: tlsPublicKey,
+				PublicSSHKey: pub,
 				SystemRoles:  id.AdditionalSystemRoles,
 			})
 		if err != nil {
 			return nil, nil, trace.Wrap(err)
 		}
-		return certs.TLS, privateKeyPEM, nil
+		return certs.TLS, priv, nil
 	case authz.RemoteBuiltinRole:
 		certs, err := authServer.GenerateHostCerts(ctx,
 			&proto.HostCertsRequest{
 				HostID:       id.Username,
 				NodeName:     id.Username,
 				Role:         id.Role,
-				PublicTLSKey: tlsPublicKeyPEM,
-				PublicSSHKey: sshPublicKeyPEM,
+				PublicTLSKey: tlsPublicKey,
+				PublicSSHKey: pub,
 			})
 		if err != nil {
 			return nil, nil, trace.Wrap(err)
 		}
-		return certs.TLS, privateKeyPEM, nil
+		return certs.TLS, priv, nil
 	default:
 		return nil, nil, trace.BadParameter("identity of unknown type %T is unsupported", identity)
 	}
@@ -859,7 +857,6 @@ func NewTestTLSServer(cfg TestTLSServerConfig) (*TestTLSServer, error) {
 		return nil, trace.Wrap(err)
 	}
 	tlsConfig.Time = cfg.AuthServer.Clock().Now
-	tlsCert := tlsConfig.Certificates[0]
 
 	srv.Listener, err = net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -867,13 +864,12 @@ func NewTestTLSServer(cfg TestTLSServerConfig) (*TestTLSServer, error) {
 	}
 
 	srv.TLSServer, err = NewTLSServer(context.Background(), TLSServerConfig{
-		Listener:             srv.Listener,
-		AccessPoint:          srv.AuthServer.AuthServer.Cache,
-		TLS:                  tlsConfig,
-		GetClientCertificate: func() (*tls.Certificate, error) { return &tlsCert, nil },
-		APIConfig:            *srv.APIConfig,
-		LimiterConfig:        *srv.Limiter,
-		AcceptedUsage:        cfg.AcceptedUsage,
+		Listener:      srv.Listener,
+		AccessPoint:   srv.AuthServer.AuthServer.Cache,
+		TLS:           tlsConfig,
+		APIConfig:     *srv.APIConfig,
+		LimiterConfig: *srv.Limiter,
+		AcceptedUsage: cfg.AcceptedUsage,
 	})
 	if err != nil {
 		return nil, trace.Wrap(err)
@@ -1334,7 +1330,14 @@ func CreateUserAndRoleWithoutRoles(clt clt, username string, allowedLogins []str
 	return created, upsertedRole, nil
 }
 
-// flushClt is the set of methods expected by the flushCache helper.
+// noopEmbedder is a no op implementation of the Embedder interface.
+type noopEmbedder struct{}
+
+func (n noopEmbedder) ComputeEmbeddings(_ context.Context, _ []string) ([]embedding.Vector64, error) {
+	return []embedding.Vector64{}, nil
+}
+
+// flushClt is the set of methods expected by the the flushCache helper.
 type flushClt interface {
 	// GetNamespace returns namespace by name
 	GetNamespace(name string) (*types.Namespace, error)

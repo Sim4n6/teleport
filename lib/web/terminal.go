@@ -22,7 +22,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -950,23 +949,6 @@ func (t *sshBaseHandler) connectToNodeWithMFABase(ctx context.Context, ws termin
 	nc.ProxyPublicAddr = t.proxyPublicAddr
 
 	return nc, nil
-}
-
-// sendError sends an error message to the client using the provided websocket.
-func (t *sshBaseHandler) sendError(errMsg string, err error, ws terminal.WSConn) {
-	envelope := &terminal.Envelope{
-		Version: defaults.WebsocketVersion,
-		Type:    defaults.WebsocketError,
-		Payload: fmt.Sprintf("%s: %s", errMsg, err.Error()),
-	}
-
-	envelopeBytes, err := proto.Marshal(envelope)
-	if err != nil {
-		t.log.WithError(err).Error("failed to marshal error message")
-	}
-	if err := ws.WriteMessage(websocket.BinaryMessage, envelopeBytes); err != nil {
-		t.log.WithError(err).Error("failed to send error message")
-	}
 }
 
 // streamEvents receives events over the SSH connection and forwards them to

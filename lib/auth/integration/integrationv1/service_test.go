@@ -428,6 +428,13 @@ func initSvc(t *testing.T, ca types.CertAuthority, clusterName string, proxyPubl
 	cacheResourceService, err := local.NewIntegrationsService(backend, local.WithIntegrationsServiceCacheMode(true))
 	require.NoError(t, err)
 
+	keystoreManager, err := keystore.NewManager(ctx, keystore.Config{
+		Software: keystore.SoftwareConfig{
+			RSAKeyPairSource: testauthority.New().GenerateKeyPair,
+		},
+	})
+	require.NoError(t, err)
+
 	cache := &mockCache{
 		domainName: clusterName,
 		ca:         ca,
@@ -443,7 +450,7 @@ func initSvc(t *testing.T, ca types.CertAuthority, clusterName string, proxyPubl
 		Backend:         localResourceService,
 		Authorizer:      authorizer,
 		Cache:           cache,
-		KeyStoreManager: keystore.NewSoftwareKeystoreForTests(t),
+		KeyStoreManager: keystoreManager,
 	})
 	require.NoError(t, err)
 

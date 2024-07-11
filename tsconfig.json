@@ -19,7 +19,7 @@
     "skipLibCheck": true,
     "sourceMap": false,
     "target": "esnext",
-    "types": ["node", "@types/wicg-file-system-access"],
+    "types": ["node", "@emotion/core", "@types/wicg-file-system-access"],
     "paths": {
       "shared/*": ["web/packages/shared/*"],
       "design/*": ["web/packages/design/src/*"],

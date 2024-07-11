@@ -31,6 +31,7 @@ import (
 	"github.com/go-mysql-org/go-mysql/packet"
 	"github.com/go-mysql-org/go-mysql/server"
 	"github.com/gravitational/trace"
+	"github.com/sirupsen/logrus"
 
 	"github.com/gravitational/teleport/api/types"
 	"github.com/gravitational/teleport/api/utils/retryutils"
@@ -72,7 +73,7 @@ func (e *Engine) InitializeConnection(clientConn net.Conn, _ *common.Session) er
 // SendError sends an error to connected client in the MySQL understandable format.
 func (e *Engine) SendError(err error) {
 	if writeErr := e.proxyConn.WriteError(trace.Unwrap(err)); writeErr != nil {
-		e.Log.DebugContext(e.Context, "Failed to send error to MySQL client.", "client_error", err, "write_error", writeErr)
+		e.Log.WithError(writeErr).Debugf("Failed to send error %q to MySQL client.", err)
 	}
 }
 
@@ -99,7 +100,7 @@ func (e *Engine) HandleConnection(ctx context.Context, sessionCtx *common.Sessio
 	defer func() {
 		err := e.GetUserProvisioner(e).Teardown(ctx, sessionCtx)
 		if err != nil {
-			e.Log.ErrorContext(e.Context, "Failed to teardown the user.", "error", err)
+			e.Log.WithError(err).Error("Failed to teardown the user.")
 		}
 	}()
 
@@ -115,7 +116,7 @@ func (e *Engine) HandleConnection(ctx context.Context, sessionCtx *common.Sessio
 	defer func() {
 		err := serverConn.Close()
 		if err != nil {
-			e.Log.ErrorContext(ctx, "Failed to close connection to MySQL server.", "error", err)
+			e.Log.WithError(err).Error("Failed to close connection to MySQL server.")
 		}
 	}()
 
@@ -126,7 +127,7 @@ func (e *Engine) HandleConnection(ctx context.Context, sessionCtx *common.Sessio
 	// is not set, or it has changed since previous call.
 	if err := e.updateServerVersion(sessionCtx, serverConn); err != nil {
 		// Log but do not fail connection if the version update fails.
-		e.Log.WarnContext(ctx, "Failed to update the MySQL server version.", "error", err)
+		e.Log.WithError(err).Warnf("Failed to update the MySQL server version.")
 
 	}
 
@@ -149,11 +150,11 @@ func (e *Engine) HandleConnection(ctx context.Context, sessionCtx *common.Sessio
 	go e.receiveFromServer(serverConn, e.proxyConn.Conn, serverErrCh, sessionCtx)
 	select {
 	case err := <-clientErrCh:
-		e.Log.DebugContext(e.Context, "Client done.", "error", err)
+		e.Log.WithError(err).Debug("Client done.")
 	case err := <-serverErrCh:
-		e.Log.DebugContext(e.Context, "Server done.", "error", err)
+		e.Log.WithError(err).Debug("Server done.")
 	case <-ctx.Done():
-		e.Log.DebugContext(e.Context, "Context canceled.")
+		e.Log.Debug("Context canceled.")
 	}
 	return nil
 }
@@ -181,7 +182,7 @@ func (e *Engine) updateServerVersion(sessionCtx *common.Session, serverConn *cli
 		return trace.Wrap(err)
 	}
 
-	e.Log.DebugContext(e.Context, "Updated MySQL server version.", "version", serverVersion)
+	e.Log.WithField("server-version", serverVersion).Debug("Updated MySQL server version.")
 	return nil
 }
 
@@ -217,7 +218,7 @@ func (e *Engine) checkAccess(ctx context.Context, sessionCtx *common.Session) er
 
 // connect establishes connection to MySQL database.
 func (e *Engine) connect(ctx context.Context, sessionCtx *common.Session) (*client.Conn, error) {
-	tlsConfig, err := e.Auth.GetTLSConfig(ctx, sessionCtx.GetExpiry(), sessionCtx.Database, sessionCtx.DatabaseUser)
+	tlsConfig, err := e.Auth.GetTLSConfig(ctx, sessionCtx)
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
@@ -230,7 +231,7 @@ func (e *Engine) connect(ctx context.Context, sessionCtx *common.Session) (*clie
 	var password string
 	switch {
 	case sessionCtx.Database.IsRDS(), sessionCtx.Database.IsRDSProxy():
-		password, err = e.Auth.GetRDSAuthToken(ctx, sessionCtx.Database, sessionCtx.DatabaseUser)
+		password, err = e.Auth.GetRDSAuthToken(ctx, sessionCtx)
 		if err != nil {
 			return nil, trace.Wrap(err)
 		}
@@ -264,7 +265,7 @@ func (e *Engine) connect(ctx context.Context, sessionCtx *common.Session) (*clie
 			dialer = newGCPTLSDialer(tlsConfig)
 		}
 	case sessionCtx.Database.IsAzure():
-		password, err = e.Auth.GetAzureAccessToken(ctx)
+		password, err = e.Auth.GetAzureAccessToken(ctx, sessionCtx)
 		if err != nil {
 			return nil, trace.Wrap(err)
 		}
@@ -308,13 +309,13 @@ func withClientCapabilities(caps ...uint32) func(conn *client.Conn) {
 // receiveFromClient relays protocol messages received from MySQL client
 // to MySQL database.
 func (e *Engine) receiveFromClient(clientConn, serverConn net.Conn, clientErrCh chan<- error, sessionCtx *common.Session) {
-	log := e.Log.With(
-		"from", "client",
-		"client", clientConn.RemoteAddr(),
-		"server", serverConn.RemoteAddr(),
-	)
+	log := e.Log.WithFields(logrus.Fields{
+		"from":   "client",
+		"client": clientConn.RemoteAddr(),
+		"server": serverConn.RemoteAddr(),
+	})
 	defer func() {
-		log.DebugContext(e.Context, "Stop receiving from client.")
+		log.Debug("Stop receiving from client.")
 		close(clientErrCh)
 	}()
 
@@ -324,10 +325,10 @@ func (e *Engine) receiveFromClient(clientConn, serverConn net.Conn, clientErrCh 
 		packet, err := protocol.ParsePacket(clientConn)
 		if err != nil {
 			if utils.IsOKNetworkError(err) {
-				log.DebugContext(e.Context, "Client connection closed.")
+				log.Debug("Client connection closed.")
 				return
 			}
-			log.ErrorContext(e.Context, "Failed to read client packet.", "error", err)
+			log.WithError(err).Error("Failed to read client packet.")
 			clientErrCh <- err
 			return
 		}
@@ -346,7 +347,7 @@ func (e *Engine) receiveFromClient(clientConn, serverConn net.Conn, clientErrCh 
 			// We do not want to allow changing the connection user and instead
 			// force users to go through normal reconnect flow so log the
 			// attempt and close the client connection.
-			log.WarnContext(e.Context, "Rejecting attempt to change user.", "user", pkt.User(), "session", sessionCtx)
+			log.Warnf("Rejecting attempt to change user to %q for session %v.", pkt.User(), sessionCtx)
 			return
 		case *protocol.Quit:
 			return
@@ -396,7 +397,7 @@ func (e *Engine) receiveFromClient(clientConn, serverConn net.Conn, clientErrCh 
 		}
 		_, err = protocol.WritePacket(packet.Bytes(), serverConn)
 		if err != nil {
-			log.ErrorContext(e.Context, "Failed to write server packet.", "error", err)
+			log.WithError(err).Error("Failed to write server packet.")
 			clientErrCh <- err
 			return
 		}
@@ -406,11 +407,11 @@ func (e *Engine) receiveFromClient(clientConn, serverConn net.Conn, clientErrCh 
 // receiveFromServer relays protocol messages received from MySQL database
 // to MySQL client.
 func (e *Engine) receiveFromServer(serverConn, clientConn net.Conn, serverErrCh chan<- error, sessionCtx *common.Session) {
-	log := e.Log.With(
-		"from", "server",
-		"client", clientConn.RemoteAddr(),
-		"server", serverConn.RemoteAddr(),
-	)
+	log := e.Log.WithFields(logrus.Fields{
+		"from":   "server",
+		"client": clientConn.RemoteAddr(),
+		"server": serverConn.RemoteAddr(),
+	})
 	messagesCounter := common.GetMessagesFromServerMetric(sessionCtx.Database)
 
 	// parse and count the messages from the server in a separate goroutine,
@@ -423,7 +424,7 @@ func (e *Engine) receiveFromServer(serverConn, clientConn net.Conn, serverErrCh 
 
 		var count int64
 		defer func() {
-			log.DebugContext(e.Context, "Stopped parsing messages from server.", "parsed_total", count)
+			log.WithField("parsed_total", count).Debug("Stopped parsing messages from server.")
 		}()
 
 		for {
@@ -443,13 +444,13 @@ func (e *Engine) receiveFromServer(serverConn, clientConn net.Conn, serverErrCh 
 	total, err := io.Copy(clientConn, io.TeeReader(serverConn, copyWriter))
 	if err != nil {
 		if utils.IsOKNetworkError(err) {
-			log.DebugContext(e.Context, "Server connection closed.")
+			log.Debug("Server connection closed.")
 		} else {
-			log.WarnContext(e.Context, "Server -> Client copy finished with unexpected error.", "error", err)
+			log.WithError(err).Warn("Server -> Client copy finished with unexpected error.")
 		}
 	}
 
-	log.DebugContext(e.Context, "Stopped receiving from server.", "total_bytes", total)
+	log.Debugf("Stopped receiving from server. Transferred %v bytes.", total)
 	serverErrCh <- trace.Wrap(err)
 }
 

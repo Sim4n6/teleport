@@ -55,8 +55,6 @@ import type {
   Regions,
 } from 'teleport/services/integrations';
 
-import type { SamlGcpWorkforce } from 'teleport/services/samlidp/types';
-
 export interface DiscoverContextState<T = any> {
   agentMeta: AgentMeta;
   currentStep: number;
@@ -553,12 +551,20 @@ export type AppMeta = BaseMeta & {
   app: App;
 };
 
-/**
- * SamlMeta describes the fields for SAML IdP
- * service provider resource that needs to be
- * preserved throughout the flow.
- */
-export type SamlMeta = BaseMeta & SamlGcpWorkforce;
+// SamlMeta describes the fields for SAML IdP
+// service provider resource that needs to be
+// preserved throughout the flow.
+export type SamlMeta = BaseMeta & SamlGcpWorkforceMeta;
+
+// GcpWorkforceMeta describes the fields for SAML
+// GCP workforce pool resource that needs to be
+// preserved throughout the flow.
+export type SamlGcpWorkforceMeta = {
+  isAutoConfig: boolean;
+  orgId: string;
+  poolName: string;
+  poolProviderName: string;
+};
 
 export type AgentMeta =
   | DbMeta

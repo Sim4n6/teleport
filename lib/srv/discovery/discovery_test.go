@@ -24,7 +24,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"regexp"
 	"slices"
 	"sync"
@@ -80,17 +79,11 @@ import (
 	gcpimds "github.com/gravitational/teleport/lib/cloud/imds/gcp"
 	"github.com/gravitational/teleport/lib/cloud/mocks"
 	libevents "github.com/gravitational/teleport/lib/events"
-	"github.com/gravitational/teleport/lib/modules"
 	"github.com/gravitational/teleport/lib/services"
 	"github.com/gravitational/teleport/lib/srv/discovery/common"
 	"github.com/gravitational/teleport/lib/srv/server"
 	usagereporter "github.com/gravitational/teleport/lib/usagereporter/teleport"
 )
-
-func TestMain(m *testing.M) {
-	modules.SetInsecureTestMode(true)
-	os.Exit(m.Run())
-}
 
 type mockSSMClient struct {
 	ssmiface.SSMAPI
@@ -1987,7 +1980,7 @@ func TestDiscoveryDatabase(t *testing.T) {
 				actualDatabases, err := tlsServer.Auth().GetDatabases(ctx)
 				require.NoError(t, err)
 				require.Empty(t, cmp.Diff(tc.expectDatabases, actualDatabases,
-					cmpopts.IgnoreFields(types.Metadata{}, "Revision"),
+					cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision"),
 					cmpopts.IgnoreFields(types.DatabaseStatusV3{}, "CACert"),
 				))
 			case <-time.After(time.Second):
@@ -2125,7 +2118,7 @@ func TestDiscoveryDatabaseRemovingDiscoveryConfigs(t *testing.T) {
 				return
 			}
 			assert.Empty(t, cmp.Diff(expectDatabases, actualDatabases,
-				cmpopts.IgnoreFields(types.Metadata{}, "Revision"),
+				cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision"),
 				cmpopts.IgnoreFields(types.DatabaseStatusV3{}, "CACert"),
 			))
 		}, waitForReconcileTimeout, 100*time.Millisecond)

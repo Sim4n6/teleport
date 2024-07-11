@@ -52,18 +52,16 @@ import (
 	"github.com/gravitational/teleport/api/types"
 	apievents "github.com/gravitational/teleport/api/types/events"
 	"github.com/gravitational/teleport/api/types/wrappers"
-	"github.com/gravitational/teleport/api/utils/keys"
 	"github.com/gravitational/teleport/lib/auth"
 	"github.com/gravitational/teleport/lib/auth/authclient"
 	"github.com/gravitational/teleport/lib/auth/native"
+	"github.com/gravitational/teleport/lib/auth/testauthority"
 	"github.com/gravitational/teleport/lib/authz"
-	"github.com/gravitational/teleport/lib/cryptosuites"
 	"github.com/gravitational/teleport/lib/events"
 	"github.com/gravitational/teleport/lib/httplib/reverseproxy"
 	"github.com/gravitational/teleport/lib/inventory"
 	libjwt "github.com/gravitational/teleport/lib/jwt"
 	"github.com/gravitational/teleport/lib/labels"
-	"github.com/gravitational/teleport/lib/modules"
 	"github.com/gravitational/teleport/lib/services"
 	"github.com/gravitational/teleport/lib/session"
 	"github.com/gravitational/teleport/lib/srv/app/common"
@@ -74,7 +72,6 @@ import (
 func TestMain(m *testing.M) {
 	utils.InitLoggerForTests()
 	native.PrecomputeTestKeys(m)
-	modules.SetInsecureTestMode(true)
 	os.Exit(m.Run())
 }
 
@@ -413,15 +410,10 @@ func SetUpSuiteWithConfig(t *testing.T, config suiteConfig) *Suite {
 }
 
 func (s *Suite) generateCertificate(t *testing.T, user types.User, publicAddr, awsRoleARN string) tls.Certificate {
-	key, err := cryptosuites.GenerateKeyWithAlgorithm(cryptosuites.ECDSAP256)
+	privateKey, publicKey, err := testauthority.New().GenerateKeyPair()
 	require.NoError(t, err)
-	privateKeyPEM, err := keys.MarshalPrivateKey(key)
-	require.NoError(t, err)
-	publicKeyPEM, err := keys.MarshalPublicKey(key.Public())
-	require.NoError(t, err)
-
 	req := auth.AppTestCertRequest{
-		PublicKey:   publicKeyPEM,
+		PublicKey:   publicKey,
 		Username:    user.GetName(),
 		TTL:         1 * time.Hour,
 		PublicAddr:  publicAddr,
@@ -433,7 +425,7 @@ func (s *Suite) generateCertificate(t *testing.T, user types.User, publicAddr, a
 	}
 	certificate, err := s.tlsServer.Auth().GenerateUserAppTestCert(req)
 	require.NoError(t, err)
-	tlsCertificate, err := tls.X509KeyPair(certificate, privateKeyPEM)
+	tlsCertificate, err := tls.X509KeyPair(certificate, privateKey)
 	require.NoError(t, err)
 
 	return tlsCertificate
@@ -471,7 +463,7 @@ func TestStart(t *testing.T) {
 
 	sort.Sort(types.AppServers(servers))
 	require.Empty(t, cmp.Diff([]types.AppServer{serverAWS, serverAWSWithIntegration, serverFoo}, servers,
-		cmpopts.IgnoreFields(types.Metadata{}, "Revision", "Expires")))
+		cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision", "Expires")))
 
 	// Check the expiry time is correct.
 	for _, server := range servers {
@@ -545,7 +537,7 @@ func TestShutdown(t *testing.T) {
 			require.Empty(t, cmp.Diff(appServers[0].GetApp(), app0, cmpopts.IgnoreFields(types.Metadata{}, "Revision", "Expires")))
 
 			// Shutdown should not return error.
-			shutdownCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+			shutdownCtx, cancel := context.WithTimeout(ctx, time.Second*5)
 			t.Cleanup(cancel)
 			if test.hasForkedChild {
 				shutdownCtx = services.ProcessForkedContext(shutdownCtx)
@@ -557,7 +549,7 @@ func TestShutdown(t *testing.T) {
 			appServersAfterShutdown, err := s.authClient.GetApplicationServers(ctx, defaults.Namespace)
 			require.NoError(t, err)
 			if test.wantAppServersAfterShutdown {
-				require.Empty(t, cmp.Diff(appServersAfterShutdown[0].GetApp(), app0, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+				require.Empty(t, cmp.Diff(appServers[0].GetApp(), app0, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
 			} else {
 				require.Empty(t, appServersAfterShutdown)
 			}

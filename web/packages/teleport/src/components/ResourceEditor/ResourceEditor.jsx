@@ -108,7 +108,7 @@ export default function ResourceEditor(props) {
               disabled={attempt.isProcessing}
               onClick={handleClose}
             >
-              Cancel
+              CANCEL
             </ButtonSecondary>
           </Box>
         </Flex>
@@ -146,7 +146,7 @@ export default function ResourceEditor(props) {
                 }
               }}
             >
-              View Documentation
+              VIEW DOCUMENTATION
             </ButtonBorder>
           </Flex>
         )}

@@ -97,7 +97,6 @@ export function cloneAbortSignal(signal: AbortSignal): CloneableAbortSignal {
       signal.removeEventListener(type, listener, options),
     eventListeners: (...args) => signal.eventListeners(...args),
     removeAllListeners: (...args) => signal.removeAllListeners(...args),
-    any: (...args) => signal.any(...args),
   };
 
   signal.addEventListener(
@@ -379,14 +378,9 @@ function cloneThenRejection<TResult>(
   };
 }
 
-/*
- * Mocks for tests.
- */
-
 /**
  * A helper for mocking unary calls. Creates a promise-like instance of a class which resolves to
- * an object where only the response field contains something. If error is passed, the instance
- * rejects with that error.
+ * an object where only the response field contains something.
  *
  * The need for this helper stems from the fact that cloneableClient returns the whole then property
  * of a unary call, so TypeScript expects the types to match.

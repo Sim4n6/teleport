@@ -210,20 +210,7 @@ func TestMakeApps(t *testing.T) {
 	}
 }
 
-func newApp(t *testing.T, name, publicAddr, description string, labels map[string]string) types.Application {
-	app, err := types.NewAppV3(types.Metadata{
-		Name:        name,
-		Description: description,
-		Labels:      labels,
-	}, types.AppSpecV3{
-		URI:        publicAddr,
-		PublicAddr: publicAddr,
-	})
-	require.NoError(t, err)
-	return app
-}
-
-func TestMakeAppTypeFromSAMLApp(t *testing.T) {
+func TestMakeSAMLApp(t *testing.T) {
 	tests := []struct {
 		name             string
 		sp               types.SAMLIdPServiceProviderV1
@@ -231,29 +218,19 @@ func TestMakeAppTypeFromSAMLApp(t *testing.T) {
 		expected         App
 	}{
 		{
-			name: "saml service provider with empty preset returns unspecified",
-			sp: types.SAMLIdPServiceProviderV1{
-				ResourceHeader: types.ResourceHeader{
-					Metadata: types.Metadata{
-						Name: "test_app",
-					},
-				},
-				Spec: types.SAMLIdPServiceProviderSpecV1{
-					Preset: "",
-				},
-			},
+			name: "empty",
 			expected: App{
 				Kind:          types.KindApp,
-				Name:          "test_app",
+				Name:          "",
 				Description:   "SAML Application",
 				PublicAddr:    "",
 				Labels:        []Label{},
 				SAMLApp:       true,
-				SAMLAppPreset: "unspecified",
+				SAMLAppPreset: "",
 			},
 		},
 		{
-			name: "saml service provider with preset",
+			name: "saml idp service provider",
 			sp: types.SAMLIdPServiceProviderV1{
 				ResourceHeader: types.ResourceHeader{
 					Metadata: types.Metadata{
@@ -280,17 +257,27 @@ func TestMakeAppTypeFromSAMLApp(t *testing.T) {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			apps := MakeAppTypeFromSAMLApp(&test.sp, MakeAppsConfig{})
+			apps := MakeSAMLApp(&test.sp, MakeAppsConfig{})
 			require.Empty(t, cmp.Diff(test.expected, apps))
 		})
 	}
 }
 
+func newApp(t *testing.T, name, publicAddr, description string, labels map[string]string) types.Application {
+	app, err := types.NewAppV3(types.Metadata{
+		Name:        name,
+		Description: description,
+		Labels:      labels,
+	}, types.AppSpecV3{
+		URI:        publicAddr,
+		PublicAddr: publicAddr,
+	})
+	require.NoError(t, err)
+	return app
+}
+
 // createAppServerOrSPFromApp returns a AppServerOrSAMLIdPServiceProvider given an App.
-//
-//nolint:staticcheck // SA1019. Kept to be deleted along with the API in 16.0.
 func createAppServerOrSPFromApp(app types.Application) types.AppServerOrSAMLIdPServiceProvider {
-	//nolint:staticcheck // SA1019. Kept to be deleted along with the API in 16.0.
 	appServerOrSP := &types.AppServerOrSAMLIdPServiceProviderV1{
 		Resource: &types.AppServerOrSAMLIdPServiceProviderV1_AppServer{
 			AppServer: &types.AppServerV3{
@@ -305,8 +292,6 @@ func createAppServerOrSPFromApp(app types.Application) types.AppServerOrSAMLIdPS
 }
 
 // createAppServerOrSPFromApp returns a AppServerOrSAMLIdPServiceProvider given a SAMLIdPServiceProvider.
-//
-//nolint:staticcheck // SA1019. Kept to be deleted along with the API in 16.0.
 func createAppServerOrSPFromSAMLIdPServiceProvider(sp types.SAMLIdPServiceProvider) types.AppServerOrSAMLIdPServiceProvider {
 	appServerOrSP := &types.AppServerOrSAMLIdPServiceProviderV1{
 		Resource: &types.AppServerOrSAMLIdPServiceProviderV1_SAMLIdPServiceProvider{

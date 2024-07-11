@@ -68,7 +68,6 @@ import { LockedAccessRequests } from './AccessRequests';
 import { Integrations } from './Integrations';
 import { Bots } from './Bots';
 import { AddBots } from './Bots/Add';
-import { JoinTokens } from './JoinTokens/JoinTokens';
 
 import type { FeatureFlags, TeleportFeature } from './types';
 
@@ -122,21 +121,6 @@ export class FeatureNodes implements TeleportFeature {
   }
 }
 
-// TODO (avatus) add navigationItem when ready to release
-export class FeatureJoinTokens implements TeleportFeature {
-  category = NavigationCategory.Management;
-  route = {
-    title: NavTitle.JoinTokens,
-    path: cfg.routes.joinTokens,
-    exact: true,
-    component: JoinTokens,
-  };
-
-  hasAccess(flags: FeatureFlags): boolean {
-    return flags.tokens;
-  }
-}
-
 export class FeatureUnifiedResources implements TeleportFeature {
   route = {
     title: 'Resources',
@@ -158,10 +142,6 @@ export class FeatureUnifiedResources implements TeleportFeature {
 
   hasAccess() {
     return !cfg.isDashboard;
-  }
-
-  getRoute() {
-    return this.route;
   }
 }
 
@@ -642,7 +622,6 @@ export function getOSSFeatures(): TeleportFeature[] {
     new FeatureAddBots(),
     new FeatureAuthConnectors(),
     new FeatureIntegrations(),
-    new FeatureJoinTokens(),
     new FeatureDiscover(),
     new FeatureIntegrationEnroll(),
 

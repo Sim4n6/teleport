@@ -136,7 +136,7 @@ export function NavigationDropdown(props: NavigationDropdownProps) {
   const history = useHistory();
 
   const ref = useRef<HTMLDivElement>();
-  const firstLinkRef = useRef<HTMLAnchorElement>();
+  const firstLinkRef = useRef<HTMLDivElement>();
 
   const clusterId = ctx.storeUser.getClusterId();
 

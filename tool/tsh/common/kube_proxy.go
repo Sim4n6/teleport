@@ -346,7 +346,7 @@ func makeKubeLocalProxy(cf *CLIConf, tc *client.TeleportClient, clusters kubecon
 	})
 
 	localProxy, err := alpnproxy.NewLocalProxy(
-		makeBasicLocalProxyConfig(cf.Context, tc, lpListener, cf.InsecureSkipVerify),
+		makeBasicLocalProxyConfig(cf, tc, lpListener),
 		alpnproxy.WithHTTPMiddleware(kubeMiddleware),
 		alpnproxy.WithSNI(client.GetKubeTLSServerName(tc.WebProxyHost())),
 		alpnproxy.WithClusterCAs(cf.Context, tc.RootClusterCACertPool),
@@ -389,7 +389,7 @@ func (k *kubeLocalProxy) Start(ctx context.Context) error {
 		errChan <- k.forwardProxy.Start()
 	}()
 	go func() {
-		errChan <- k.localProxy.Start(ctx)
+		errChan <- k.localProxy.StartHTTPAccessProxy(ctx)
 	}()
 
 	select {
@@ -463,16 +463,16 @@ func loadKubeUserCerts(ctx context.Context, tc *client.TeleportClient, clusters 
 	defer span.End()
 
 	// Renew tsh session and reuse the proxy client.
-	var clusterClient *client.ClusterClient
+	var proxy *client.ProxyClient
 	err := client.RetryWithRelogin(ctx, tc, func() error {
 		var err error
-		clusterClient, err = tc.ConnectToCluster(ctx)
+		proxy, err = tc.ConnectToProxy(ctx)
 		return trace.Wrap(err)
 	})
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
-	defer clusterClient.Close()
+	defer proxy.Close()
 
 	// TODO for best performance, load one kube cert at a time.
 	kubeKeys, err := loadKubeKeys(tc, clusters.TeleportClusters())
@@ -496,7 +496,7 @@ func loadKubeUserCerts(ctx context.Context, tc *client.TeleportClient, clusters 
 		}
 
 		// Try issue.
-		cert, err := issueKubeCert(ctx, tc, clusterClient, cluster.TeleportCluster, cluster.KubeCluster)
+		cert, err := issueKubeCert(ctx, tc, proxy, cluster.TeleportCluster, cluster.KubeCluster)
 		if err != nil {
 			return nil, trace.Wrap(err)
 		}
@@ -535,7 +535,7 @@ func kubeCertFromKey(key *client.Key, kubeCluster string) (tls.Certificate, erro
 // If required it performs relogin procedure.
 func (k *kubeLocalProxy) getCertReissuer(tc *client.TeleportClient) func(ctx context.Context, teleportCluster, kubeCluster string) (tls.Certificate, error) {
 	return func(ctx context.Context, teleportCluster, kubeCluster string) (tls.Certificate, error) {
-		var clusterClient *client.ClusterClient
+		var proxy *client.ProxyClient
 		var currentContext string
 
 		// We save user's current context in case there was relogin, which will delete our
@@ -552,13 +552,13 @@ func (k *kubeLocalProxy) getCertReissuer(tc *client.TeleportClient) func(ctx con
 			defer cancel()
 
 			var err error
-			clusterClient, err = tc.ConnectToCluster(ctx)
+			proxy, err = tc.ConnectToProxy(ctx)
 			return trace.Wrap(err)
 		})
 		if err != nil {
 			return tls.Certificate{}, trace.Wrap(err)
 		}
-		defer clusterClient.Close()
+		defer proxy.Close()
 
 		// We recreate ephemeral kubeconfig to make sure it's there even after relogin.
 		k.kubeconfig.CurrentContext = currentContext
@@ -566,17 +566,19 @@ func (k *kubeLocalProxy) getCertReissuer(tc *client.TeleportClient) func(ctx con
 			return tls.Certificate{}, trace.Wrap(err)
 		}
 
-		return issueKubeCert(ctx, tc, clusterClient, teleportCluster, kubeCluster)
+		return issueKubeCert(ctx, tc, proxy, teleportCluster, kubeCluster)
 	}
 }
 
-func issueKubeCert(ctx context.Context, tc *client.TeleportClient, clusterClient *client.ClusterClient, teleportCluster, kubeCluster string) (tls.Certificate, error) {
+func issueKubeCert(ctx context.Context, tc *client.TeleportClient, proxy *client.ProxyClient, teleportCluster, kubeCluster string) (tls.Certificate, error) {
+	var mfaRequired bool
+
 	requesterName := proto.UserCertsRequest_TSH_KUBE_LOCAL_PROXY
 	if tc.AllowHeadless {
 		requesterName = proto.UserCertsRequest_TSH_KUBE_LOCAL_PROXY_HEADLESS
 	}
 
-	key, mfaRequired, err := clusterClient.IssueUserCertsWithMFA(
+	key, err := proxy.IssueUserCertsWithMFA(
 		ctx,
 		client.ReissueParams{
 			RouteToCluster:    teleportCluster,
@@ -584,6 +586,7 @@ func issueKubeCert(ctx context.Context, tc *client.TeleportClient, clusterClient
 			RequesterName:     requesterName,
 		},
 		tc.NewMFAPrompt(mfa.WithPromptReasonSessionMFA("Kubernetes cluster", kubeCluster)),
+		client.WithMFARequired(&mfaRequired),
 	)
 	if err != nil {
 		return tls.Certificate{}, trace.Wrap(err)
@@ -607,7 +610,7 @@ func issueKubeCert(ctx context.Context, tc *client.TeleportClient, clusterClient
 	}
 
 	// Save it if MFA was not required.
-	if mfaRequired == proto.MFARequired_MFA_REQUIRED_NO {
+	if !mfaRequired {
 		if err := tc.LocalAgent().AddKubeKey(key); err != nil {
 			return tls.Certificate{}, trace.Wrap(err)
 		}

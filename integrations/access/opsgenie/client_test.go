@@ -59,8 +59,7 @@ func TestCreateAlert(t *testing.T) {
 		Roles:         []string{"role1", "role2"},
 		RequestReason: "someReason",
 		SystemAnnotations: types.Labels{
-			types.TeleportNamespace + types.ReqAnnotationNotifySchedulesLabel: {"responder@example.com"},
-			types.TeleportNamespace + types.ReqAnnotationTeamsLabel:           {"MyOpsGenieTeam"},
+			types.TeleportNamespace + types.ReqAnnotationNotifySchedulesLabel: {"responder@teleport.com"},
 		},
 	})
 	assert.NoError(t, err)
@@ -69,11 +68,8 @@ func TestCreateAlert(t *testing.T) {
 		Message:     "Access request from someUser",
 		Alias:       "teleport-access-request/someRequestID",
 		Description: "someUser requested permissions for roles role1, role2 on Teleport at 01 Jan 01 00:00 UTC.\nReason: someReason\n\n",
-		Responders: []Responder{
-			{Type: "schedule", Name: "responder@example.com", ID: "responder@example.com"},
-			{Type: "team", Name: "MyOpsGenieTeam", ID: "MyOpsGenieTeam"},
-		},
-		Priority: "somePriority",
+		Responders:  []Responder{{Type: "schedule", ID: "responder@teleport.com"}},
+		Priority:    "somePriority",
 	}
 	var got AlertBody
 	err = json.Unmarshal([]byte(recievedReq), &got)

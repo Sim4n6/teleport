@@ -531,7 +531,12 @@ func mustStartALPNLocalProxyWithConfig(t *testing.T, config alpnproxy.LocalProxy
 	})
 
 	go func() {
-		err := lp.Start(context.Background())
+		var err error
+		if config.HTTPMiddleware == nil {
+			err = lp.Start(context.Background())
+		} else {
+			err = lp.StartHTTPAccessProxy(context.Background())
+		}
 		assert.NoError(t, err)
 	}()
 	return lp

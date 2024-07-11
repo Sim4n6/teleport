@@ -24,7 +24,11 @@ import { CircleArrowLeft, CircleArrowRight } from 'design/Icon';
 
 export function SearchPagination({ prevPage, nextPage }: Props) {
   return (
-    <StyledPanel>
+    <StyledPanel
+      borderBottomLeftRadius={3}
+      borderBottomRightRadius={3}
+      showTopBorder={true}
+    >
       <Flex justifyContent="flex-end" width="100%">
         <Flex alignItems="center" mr={2}></Flex>
         <Flex>

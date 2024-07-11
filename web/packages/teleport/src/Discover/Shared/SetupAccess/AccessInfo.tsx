@@ -159,7 +159,9 @@ export function YamlReader({
 }
 
 const Info = ({ children }: { children: React.ReactNode }) => (
-  <Text mt={4}>{children}</Text>
+  <Text mt={4} width="100px">
+    {children}
+  </Text>
 );
 
 const ReadOnlyYamlEditor = ({ content }: { content: string }) => {

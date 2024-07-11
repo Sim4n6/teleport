@@ -1025,7 +1025,7 @@ func TestAWSOIDCAppAccessAppServerCreationDeletion(t *testing.T) {
 	require.Empty(t, cmp.Diff(
 		expectedServer,
 		appServers[0],
-		cmpopts.IgnoreFields(types.Metadata{}, "Revision", "Namespace"),
+		cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision", "Namespace"),
 	))
 
 	// After deleting the application, it should be removed from the backend.

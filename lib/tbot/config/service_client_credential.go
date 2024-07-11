@@ -21,7 +21,6 @@ package config
 import (
 	"crypto/tls"
 	"sync"
-	"time"
 
 	"github.com/gravitational/trace"
 	"golang.org/x/crypto/ssh"
@@ -94,16 +93,6 @@ func (o *UnstableClientCredentialOutput) SSHClientConfig() (*ssh.ClientConfig, e
 		return nil, trace.BadParameter("credentials not yet ready")
 	}
 	return o.facade.SSHClientConfig()
-}
-
-// Expiry returns the credential expiry.
-func (o *UnstableClientCredentialOutput) Expiry() (time.Time, bool) {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-	if o.facade == nil {
-		return time.Time{}, false
-	}
-	return o.facade.Expiry()
 }
 
 // Facade returns the underlying facade

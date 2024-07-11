@@ -431,9 +431,13 @@ func (a *App) getMessageRecipients(ctx context.Context, req types.AccessRequest)
 		recipientSet.Add(common.Recipient{})
 		return recipientSet.ToSlice()
 	case types.PluginTypeOpsgenie:
-		recipients, ok := req.GetSystemAnnotations()[types.TeleportNamespace+types.ReqAnnotationNotifySchedulesLabel]
-		if !ok {
-			return recipientSet.ToSlice()
+		// When both notify-services and approve-schedules are present, each is used for their own intended purpose.
+		recipients := make([]string, 0)
+		if approveSchedules, ok := req.GetSystemAnnotations()[types.TeleportNamespace+types.ReqAnnotationApproveSchedulesLabel]; ok {
+			recipients = approveSchedules
+		}
+		if notifySchedules, ok := req.GetSystemAnnotations()[types.TeleportNamespace+types.ReqAnnotationNotifySchedulesLabel]; ok {
+			recipients = notifySchedules
 		}
 		for _, recipient := range recipients {
 			rec, err := a.bot.FetchRecipient(ctx, recipient)
@@ -475,7 +479,7 @@ func (a *App) recipientsFromAccessMonitoringRules(ctx context.Context, req types
 	// This switch is used to determine which plugins we are enabling access monitoring notification rules for.
 	switch a.pluginType {
 	// Enabled plugins are added to this case.
-	case types.PluginTypeSlack, types.PluginTypeMattermost:
+	case types.PluginTypeSlack:
 		log.Debug("Applying access monitoring rules to request")
 	default:
 		return &recipientSet

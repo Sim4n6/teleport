@@ -18,7 +18,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import { space, SpaceProps } from 'design/system';
+import { space } from 'design/system';
 import { ButtonBorder, Flex, Text, Box } from 'design';
 import Menu, { MenuItem } from 'design/Menu';
 import { ChevronDown } from 'design/Icon';
@@ -26,7 +26,7 @@ import { ChevronDown } from 'design/Icon';
 import { AwsRole } from 'shared/services/apps';
 
 export class AwsLaunchButton extends React.Component<Props> {
-  anchorEl: React.MutableRefObject<HTMLButtonElement> = React.createRef();
+  anchorEl = React.createRef();
 
   state = {
     open: false,
@@ -53,9 +53,9 @@ export class AwsLaunchButton extends React.Component<Props> {
       <>
         <ButtonBorder
           textTransform="none"
-          width={this.props.width || '90px'}
+          width="90px"
           size="small"
-          setRef={e => (this.anchorEl.current = e)}
+          setRef={e => (this.anchorEl = e)}
           onClick={this.onOpen}
         >
           Launch
@@ -76,7 +76,7 @@ export class AwsLaunchButton extends React.Component<Props> {
             horizontal: 'right',
           }}
           getContentAnchorEl={null}
-          anchorEl={this.anchorEl.current}
+          anchorEl={this.anchorEl}
           open={open}
           onClose={this.onClose}
         >
@@ -180,7 +180,6 @@ type Props = {
   awsRoles: AwsRole[];
   getLaunchUrl(arn: string): string;
   onLaunchUrl?(arn: string): void;
-  width?: string;
 };
 
 const StyledMenuItem = styled(MenuItem)(
@@ -200,7 +199,7 @@ const StyledMenuItem = styled(MenuItem)(
 `
 );
 
-const StyledInput = styled.input<SpaceProps>(
+const StyledInput = styled.input(
   ({ theme }) => `
   background: transparent;
   border: 1px solid ${theme.colors.text.muted};

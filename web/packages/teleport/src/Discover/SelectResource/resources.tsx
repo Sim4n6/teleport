@@ -133,8 +133,7 @@ export const WINDOWS_DESKTOPS: ResourceSpec[] = [
     keywords: 'windows desktop active directory ad',
     icon: 'Windows',
     event: DiscoverEventResource.WindowsDesktop,
-    unguidedLink:
-      'https://goteleport.com/docs/desktop-access/active-directory/',
+    platform: Platform.Windows,
   },
   {
     name: 'Local Users',
@@ -177,7 +176,7 @@ export const BASE_RESOURCES: ResourceSpec[] = [
 
 export function getResourcePretitle(r: ResourceSpec) {
   if (!r) {
-    return '';
+    return {};
   }
 
   switch (r.kind) {

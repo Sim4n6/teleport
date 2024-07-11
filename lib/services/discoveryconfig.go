@@ -72,8 +72,9 @@ func MarshalDiscoveryConfig(discoveryConfig *discoveryconfig.DiscoveryConfig, op
 		return nil, trace.Wrap(err)
 	}
 
-	if !cfg.PreserveRevision {
+	if !cfg.PreserveResourceID {
 		copy := *discoveryConfig
+		copy.SetResourceID(0)
 		copy.SetRevision("")
 		discoveryConfig = &copy
 	}
@@ -95,6 +96,9 @@ func UnmarshalDiscoveryConfig(data []byte, opts ...MarshalOption) (*discoverycon
 	}
 	if err := discoveryConfig.CheckAndSetDefaults(); err != nil {
 		return nil, trace.Wrap(err)
+	}
+	if cfg.ID != 0 {
+		discoveryConfig.SetResourceID(cfg.ID)
 	}
 	if cfg.Revision != "" {
 		discoveryConfig.SetRevision(cfg.Revision)

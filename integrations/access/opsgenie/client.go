@@ -45,7 +45,6 @@ const (
 	heartbeatName         = "teleport-access-heartbeat"
 	ResponderTypeSchedule = "schedule"
 	ResponderTypeUser     = "user"
-	ResponderTypeTeam     = "team"
 
 	ResolveAlertRequestRetryInterval = time.Second * 10
 	ResolveAlertRequestRetryTimeout  = time.Minute * 2
@@ -83,8 +82,6 @@ type ClientConfig struct {
 	APIEndpoint string
 	// DefaultSchedules are the default on-call schedules to check for auto approval
 	DefaultSchedules []string
-	// DefaultTeams are the default Opsgenie Teams to add as responders
-	DefaultTeams []string
 	// Priority is the priority alerts are to be created with
 	Priority string
 
@@ -145,7 +142,7 @@ func (og Client) CreateAlert(ctx context.Context, reqID string, reqData RequestD
 		Message:     fmt.Sprintf("Access request from %s", reqData.User),
 		Alias:       fmt.Sprintf("%s/%s", alertKeyPrefix, reqID),
 		Description: bodyDetails,
-		Responders:  og.getResponders(reqData),
+		Responders:  og.getScheduleResponders(reqData),
 		Priority:    og.Priority,
 	}
 
@@ -208,28 +205,16 @@ func (og Client) getAlertRequestResult(ctx context.Context, reqID string) (GetAl
 	return result, nil
 }
 
-func (og Client) getResponders(reqData RequestData) []Responder {
+func (og Client) getScheduleResponders(reqData RequestData) []Responder {
 	schedules := og.DefaultSchedules
 	if reqSchedules, ok := reqData.SystemAnnotations[types.TeleportNamespace+types.ReqAnnotationNotifySchedulesLabel]; ok {
 		schedules = reqSchedules
 	}
-	teams := og.DefaultTeams
-	if reqTeams, ok := reqData.SystemAnnotations[types.TeleportNamespace+types.ReqAnnotationTeamsLabel]; ok {
-		teams = reqTeams
-	}
-	responders := make([]Responder, 0, len(schedules)+len(teams))
+	responders := make([]Responder, 0, len(schedules))
 	for _, s := range schedules {
 		responders = append(responders, Responder{
 			Type: ResponderTypeSchedule,
 			ID:   s,
-			Name: s,
-		})
-	}
-	for _, t := range teams {
-		responders = append(responders, Responder{
-			Type: ResponderTypeTeam,
-			ID:   t,
-			Name: t,
 		})
 	}
 	return responders

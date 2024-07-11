@@ -150,7 +150,6 @@ func (a *App) remindIfNecessary(ctx context.Context) error {
 
 	var nextToken string
 	var err error
-	remindersLookup := make(map[common.Recipient][]*accesslist.AccessList)
 	for {
 		var accessLists []*accesslist.AccessList
 		accessLists, nextToken, err = a.apiClient.ListAccessLists(ctx, 0 /* default page size */, nextToken)
@@ -168,16 +167,8 @@ func (a *App) remindIfNecessary(ctx context.Context) error {
 		}
 
 		for _, accessList := range accessLists {
-			recipients, err := a.getRecipientsRequiringReminders(ctx, accessList)
-			if err != nil {
-				log.WithError(err).Warnf("Error getting recipients to notify for review due for access list %q", accessList.Spec.Title)
-				continue
-			}
-
-			// Store all recipients and the accesslist needing review
-			// for later processing.
-			for _, recipient := range recipients {
-				remindersLookup[recipient] = append(remindersLookup[recipient], accessList)
+			if err := a.notifyForAccessListReviews(ctx, accessList); err != nil {
+				log.WithError(err).Warn("Error notifying for access list reviews")
 			}
 		}
 
@@ -186,25 +177,12 @@ func (a *App) remindIfNecessary(ctx context.Context) error {
 		}
 	}
 
-	// Send reminders for each collected recipients.
-	var errs []error
-	for recipient, accessLists := range remindersLookup {
-		if err := a.bot.SendReviewReminders(ctx, recipient, accessLists); err != nil {
-			errs = append(errs, err)
-		}
-	}
-
-	if len(errs) > 0 {
-		log.WithError(trace.NewAggregate(errs...)).Warn("Error notifying for access list reviews")
-	}
-
 	return nil
 }
 
-// getRecipientsRequiringReminders will return recipients that require reminders only
-// if the access list review dates are getting close. At the moment, this
+// notifyForAccessListReviews will notify if access list review dates are getting close. At the moment, this
 // only supports notifying owners.
-func (a *App) getRecipientsRequiringReminders(ctx context.Context, accessList *accesslist.AccessList) ([]common.Recipient, error) {
+func (a *App) notifyForAccessListReviews(ctx context.Context, accessList *accesslist.AccessList) error {
 	log := logger.Get(ctx)
 
 	// Find the current notification window.
@@ -214,12 +192,12 @@ func (a *App) getRecipientsRequiringReminders(ctx context.Context, accessList *a
 	// If the current time before the notification start time, skip notifications.
 	if now.Before(notificationStart) {
 		log.Debugf("Access list %s is not ready for notifications, notifications start at %s", accessList.GetName(), notificationStart.Format(time.RFC3339))
-		return nil, nil
+		return nil
 	}
 
 	allRecipients := a.fetchRecipients(ctx, accessList, now, notificationStart)
 	if len(allRecipients) == 0 {
-		return nil, trace.NotFound("no recipients could be fetched for access list %s", accessList.GetName())
+		return trace.NotFound("no recipients could be fetched for access list %s", accessList.GetName())
 	}
 
 	// Try to create base notification data with a zero notification date. If these objects already
@@ -234,15 +212,10 @@ func (a *App) getRecipientsRequiringReminders(ctx context.Context, accessList *a
 
 	// Error is okay so long as it's already exists.
 	if err != nil && !trace.IsAlreadyExists(err) {
-		return nil, trace.Wrap(err, "during create")
+		return trace.Wrap(err, "during create")
 	}
 
-	recipients, err := a.updatePluginDataAndGetRecipientsRequiringReminders(ctx, accessList, allRecipients, now, notificationStart)
-	if err != nil {
-		return nil, trace.Wrap(err)
-	}
-
-	return recipients, nil
+	return trace.Wrap(a.sendMessages(ctx, accessList, allRecipients, now, notificationStart))
 }
 
 // fetchRecipients will return all recipients.
@@ -264,9 +237,8 @@ func (a *App) fetchRecipients(ctx context.Context, accessList *accesslist.Access
 	return allRecipients
 }
 
-// updatePluginDataAndGetRecipientsRequiringReminders will return recipients requiring reminders
-// and update the plugin data about when the recipient got notified.
-func (a *App) updatePluginDataAndGetRecipientsRequiringReminders(ctx context.Context, accessList *accesslist.AccessList, allRecipients map[string]common.Recipient, now, notificationStart time.Time) ([]common.Recipient, error) {
+// sendMessages will send review notifications to owners and update the plugin data.
+func (a *App) sendMessages(ctx context.Context, accessList *accesslist.AccessList, allRecipients map[string]common.Recipient, now, notificationStart time.Time) error {
 	log := logger.Get(ctx)
 
 	var windowStart time.Time
@@ -304,8 +276,15 @@ func (a *App) updatePluginDataAndGetRecipientsRequiringReminders(ctx context.Con
 		return pd.AccessListNotificationData{UserNotifications: userNotifications}, nil
 	})
 	if err != nil {
-		return nil, trace.Wrap(err)
+		return trace.Wrap(err)
 	}
 
-	return recipients, nil
+	var errs []error
+	for _, recipient := range recipients {
+		if err := a.bot.SendReviewReminders(ctx, recipient, accessList); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	return trace.NewAggregate(errs...)
 }

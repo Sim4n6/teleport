@@ -82,7 +82,7 @@ export function ClusterAdd(props: {
                     props.onCancel();
                   }}
                 >
-                  Cancel
+                  CANCEL
                 </ButtonSecondary>
               </Box>
             </DialogContent>

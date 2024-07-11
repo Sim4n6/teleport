@@ -19,7 +19,6 @@
 package ui
 
 import (
-	"cmp"
 	"sort"
 
 	"github.com/sirupsen/logrus"
@@ -60,8 +59,6 @@ type App struct {
 	// SAMLAppPreset is the preset value of SAML IdP service provider. The SAML service provider
 	// preset value is used to process custom configuration for the service provider.
 	SAMLAppPreset string `json:"samlAppPreset,omitempty"`
-	// RequireRequest indicates if a returned resource is only accessible after an access request
-	RequiresRequest bool `json:"requiresRequest,omitempty"`
 	// Integration is the integration name that must be used to access this Application.
 	// Only applicable to AWS App Access.
 	Integration string `json:"integration,omitempty"`
@@ -94,8 +91,6 @@ type MakeAppsConfig struct {
 	UserGroupLookup map[string]types.UserGroup
 	// Logger is a logger used for debugging while making an app
 	Logger logrus.FieldLogger
-	// RequireRequest indicates if a returned resource is only accessible after an access request
-	RequiresRequest bool
 }
 
 // MakeApp creates an application object for the WebUI.
@@ -129,20 +124,19 @@ func MakeApp(app types.Application, c MakeAppsConfig) App {
 	}
 
 	resultApp := App{
-		Kind:            types.KindApp,
-		Name:            app.GetName(),
-		Description:     description,
-		URI:             app.GetURI(),
-		PublicAddr:      app.GetPublicAddr(),
-		Labels:          labels,
-		ClusterID:       c.AppClusterName,
-		FQDN:            fqdn,
-		AWSConsole:      app.IsAWSConsole(),
-		FriendlyName:    types.FriendlyName(app),
-		UserGroups:      userGroupAndDescriptions,
-		SAMLApp:         false,
-		RequiresRequest: c.RequiresRequest,
-		Integration:     app.GetIntegration(),
+		Kind:         types.KindApp,
+		Name:         app.GetName(),
+		Description:  description,
+		URI:          app.GetURI(),
+		PublicAddr:   app.GetPublicAddr(),
+		Labels:       labels,
+		ClusterID:    c.AppClusterName,
+		FQDN:         fqdn,
+		AWSConsole:   app.IsAWSConsole(),
+		FriendlyName: types.FriendlyName(app),
+		UserGroups:   userGroupAndDescriptions,
+		SAMLApp:      false,
+		Integration:  app.GetIntegration(),
 	}
 
 	if app.IsAWSConsole() {
@@ -154,23 +148,20 @@ func MakeApp(app types.Application, c MakeAppsConfig) App {
 	return resultApp
 }
 
-// MakeAppTypeFromSAMLApp creates App type from SAMLIdPServiceProvider type for the WebUI.
+// MakeSAMLApp creates a SAMLIdPServiceProvider object for the WebUI.
 // Keep in sync with lib/teleterm/apiserver/handler/handler_apps.go.
-// Note: The SAMLAppPreset field is used in SAML service provider update flow in the
-// Web UI. Thus, this field is currently not available in the Connect App type.
-func MakeAppTypeFromSAMLApp(app types.SAMLIdPServiceProvider, c MakeAppsConfig) App {
+func MakeSAMLApp(app types.SAMLIdPServiceProvider, c MakeAppsConfig) App {
 	labels := makeLabels(app.GetAllLabels())
 	resultApp := App{
-		Kind:            types.KindApp,
-		Name:            app.GetName(),
-		Description:     "SAML Application",
-		PublicAddr:      "",
-		Labels:          labels,
-		ClusterID:       c.AppClusterName,
-		FriendlyName:    types.FriendlyName(app),
-		SAMLApp:         true,
-		SAMLAppPreset:   cmp.Or(app.GetPreset(), "unspecified"),
-		RequiresRequest: c.RequiresRequest,
+		Kind:          types.KindApp,
+		Name:          app.GetName(),
+		Description:   "SAML Application",
+		PublicAddr:    "",
+		Labels:        labels,
+		ClusterID:     c.AppClusterName,
+		FriendlyName:  types.FriendlyName(app),
+		SAMLApp:       true,
+		SAMLAppPreset: app.GetPreset(),
 	}
 
 	return resultApp

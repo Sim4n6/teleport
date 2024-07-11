@@ -18,15 +18,7 @@
 
 import React from 'react';
 import { Danger } from 'design/Alert';
-import {
-  Indicator,
-  Text,
-  Box,
-  Flex,
-  ButtonPrimary,
-  Link,
-  Button,
-} from 'design';
+import { Indicator, Text, Box, Flex, ButtonPrimary, Link } from 'design';
 import Card from 'design/Card';
 import Image from 'design/Image';
 
@@ -71,16 +63,14 @@ export default function TrustedClusters() {
       <FeatureHeader alignItems="center">
         <FeatureHeaderTitle>Trusted Clusters</FeatureHeaderTitle>
         {hasClusters && (
-          <Button
-            intent="primary"
-            fill="border"
+          <ButtonPrimary
             disabled={!canCreate}
             ml="auto"
             width="240px"
             onClick={() => resources.create('trusted_cluster')}
           >
             Connect to Root Cluster
-          </Button>
+          </ButtonPrimary>
         )}
       </FeatureHeader>
       {attempt.status === 'failed' && <Danger>{attempt.statusText} </Danger>}

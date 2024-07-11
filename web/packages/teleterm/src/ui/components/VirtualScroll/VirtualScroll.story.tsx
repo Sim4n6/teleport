@@ -109,7 +109,7 @@ export function TreeList() {
   );
 }
 
-const ClickableItem = styled.span<{ ml: string }>`
+const ClickableItem = styled.span`
   visibility: ${props => (props.hidden ? 'hidden' : 'visible')};
   margin-left: ${props => props.ml};
   font-weight: bold;

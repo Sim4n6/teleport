@@ -51,13 +51,12 @@ Here's the list of resources currently exposed via [`tctl`](./cli/tctl.mdx):
 | [user](#user) | A user record in the internal Teleport user DB. |
 | [role](#role) | A role assumed by interactive and non-interactive users. |
 | connector | Authentication connectors for [Single Sign-On](../access-controls/sso.mdx) (SSO) for SAML, OIDC and GitHub. |
-| node | A registered SSH node. The same record is displayed via `tctl nodes ls`. |
+| node | A registered SSH node. The same record is displayed via `tctl nodes ls` |
 | windows_desktop | A registered Windows desktop. |
 | cluster | A trusted cluster. See [here](../management/admin/trustedclusters.mdx) for more details on connecting clusters together. |
 | [login_rule](#login-rules) | A Login Rule, see the [Login Rules guide](../access-controls/login-rules.mdx) for more info. |
 | [device](#device) | A Teleport Trusted Device, see the [Device Trust guide](../access-controls/device-trust/guide.mdx) for more info. |
-| [ui_config](#ui-config) | Configuration for the Web UI served by the Proxy Service. |
-| [vnet_config](#vnet-config) | Configuration for the cluster's VNet options. |
+| [ui_config](#ui-config) | Configuration for the Web UI served by the Proxy Service |
 | [cluster_auth_preference](#cluster-auth-preferences) | Configuration for the cluster's auth preferences. |
 | [database_object_import_rule](#database-object-import-rule) | Database object import rules. |
 
@@ -208,30 +207,6 @@ Global configuration options for the Web UI served by the Proxy Service. This re
 
 (!docs/pages/includes/ui-config-spec.mdx!)
 
-## VNet config
-
-Cluster-specific options VNet should use when setting up connections to resources from this cluster.
-
-See [VNet](../application-access/guides/vnet.mdx) for more details.
-
-```yaml
-kind: vnet_config
-version: v1
-metadata:
-  name: vnet-config
-spec:
-  # The range to use when assigning IP addresses to resources.
-  # It can be changed in case of conflicts with other software
-  # deployed on end user devices. Defaults to "100.64.0.0/10".
-  ipv4_cidr_range: "100.64.0.0/10"
-  # Extra DNS zones that VNet should capture DNS queries for.
-  # Set them if your TCP apps use custom public_addr.
-  # Requires DNS TXT record to be set on the domains,
-  # see the guide linked above. Empty by default.
-  custom_dns_zones:
-  - suffix: company.test
-```
-
 ## Cluster maintenance config
 
 Global configuration options for the agents enrolled into automatic updates.
@@ -247,7 +222,7 @@ metadata:
   name: cluster-auth-preference
 spec:
   # Sets the type of second factor to use.
-  # Possible values: "on", "otp" and "webauthn"
+  # Possible values: "on", "off", "otp", "webauthn" and "optional".
   # If "on" is set, all MFA protocols are supported.
   second_factor: "otp"
 

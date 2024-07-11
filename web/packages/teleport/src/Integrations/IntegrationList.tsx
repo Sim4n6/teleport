@@ -254,7 +254,7 @@ function getStatus(item: IntegrationLike): Status | null {
   }
 }
 
-const StatusLight = styled(Box)<{ status: Status }>`
+const StatusLight = styled(Box)`
   border-radius: 50%;
   margin-right: 4px;
   width: 8px;

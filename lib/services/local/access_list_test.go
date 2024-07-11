@@ -34,7 +34,6 @@ import (
 	"github.com/gravitational/teleport/api/types/accesslist"
 	"github.com/gravitational/teleport/api/types/header"
 	"github.com/gravitational/teleport/api/types/trait"
-	"github.com/gravitational/teleport/entitlements"
 	"github.com/gravitational/teleport/lib/backend"
 	"github.com/gravitational/teleport/lib/backend/memory"
 	"github.com/gravitational/teleport/lib/modules"
@@ -63,7 +62,7 @@ func TestAccessListCRUD(t *testing.T) {
 	require.Empty(t, out)
 
 	cmpOpts := []cmp.Option{
-		cmpopts.IgnoreFields(header.Metadata{}, "Revision"),
+		cmpopts.IgnoreFields(header.Metadata{}, "ID", "Revision"),
 	}
 
 	// Create both access lists.
@@ -393,7 +392,7 @@ func TestAccessListUpsertWithMembers(t *testing.T) {
 	accessList1 := newAccessList(t, "accessList1", clock)
 
 	cmpOpts := []cmp.Option{
-		cmpopts.IgnoreFields(header.Metadata{}, "Revision"),
+		cmpopts.IgnoreFields(header.Metadata{}, "ID"),
 	}
 
 	t.Run("create access list", func(t *testing.T) {
@@ -469,7 +468,7 @@ func TestAccessListMembersCRUD(t *testing.T) {
 	accessList2 := newAccessList(t, "accessList2", clock)
 
 	cmpOpts := []cmp.Option{
-		cmpopts.IgnoreFields(header.Metadata{}, "Revision"),
+		cmpopts.IgnoreFields(header.Metadata{}, "ID", "Revision"),
 	}
 
 	// Create both access lists.
@@ -642,7 +641,7 @@ func TestAccessListReviewCRUD(t *testing.T) {
 	accessList2OrigDate := accessList2.Spec.Audit.NextAuditDate
 
 	cmpOpts := []cmp.Option{
-		cmpopts.IgnoreFields(header.Metadata{}, "Revision"),
+		cmpopts.IgnoreFields(header.Metadata{}, "ID", "Revision"),
 		cmpopts.SortSlices(func(review1, review2 *accesslist.Review) bool {
 			return review1.GetName() < review2.GetName()
 		}),
@@ -1095,7 +1094,7 @@ func TestAccessListService_ListAllAccessListMembers(t *testing.T) {
 		}
 	}
 
-	require.Empty(t, cmp.Diff(expectedMembers, allMembers, cmpopts.IgnoreFields(header.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(expectedMembers, allMembers, cmpopts.IgnoreFields(header.Metadata{}, "ID", "Revision")))
 }
 
 func TestAccessListService_ListAllAccessListReviews(t *testing.T) {
@@ -1156,7 +1155,7 @@ func TestAccessListService_ListAllAccessListReviews(t *testing.T) {
 		}
 	}
 
-	require.Empty(t, cmp.Diff(expectedReviews, allReviews, cmpopts.IgnoreFields(header.Metadata{}, "Revision"), cmpopts.SortSlices(
+	require.Empty(t, cmp.Diff(expectedReviews, allReviews, cmpopts.IgnoreFields(header.Metadata{}, "ID", "Revision"), cmpopts.SortSlices(
 		func(r1, r2 *accesslist.Review) bool {
 			return r1.GetName() < r2.GetName()
 		}),
@@ -1168,9 +1167,9 @@ func newAccessListService(t *testing.T, mem *memory.Memory, clock clockwork.Cloc
 
 	modules.SetTestModules(t, &modules.TestModules{
 		TestFeatures: modules.Features{
-			Entitlements: map[entitlements.EntitlementKind]modules.EntitlementInfo{
-				entitlements.Identity:    {Enabled: igsEnabled},
-				entitlements.AccessLists: {Enabled: true, Limit: 1},
+			IdentityGovernanceSecurity: igsEnabled,
+			AccessList: modules.AccessListFeature{
+				CreateLimit: 1,
 			},
 		},
 	})

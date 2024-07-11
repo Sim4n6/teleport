@@ -40,16 +40,14 @@ const LinearProgress = (props: LinearProgressProps) => {
   );
 };
 
-const StyledProgress = styled.div<{ transparentBackground?: boolean }>`
+const StyledProgress = styled.div`
   position: relative;
   overflow: hidden;
   display: block;
   height: 1px;
   z-index: 0;
   background-color: ${props =>
-    props.transparentBackground
-      ? 'transparent'
-      : props.theme.colors.levels.surface};
+    props.transparentBackground ? 'transparent' : props.theme.colors.surface};
 
   .parent-bar-2 {
     position: absolute;

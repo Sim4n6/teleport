@@ -38,11 +38,10 @@ import (
 // Player is used to stream recorded sessions over a channel.
 type Player struct {
 	// read only config fields
-	clock        clockwork.Clock
-	log          logrus.FieldLogger
-	sessionID    session.ID
-	streamer     Streamer
-	skipIdleTime bool
+	clock     clockwork.Clock
+	log       logrus.FieldLogger
+	sessionID session.ID
+	streamer  Streamer
 
 	speed      atomic.Value // playback speed (1.0 for normal speed)
 	lastPlayed atomic.Int64 // timestamp of most recently played event
@@ -89,11 +88,10 @@ type Streamer interface {
 
 // Config configures a session player.
 type Config struct {
-	Clock        clockwork.Clock
-	Log          logrus.FieldLogger
-	SessionID    session.ID
-	Streamer     Streamer
-	SkipIdleTime bool
+	Clock     clockwork.Clock
+	Log       logrus.FieldLogger
+	SessionID session.ID
+	Streamer  Streamer
 }
 
 func New(cfg *Config) (*Player, error) {
@@ -315,9 +313,6 @@ loop:
 		// will not apply until after the sleep completes
 		speed := p.speed.Load().(float64)
 		scaled := float64(currentDelay-lastDelay) / speed
-		if p.skipIdleTime {
-			scaled = min(scaled, 500.0*float64(time.Millisecond))
-		}
 
 		timer := p.clock.NewTimer(time.Duration(scaled) * time.Millisecond)
 		defer timer.Stop()

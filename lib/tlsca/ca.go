@@ -71,7 +71,7 @@ func FromKeys(certPEM, keyPEM []byte) (*CertAuthority, error) {
 		return nil, trace.Wrap(err)
 	}
 	if len(keyPEM) != 0 {
-		ca.Signer, err = keys.ParsePrivateKey(keyPEM)
+		ca.Signer, err = ParsePrivateKeyPEM(keyPEM)
 		if err != nil {
 			return nil, trace.Wrap(err)
 		}
@@ -184,9 +184,6 @@ type Identity struct {
 	// BotName indicates the name of the Machine ID bot this identity was issued
 	// to, if any.
 	BotName string
-	// BotInstanceID is a unique identifier for Machine ID bots that is
-	// persisted through renewals.
-	BotInstanceID string
 	// AllowedResourceIDs lists the resources the identity should be allowed to
 	// access.
 	AllowedResourceIDs []types.ResourceID
@@ -531,10 +528,6 @@ var (
 	// RequestedDatabaseRolesExtensionOID is an extension OID used when
 	// encoding/decoding requested database roles.
 	RequestedDatabaseRolesExtensionOID = asn1.ObjectIdentifier{1, 3, 9999, 2, 19}
-
-	// BotInstanceASN1ExtensionOID is an extension that encodes a unique bot
-	// instance identifier into a certificate.
-	BotInstanceASN1ExtensionOID = asn1.ObjectIdentifier{1, 3, 9999, 2, 20}
 )
 
 // Device Trust OIDs.
@@ -817,14 +810,6 @@ func (id *Identity) Subject() (pkix.Name, error) {
 			})
 	}
 
-	if id.BotInstanceID != "" {
-		subject.ExtraNames = append(subject.ExtraNames,
-			pkix.AttributeTypeAndValue{
-				Type:  BotInstanceASN1ExtensionOID,
-				Value: id.BotInstanceID,
-			})
-	}
-
 	if len(id.AllowedResourceIDs) > 0 {
 		allowedResourcesStr, err := types.ResourceIDsToString(id.AllowedResourceIDs)
 		if err != nil {
@@ -1065,11 +1050,6 @@ func FromSubject(subject pkix.Name, expires time.Time) (*Identity, error) {
 			if ok {
 				id.BotName = val
 			}
-		case attr.Type.Equal(BotInstanceASN1ExtensionOID):
-			val, ok := attr.Value.(string)
-			if ok {
-				id.BotInstanceID = val
-			}
 		case attr.Type.Equal(AllowedResourcesASN1ExtensionOID):
 			allowedResourcesStr, ok := attr.Value.(string)
 			if ok {
@@ -1214,11 +1194,10 @@ func (ca *CertAuthority) GenerateCertificate(req CertificateRequest) ([]byte, er
 	}
 
 	log.WithFields(logrus.Fields{
-		"not_after":   req.NotAfter,
-		"dns_names":   req.DNSNames,
-		"key_usage":   req.KeyUsage,
-		"common_name": req.Subject.CommonName,
-	}).Debug("Generating TLS certificate")
+		"not_after": req.NotAfter,
+		"dns_names": req.DNSNames,
+		"key_usage": req.KeyUsage,
+	}).Infof("Generating TLS certificate %v", req.Subject.String())
 
 	template := &x509.Certificate{
 		SerialNumber: serialNumber,

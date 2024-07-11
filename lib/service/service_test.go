@@ -49,7 +49,6 @@ import (
 	"github.com/gravitational/teleport"
 	"github.com/gravitational/teleport/api/breaker"
 	"github.com/gravitational/teleport/api/types"
-	"github.com/gravitational/teleport/entitlements"
 	"github.com/gravitational/teleport/lib"
 	"github.com/gravitational/teleport/lib/auth"
 	"github.com/gravitational/teleport/lib/auth/authclient"
@@ -73,7 +72,6 @@ import (
 
 func TestMain(m *testing.M) {
 	utils.InitLoggerForTests()
-	modules.SetInsecureTestMode(true)
 	os.Exit(m.Run())
 }
 
@@ -370,7 +368,7 @@ func TestServiceCheckPrincipals(t *testing.T) {
 	defer tlsServer.Close()
 
 	testConnector := &Connector{
-		serverIdentity: tlsServer.Identity,
+		ServerIdentity: tlsServer.Identity,
 	}
 
 	tests := []struct {
@@ -478,10 +476,8 @@ func TestAthenaAuditLogSetup(t *testing.T) {
 	ctx := context.Background()
 	modules.SetTestModules(t, &modules.TestModules{
 		TestFeatures: modules.Features{
-			Cloud: true,
-			Entitlements: map[entitlements.EntitlementKind]modules.EntitlementInfo{
-				entitlements.ExternalAuditStorage: {Enabled: true},
-			},
+			Cloud:                true,
+			ExternalAuditStorage: true,
 		},
 	})
 
@@ -890,8 +886,7 @@ func TestSetupProxyTLSConfig(t *testing.T) {
 				Supervisor: NewSupervisor("process-id", cfg.Log),
 			}
 			conn := &Connector{
-				clientIdentity: &state.Identity{},
-				serverIdentity: &state.Identity{
+				ServerIdentity: &state.Identity{
 					Cert: &ssh.Certificate{
 						Permissions: ssh.Permissions{
 							Extensions: map[string]string{},
@@ -1240,8 +1235,7 @@ func TestProxyGRPCServers(t *testing.T) {
 	require.NoError(t, err)
 
 	testConnector := &Connector{
-		clientIdentity: serverIdentity,
-		serverIdentity: serverIdentity,
+		ServerIdentity: serverIdentity,
 		Client:         client,
 	}
 
@@ -1360,7 +1354,7 @@ func TestProxyGRPCServers(t *testing.T) {
 			name: "secure client to secure server",
 			credentials: func() credentials.TransportCredentials {
 				// Create a new client using the server identity.
-				creds, err := testConnector.ServerTLSConfig(nil)
+				creds, err := testConnector.ServerIdentity.TLSConfig(nil)
 				require.NoError(t, err)
 				return credentials.NewTLS(creds)
 			}(),
@@ -1731,88 +1725,6 @@ func TestInstanceMetadata(t *testing.T) {
 			}
 
 			require.Equal(t, tc.expectedHostname, cfg.Hostname)
-		})
-	}
-}
-
-func TestInitDatabaseService(t *testing.T) {
-	t.Parallel()
-
-	for _, test := range []struct {
-		desc      string
-		enabled   bool
-		databases []servicecfg.Database
-		expectErr bool
-	}{
-		{
-			desc:    "enabled valid databases",
-			enabled: true,
-			databases: []servicecfg.Database{
-				{Name: "pg", Protocol: defaults.ProtocolPostgres, URI: "localhost:0"},
-			},
-			expectErr: false,
-		},
-		{
-			desc:    "enabled invalid databases",
-			enabled: true,
-			databases: []servicecfg.Database{
-				{Name: "pg", Protocol: defaults.ProtocolPostgres, URI: "localhost:0"},
-				{Name: ""},
-			},
-			expectErr: true,
-		},
-		{
-			desc:    "disabled invalid databases",
-			enabled: false,
-			databases: []servicecfg.Database{
-				{Name: "pg", Protocol: defaults.ProtocolPostgres, URI: "localhost:0"},
-				{Name: ""},
-			},
-			expectErr: false,
-		},
-	} {
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			cfg := servicecfg.MakeDefaultConfig()
-			cfg.DataDir = t.TempDir()
-			cfg.Auth.StorageConfig.Params["path"] = t.TempDir()
-			cfg.Hostname = "default.example.com"
-			cfg.Auth.Enabled = true
-			cfg.SetAuthServerAddress(utils.NetAddr{AddrNetwork: "tcp", Addr: "127.0.0.1:0"})
-			cfg.Auth.ListenAddr = utils.NetAddr{AddrNetwork: "tcp", Addr: "127.0.0.1:0"}
-			cfg.Auth.StorageConfig.Params["path"] = t.TempDir()
-			cfg.Proxy.Enabled = true
-			cfg.Proxy.DisableWebInterface = true
-			cfg.Proxy.WebAddr = utils.NetAddr{AddrNetwork: "tcp", Addr: "localhost:0"}
-			cfg.SSH.Enabled = false
-			cfg.CircuitBreakerConfig = breaker.NoopBreakerConfig()
-
-			cfg.Databases.Enabled = test.enabled
-			cfg.Databases.Databases = test.databases
-
-			process, err := NewTeleport(cfg)
-			require.NoError(t, err)
-			t.Cleanup(func() {
-				require.NoError(t, process.Close())
-			})
-			require.NoError(t, process.Start())
-
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-
-			if !test.expectErr {
-				_, err := process.WaitForEvent(ctx, TeleportReadyEvent)
-				require.NoError(t, err)
-				return
-			}
-
-			event, err := process.WaitForEvent(ctx, ServiceExitedWithErrorEvent)
-			require.NoError(t, err)
-			require.NotNil(t, event)
-			exitPayload, ok := event.Payload.(ExitEventPayload)
-			require.True(t, ok, "expected ExitEventPayload but got %T", event.Payload)
-			require.Equal(t, "db.init", exitPayload.Service.Name())
 		})
 	}
 }

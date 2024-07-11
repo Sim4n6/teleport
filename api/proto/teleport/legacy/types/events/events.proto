@@ -2479,9 +2479,6 @@ message SAMLConnectorCreate {
     (gogoproto.embed) = true,
     (gogoproto.jsontag) = ""
   ];
-
-  // Connector is the new SAML connector
-  types.SAMLConnectorV2 Connector = 4 [(gogoproto.jsontag) = "connector"];
 }
 
 // SAMLConnectorUpdate fires when SAML connector is updated.
@@ -2506,9 +2503,6 @@ message SAMLConnectorUpdate {
     (gogoproto.embed) = true,
     (gogoproto.jsontag) = ""
   ];
-
-  // Connector is the updated SAML connector
-  types.SAMLConnectorV2 Connector = 4 [(gogoproto.jsontag) = "connector"];
 }
 
 // SAMLConnectorDelete fires when SAML connector is deleted.
@@ -3072,45 +3066,6 @@ message DatabaseSessionQuery {
     (gogoproto.embed) = true,
     (gogoproto.jsontag) = ""
   ];
-}
-
-// DatabaseSessionCommandResult represents the result of a user command. It is
-// expected that for each user command/query there will be a corresponding
-// result.
-message DatabaseSessionCommandResult {
-  // Metadata is a common event metadata.
-  Metadata Metadata = 1 [
-    (gogoproto.nullable) = false,
-    (gogoproto.embed) = true,
-    (gogoproto.jsontag) = ""
-  ];
-  // User is a common user event metadata.
-  UserMetadata User = 2 [
-    (gogoproto.nullable) = false,
-    (gogoproto.embed) = true,
-    (gogoproto.jsontag) = ""
-  ];
-  // SessionMetadata is a common event session metadata.
-  SessionMetadata Session = 3 [
-    (gogoproto.nullable) = false,
-    (gogoproto.embed) = true,
-    (gogoproto.jsontag) = ""
-  ];
-  // Database contains database related metadata.
-  DatabaseMetadata Database = 4 [
-    (gogoproto.nullable) = false,
-    (gogoproto.embed) = true,
-    (gogoproto.jsontag) = ""
-  ];
-  // Status indicates if the command was successful or not.
-  Status Status = 5 [
-    (gogoproto.nullable) = false,
-    (gogoproto.embed) = true,
-    (gogoproto.jsontag) = ""
-  ];
-  // AfftectedRecords represents the number of records that were affected by the
-  // command.
-  uint64 AffectedRecords = 6 [(gogoproto.jsontag) = "affected_records,omitempty"];
 }
 
 // DatabasePermissionUpdate is emitted when a user database permissions are updated.
@@ -3824,8 +3779,6 @@ message BotJoin {
     (gogoproto.jsontag) = "attributes,omitempty",
     (gogoproto.casttype) = "Struct"
   ];
-  // UserName is the name of the user associated with the bot which has joined.
-  string UserName = 7 [(gogoproto.jsontag) = "user_name,omitempty"];
   // ConnectionMetadata holds information about the connection
   ConnectionMetadata Connection = 8 [
     (gogoproto.nullable) = false,
@@ -3928,9 +3881,6 @@ enum DeviceOrigin {
 
 // DeviceMetadata groups device information for events.
 message DeviceMetadata {
-  reserved 7; // string web_session_id
-  reserved "web_session_id";
-
   // ID of the device.
   string device_id = 1 [(gogoproto.jsontag) = "device_id"];
   // OS of the device.
@@ -3941,13 +3891,6 @@ message DeviceMetadata {
   string credential_id = 4 [(gogoproto.jsontag) = "credential_id,omitempty"];
   // Device origin.
   DeviceOrigin device_origin = 5 [(gogoproto.jsontag) = "device_origin,omitempty"];
-  // True if web authentication, aka on-behalf-of device authentication, was
-  // performed.
-  // Only present in "device.authenticate" type events.
-  bool web_authentication = 6 [(gogoproto.jsontag) = "web_authentication,omitempty"];
-  // Device web authentication attempt ID.
-  // Present in events related to device web authentication.
-  string web_authentication_id = 8 [(gogoproto.jsontag) = "web_authentication_id,omitempty"];
 }
 
 // DeviceEvent is a device-related event.
@@ -4273,7 +4216,6 @@ message OneOf {
     events.OktaAccessListSync OktaAccessListSync = 148;
     events.DatabasePermissionUpdate DatabasePermissionUpdate = 149;
     events.SPIFFESVIDIssued SPIFFESVIDIssued = 150;
-    events.OktaUserSync OktaUserSync = 151;
     events.AuthPreferenceUpdate AuthPreferenceUpdate = 152;
     events.SessionRecordingConfigUpdate SessionRecordingConfigUpdate = 153;
     events.ClusterNetworkingConfigUpdate ClusterNetworkingConfigUpdate = 154;
@@ -4281,7 +4223,6 @@ message OneOf {
     events.DatabaseUserDeactivate DatabaseUserDeactivate = 156;
     events.AccessPathChanged AccessPathChanged = 157;
     events.SpannerRPC SpannerRPC = 158;
-    events.DatabaseSessionCommandResult DatabaseSessionCommandResult = 159;
     events.DiscoveryConfigCreate DiscoveryConfigCreate = 160;
     events.DiscoveryConfigUpdate DiscoveryConfigUpdate = 161;
     events.DiscoveryConfigDelete DiscoveryConfigDelete = 162;
@@ -6215,48 +6156,6 @@ message OktaAccessListSync {
   int32 numAccessListMembers = 9;
 }
 
-// OktaUserSync records an Okta user sync event.
-message OktaUserSync {
-  // Metadata is a common event metadata.
-  Metadata Metadata = 1 [
-    (gogoproto.nullable) = false,
-    (gogoproto.embed) = true,
-    (gogoproto.jsontag) = ""
-  ];
-  // Status contains common command or operation status fields.
-  Status Status = 2 [
-    (gogoproto.nullable) = false,
-    (gogoproto.embed) = true,
-    (gogoproto.jsontag) = ""
-  ];
-
-  // OrgUrl is the URL of the Okta organization being synced to
-  string org_url = 3;
-
-  // AppId is the optional ID of an Okta Application that Teleport is using as
-  // its gateway into Okta. The list of potential Teleport users are drawn from
-  // the list of Okta users assigned to this app - either directly or via a group
-  // assignement. If not set, the Okta sync service is drawing its user list from
-  // the whole organization.
-  string app_id = 4;
-
-  // NumUsersCreated is the number of Teleport users created in this
-  // synchronization pass.
-  int32 num_users_created = 5 [(gogoproto.jsontag) = "num_users_created"];
-
-  // NumUsersDeleted is the number of Teleport users deleted in this
-  // synchronization pass.
-  int32 num_users_deleted = 6 [(gogoproto.jsontag) = "num_users_deleted"];
-
-  // NumUserModified is the number of Teleport users modified in this
-  // synchronization pass.
-  int32 num_users_modified = 7 [(gogoproto.jsontag) = "num_users_modified"];
-
-  // NumUsersTotal is the total number of Teleport users managed by the Okta
-  // integration at the end of the synchronzaton pass.
-  int32 num_users_total = 8 [(gogoproto.jsontag) = "num_users_total"];
-}
-
 // SPIFFESVIDIssued is an event recorded when a SPIFFE SVID is issued.
 message SPIFFESVIDIssued {
   // Metadata is a common event metadata
@@ -6323,17 +6222,6 @@ message AuthPreferenceUpdate {
     (gogoproto.embed) = true,
     (gogoproto.jsontag) = ""
   ];
-
-  // AdminActionsMFA indicates whether MFA for admin actions was altered
-  // while updating the authentication preference.
-  AdminActionsMFAStatus AdminActionsMFA = 5 [(gogoproto.jsontag) = "admin_actions_mfa_changed"];
-}
-
-enum AdminActionsMFAStatus {
-  ADMIN_ACTIONS_MFA_STATUS_UNSPECIFIED = 0;
-  ADMIN_ACTIONS_MFA_STATUS_UNCHANGED = 1;
-  ADMIN_ACTIONS_MFA_STATUS_ENABLED = 2;
-  ADMIN_ACTIONS_MFA_STATUS_DISABLED = 3;
 }
 
 // ClusterNetworkingConfigUpdate is emitted when the cluster networking config is updated.

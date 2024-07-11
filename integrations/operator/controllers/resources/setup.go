@@ -26,9 +26,7 @@ import (
 
 	"github.com/gravitational/teleport/api/client"
 	"github.com/gravitational/teleport/api/client/proto"
-	"github.com/gravitational/teleport/entitlements"
 	"github.com/gravitational/teleport/integrations/operator/controllers"
-	"github.com/gravitational/teleport/lib/modules"
 )
 
 type reconcilerFactory struct {
@@ -50,23 +48,20 @@ func SetupAllControllers(log logr.Logger, mgr manager.Manager, teleportClient *c
 		{"TeleportOpenSSHEICEServerV2", NewOpenSSHEICEServerV2Reconciler},
 	}
 
-	oidc := modules.GetProtoEntitlement(features, entitlements.OIDC)
-	saml := modules.GetProtoEntitlement(features, entitlements.SAML)
-
-	if oidc.Enabled {
+	if features.GetOIDC() {
 		reconcilers = append(reconcilers, reconcilerFactory{"TeleportOIDCConnector", NewOIDCConnectorReconciler})
 	} else {
 		log.Info("OIDC connectors are only available in Teleport Enterprise edition. TeleportOIDCConnector resources won't be reconciled")
 	}
 
-	if saml.Enabled {
+	if features.GetSAML() {
 		reconcilers = append(reconcilers, reconcilerFactory{"TeleportSAMLConnector", NewSAMLConnectorReconciler})
 	} else {
 		log.Info("SAML connectors are only available in Teleport Enterprise edition. TeleportSAMLConnector resources won't be reconciled")
 	}
 
 	// Login Rules are enterprise-only but there is no specific feature flag for them.
-	if oidc.Enabled || saml.Enabled {
+	if features.GetOIDC() || features.GetSAML() {
 		reconcilers = append(reconcilers, reconcilerFactory{"TeleportLoginRule", NewLoginRuleReconciler})
 	} else {
 		log.Info("Login Rules are only available in Teleport Enterprise edition. TeleportLoginRule resources won't be reconciled")

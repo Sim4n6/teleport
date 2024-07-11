@@ -24,8 +24,8 @@ import { dryRunResponse } from '../../fixtures';
 import { useSpecifiableFields } from '../useSpecifiableFields';
 
 import {
-  RequestCheckoutWithSlider as RequestCheckoutComp,
-  RequestCheckoutWithSliderProps,
+  RequestCheckout as RequestCheckoutComp,
+  RequestCheckoutProps,
 } from './RequestCheckout';
 
 test('adding a reviewer and then removing it afterwards when there are no suggested reviewers', async () => {
@@ -146,7 +146,7 @@ const RequestCheckout = ({ reviewers = [] }: { reviewers?: string[] }) => {
   );
 };
 
-const props: RequestCheckoutWithSliderProps = {
+const props: RequestCheckoutProps = {
   createAttempt: { status: '' },
   fetchResourceRequestRolesAttempt: { status: '' },
   isResourceRequest: false,

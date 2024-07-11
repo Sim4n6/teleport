@@ -12,8 +12,7 @@ exports[`render Apps 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -22,50 +21,30 @@ exports[`render Apps 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: transparent;
-  color: rgba(255,255,255,0.54);
-  border-color: rgba(255,255,255,0.54);
-  border-width: 1.5px;
-  padding: 0 6.5px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0);
+  border: 1px solid rgba(255,255,255,0.36);
+  font-size: 10px;
   min-height: 24px;
-  font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
-  width: 123px;
-  text-transform: none;
-}
-
-.c8:focus-visible,
-.teleport-button__force-focus-visible .c8 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
+  padding: 0px 16px;
+  width: 134px;
 }
 
 .c8:hover,
-.teleport-button__force-hover .c8 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c8:focus {
+  background: rgba(255,255,255,0.07);
 }
 
-.c8:active,
-.teleport-button__force-active .c8 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c8:active {
+  background: rgba(255,255,255,0.13);
 }
 
 .c8:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -304,8 +283,8 @@ exports[`render Apps 1`] = `
           >
             <button
               class="c8"
-              fill="border"
-              width="123px"
+              kind="border"
+              width="134px"
             >
               + Add to request
             </button>
@@ -329,8 +308,7 @@ exports[`render Databases 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -339,50 +317,30 @@ exports[`render Databases 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: transparent;
-  color: rgba(255,255,255,0.54);
-  border-color: rgba(255,255,255,0.54);
-  border-width: 1.5px;
-  padding: 0 6.5px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0);
+  border: 1px solid rgba(255,255,255,0.36);
+  font-size: 10px;
   min-height: 24px;
-  font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
-  width: 137px;
-  text-transform: none;
-}
-
-.c8:focus-visible,
-.teleport-button__force-focus-visible .c8 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
+  padding: 0px 16px;
+  width: 134px;
 }
 
 .c8:hover,
-.teleport-button__force-hover .c8 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c8:focus {
+  background: rgba(255,255,255,0.07);
 }
 
-.c8:active,
-.teleport-button__force-active .c8 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c8:active {
+  background: rgba(255,255,255,0.13);
 }
 
 .c8:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -641,10 +599,10 @@ exports[`render Databases 1`] = `
           >
             <button
               class="c8"
-              fill="border"
-              width="137px"
+              kind="border"
+              width="134px"
             >
-              + Request Access
+              + Add to request
             </button>
           </td>
         </tr>
@@ -666,8 +624,7 @@ exports[`render Desktops 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -676,50 +633,30 @@ exports[`render Desktops 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: transparent;
-  color: rgba(255,255,255,0.54);
-  border-color: rgba(255,255,255,0.54);
-  border-width: 1.5px;
-  padding: 0 6.5px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0);
+  border: 1px solid rgba(255,255,255,0.36);
+  font-size: 10px;
   min-height: 24px;
-  font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
-  width: 137px;
-  text-transform: none;
-}
-
-.c8:focus-visible,
-.teleport-button__force-focus-visible .c8 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
+  padding: 0px 16px;
+  width: 134px;
 }
 
 .c8:hover,
-.teleport-button__force-hover .c8 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c8:focus {
+  background: rgba(255,255,255,0.07);
 }
 
-.c8:active,
-.teleport-button__force-active .c8 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c8:active {
+  background: rgba(255,255,255,0.13);
 }
 
 .c8:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -930,10 +867,10 @@ exports[`render Desktops 1`] = `
           >
             <button
               class="c8"
-              fill="border"
-              width="137px"
+              kind="border"
+              width="134px"
             >
-              + Request Access
+              + Add to request
             </button>
           </td>
         </tr>
@@ -955,8 +892,7 @@ exports[`render Kubes 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -965,50 +901,30 @@ exports[`render Kubes 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: transparent;
-  color: rgba(255,255,255,0.54);
-  border-color: rgba(255,255,255,0.54);
-  border-width: 1.5px;
-  padding: 0 6.5px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0);
+  border: 1px solid rgba(255,255,255,0.36);
+  font-size: 10px;
   min-height: 24px;
-  font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
-  width: 137px;
-  text-transform: none;
-}
-
-.c8:focus-visible,
-.teleport-button__force-focus-visible .c8 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
+  padding: 0px 16px;
+  width: 134px;
 }
 
 .c8:hover,
-.teleport-button__force-hover .c8 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c8:focus {
+  background: rgba(255,255,255,0.07);
 }
 
-.c8:active,
-.teleport-button__force-active .c8 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c8:active {
+  background: rgba(255,255,255,0.13);
 }
 
 .c8:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -1211,10 +1127,10 @@ exports[`render Kubes 1`] = `
           >
             <button
               class="c8"
-              fill="border"
-              width="137px"
+              kind="border"
+              width="134px"
             >
-              + Request Access
+              + Add to request
             </button>
           </td>
         </tr>
@@ -1236,8 +1152,7 @@ exports[`render Nodes 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -1246,50 +1161,30 @@ exports[`render Nodes 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: transparent;
-  color: rgba(255,255,255,0.54);
-  border-color: rgba(255,255,255,0.54);
-  border-width: 1.5px;
-  padding: 0 6.5px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0);
+  border: 1px solid rgba(255,255,255,0.36);
+  font-size: 10px;
   min-height: 24px;
-  font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
-  width: 137px;
-  text-transform: none;
-}
-
-.c8:focus-visible,
-.teleport-button__force-focus-visible .c8 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
+  padding: 0px 16px;
+  width: 134px;
 }
 
 .c8:hover,
-.teleport-button__force-hover .c8 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c8:focus {
+  background: rgba(255,255,255,0.07);
 }
 
-.c8:active,
-.teleport-button__force-active .c8 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c8:active {
+  background: rgba(255,255,255,0.13);
 }
 
 .c8:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -1500,10 +1395,10 @@ exports[`render Nodes 1`] = `
           >
             <button
               class="c8"
-              fill="border"
-              width="137px"
+              kind="border"
+              width="134px"
             >
-              + Request Access
+              + Add to request
             </button>
           </td>
         </tr>
@@ -1536,8 +1431,7 @@ exports[`render Roles 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -1546,50 +1440,30 @@ exports[`render Roles 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: transparent;
-  color: rgba(255,255,255,0.54);
-  border-color: rgba(255,255,255,0.54);
-  border-width: 1.5px;
-  padding: 0 6.5px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0);
+  border: 1px solid rgba(255,255,255,0.36);
+  font-size: 10px;
   min-height: 24px;
-  font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
-  width: 137px;
-  text-transform: none;
-}
-
-.c19:focus-visible,
-.teleport-button__force-focus-visible .c19 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
+  padding: 0px 16px;
+  width: 134px;
 }
 
 .c19:hover,
-.teleport-button__force-hover .c19 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c19:focus {
+  background: rgba(255,255,255,0.07);
 }
 
-.c19:active,
-.teleport-button__force-active .c19 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c19:active {
+  background: rgba(255,255,255,0.13);
 }
 
 .c19:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -2011,10 +1885,10 @@ exports[`render Roles 1`] = `
           >
             <button
               class="c19"
-              fill="border"
-              width="137px"
+              kind="border"
+              width="134px"
             >
-              + Request Access
+              + Add to request
             </button>
           </td>
         </tr>
@@ -2027,10 +1901,10 @@ exports[`render Roles 1`] = `
           >
             <button
               class="c19"
-              fill="border"
-              width="137px"
+              kind="border"
+              width="134px"
             >
-              + Request Access
+              + Add to request
             </button>
           </td>
         </tr>
@@ -2052,8 +1926,7 @@ exports[`render UserGroups 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -2062,50 +1935,30 @@ exports[`render UserGroups 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: transparent;
-  color: rgba(255,255,255,0.54);
-  border-color: rgba(255,255,255,0.54);
-  border-width: 1.5px;
-  padding: 0 6.5px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0);
+  border: 1px solid rgba(255,255,255,0.36);
+  font-size: 10px;
   min-height: 24px;
-  font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
-  width: 137px;
-  text-transform: none;
-}
-
-.c8:focus-visible,
-.teleport-button__force-focus-visible .c8 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
+  padding: 0px 16px;
+  width: 134px;
 }
 
 .c8:hover,
-.teleport-button__force-hover .c8 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c8:focus {
+  background: rgba(255,255,255,0.07);
 }
 
-.c8:active,
-.teleport-button__force-active .c8 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c8:active {
+  background: rgba(255,255,255,0.13);
 }
 
 .c8:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -2336,10 +2189,10 @@ exports[`render UserGroups 1`] = `
           >
             <button
               class="c8"
-              fill="border"
-              width="137px"
+              kind="border"
+              width="134px"
             >
-              + Request Access
+              + Add to request
             </button>
           </td>
         </tr>
@@ -2367,10 +2220,10 @@ exports[`render UserGroups 1`] = `
           >
             <button
               class="c8"
-              fill="border"
-              width="137px"
+              kind="border"
+              width="134px"
             >
-              + Request Access
+              + Add to request
             </button>
           </td>
         </tr>

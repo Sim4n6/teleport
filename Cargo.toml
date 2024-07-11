@@ -1,6 +1,9 @@
 [workspace]
 resolver = "2"
-members = ["lib/srv/desktop/rdp/rdpclient", "web/packages/teleport/src/ironrdp"]
+members = [
+    "lib/srv/desktop/rdp/rdpclient",
+    "web/packages/teleport/src/ironrdp"
+]
 
 [workspace.package]
 edition = "2021"
@@ -30,5 +33,5 @@ ironrdp-rdpdr = { git = "https://github.com/Devolutions/IronRDP", rev = "dfbe947
 ironrdp-rdpsnd = { git = "https://github.com/Devolutions/IronRDP", rev = "dfbe947e5b9bd2da06f1e14620ee4d68bca4252f" }
 ironrdp-session = { git = "https://github.com/Devolutions/IronRDP", rev = "dfbe947e5b9bd2da06f1e14620ee4d68bca4252f" }
 ironrdp-svc = { git = "https://github.com/Devolutions/IronRDP", rev = "dfbe947e5b9bd2da06f1e14620ee4d68bca4252f" }
-ironrdp-tls = { git = "https://github.com/Devolutions/IronRDP", rev = "dfbe947e5b9bd2da06f1e14620ee4d68bca4252f", features = ["rustls" ] }
+ironrdp-tls = { git = "https://github.com/Devolutions/IronRDP", rev = "dfbe947e5b9bd2da06f1e14620ee4d68bca4252f", features = ["rustls"]}
 ironrdp-tokio = { git = "https://github.com/Devolutions/IronRDP", rev = "dfbe947e5b9bd2da06f1e14620ee4d68bca4252f" }

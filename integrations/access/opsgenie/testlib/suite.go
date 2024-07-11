@@ -28,18 +28,19 @@ import (
 
 	"github.com/gravitational/teleport/api/types"
 	"github.com/gravitational/teleport/integrations/access/opsgenie"
+	"github.com/gravitational/teleport/integrations/access/pagerduty"
 	"github.com/gravitational/teleport/integrations/lib/logger"
 	"github.com/gravitational/teleport/integrations/lib/testing/integration"
 )
 
 const (
-	NotifyScheduleNameOne      = "Teleport Notifications One"
-	NotifyScheduleNameTwo      = "Teleport Notifications Two"
+	ResponderName1             = "Responder 1"
+	ResponderName2             = "Responder 2"
+	ResponderName3             = "Responder 3"
+	NotifyScheduleName         = "Teleport Notifications"
 	NotifyScheduleAnnotation   = types.TeleportNamespace + types.ReqAnnotationNotifySchedulesLabel
 	ApprovalScheduleName       = "Teleport Approval"
 	ApprovalScheduleAnnotation = types.TeleportNamespace + types.ReqAnnotationApproveSchedulesLabel
-	NotifyTeamName             = "My Team"
-	NotifyTeamAnnotation       = types.TeleportNamespace + types.ReqAnnotationTeamsLabel
 )
 
 // OpsgenieBaseSuite is the OpsGenie access plugin test suite.
@@ -53,6 +54,7 @@ type OpsgenieBaseSuite struct {
 	ogNotifyResponder opsgenie.Responder
 	ogResponder1      opsgenie.Responder
 	ogResponder2      opsgenie.Responder
+	ogResponder3      opsgenie.Responder
 }
 
 // SetupTest starts a fake OpsGenie and generates the plugin configuration.
@@ -72,25 +74,30 @@ func (s *OpsgenieBaseSuite) SetupTest() {
 
 	// This service should be notified for every access request.
 	s.ogNotifyResponder = s.fakeOpsgenie.StoreResponder(opsgenie.Responder{
-		Name: NotifyScheduleNameOne,
+		Name: NotifyScheduleName,
 	})
-
 	s.AnnotateRequesterRoleAccessRequests(
 		ctx,
 		NotifyScheduleAnnotation,
-		[]string{NotifyScheduleNameOne, NotifyScheduleNameTwo},
+		[]string{NotifyScheduleName},
 	)
 
 	// Responder 1 and 2 are on-call and should be automatically approved.
 	// Responder 3 is not.
 	s.ogResponder1 = s.fakeOpsgenie.StoreResponder(opsgenie.Responder{
-		Name: integration.Requester1UserName,
-		Type: opsgenie.ResponderTypeUser,
+		Name: ResponderName1,
 	})
 	s.ogResponder2 = s.fakeOpsgenie.StoreResponder(opsgenie.Responder{
-		Name: "Not a Teleport user",
-		Type: opsgenie.ResponderTypeUser,
+		Name: ResponderName2,
 	})
+	s.ogResponder3 = s.fakeOpsgenie.StoreResponder(opsgenie.Responder{
+		Name: ResponderName3,
+	})
+	s.AnnotateRequesterRoleAccessRequests(
+		ctx,
+		pagerduty.ServicesDefaultAnnotation,
+		[]string{ResponderName1, ResponderName2},
+	)
 
 	var conf opsgenie.Config
 	conf.Teleport = s.TeleportConfig()
@@ -101,8 +108,8 @@ func (s *OpsgenieBaseSuite) SetupTest() {
 
 // startApp starts the OpsGenie plugin, waits for it to become ready and returns.
 func (s *OpsgenieBaseSuite) startApp() {
-	s.T().Helper()
 	t := s.T()
+	t.Helper()
 
 	app, err := opsgenie.NewOpsgenieApp(context.Background(), &s.appConfig)
 	require.NoError(t, err)
@@ -129,43 +136,12 @@ func (s *OpsgenieSuiteEnterprise) SetupTest() {
 	s.OpsgenieBaseSuite.SetupTest()
 }
 
-// TestAlertCreationForSchedules validates that an alert is created to the service
-// specified in the role's annotation using /notify-services annotation
-func (s *OpsgenieSuiteOSS) TestAlertCreationForSchedules() {
+// TestAlertCreation validates that an alert is created to the service
+// specified in the role's annotation.
+func (s *OpsgenieSuiteOSS) TestAlertCreation() {
 	t := s.T()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	t.Cleanup(cancel)
-
-	s.startApp()
-
-	// Test execution: create an access request
-	req := s.CreateAccessRequest(ctx, integration.RequesterOSSUserName, nil)
-
-	// Validate the alert has been created in OpsGenie and its ID is stored in
-	// the plugin_data.
-	pluginData := s.checkPluginData(ctx, req.GetName(), func(data opsgenie.PluginData) bool {
-		return data.AlertID != ""
-	})
-
-	alert, err := s.fakeOpsgenie.CheckNewAlert(ctx)
-
-	require.NoError(t, err, "no new alerts stored")
-
-	assert.Equal(t, alert.ID, pluginData.AlertID)
-}
-
-// TestAlertCreationForTeams validates that an alert is created to the service
-// specified in the role's annotation using /teams annotation
-func (s *OpsgenieSuiteOSS) TestAlertCreationForTeams() {
-	t := s.T()
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	t.Cleanup(cancel)
-
-	s.AnnotateRequesterRoleAccessRequests(
-		ctx,
-		NotifyTeamAnnotation,
-		[]string{NotifyTeamName},
-	)
 
 	s.startApp()
 

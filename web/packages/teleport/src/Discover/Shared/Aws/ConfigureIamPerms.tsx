@@ -201,7 +201,7 @@ export function ConfigureIamPerms({
   );
 }
 
-const EditorWrapper = styled(Flex)<{ $height: number }>`
+const EditorWrapper = styled(Flex)`
   flex-directions: column;
   height: ${p => p.$height}px;
   margin-top: ${p => p.theme.space[3]}px;

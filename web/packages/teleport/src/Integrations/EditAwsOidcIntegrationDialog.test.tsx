@@ -47,7 +47,7 @@ test('user acknowledging script was ran when s3 bucket fields are edited', async
 
   // Initial state.
   expect(screen.queryByTestId('scriptbox')).not.toBeInTheDocument();
-  expect(screen.queryByLabelText(/I ran the command/i)).not.toBeInTheDocument();
+  expect(screen.queryByTestId('checkbox')).not.toBeInTheDocument();
   expect(
     screen.queryByRole('button', { name: /generate command/i })
   ).not.toBeInTheDocument();
@@ -67,32 +67,30 @@ test('user acknowledging script was ran when s3 bucket fields are edited', async
   //  - checkbox to confirm user has ran command
   //  - edit button replaces generate command button
   //  - save button still disabled
-  await userEvent.click(
-    screen.getByRole('button', { name: /generate command/i })
-  );
+  userEvent.click(screen.getByRole('button', { name: /generate command/i }));
   await screen.findByRole('button', { name: /edit/i });
   expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
   expect(
     screen.queryByRole('button', { name: /generate command/i })
   ).not.toBeInTheDocument();
-  expect(screen.getByLabelText(/I ran the command/i)).toBeInTheDocument();
+  expect(screen.getByTestId('checkbox')).toBeInTheDocument();
   expect(screen.getByTestId('scriptbox')).toBeInTheDocument();
 
   // Click on checkbox should enable save button and disable edit button.
-  await userEvent.click(screen.getByRole('checkbox'));
+  userEvent.click(screen.getByRole('checkbox'));
   await waitFor(() =>
     expect(screen.getByRole('button', { name: /save/i })).toBeEnabled()
   );
   expect(screen.getByRole('button', { name: /edit/i })).toBeDisabled();
 
   // Unchecking the checkbox should disable save button.
-  await userEvent.click(screen.getByRole('checkbox'));
+  userEvent.click(screen.getByRole('checkbox'));
   await waitFor(() =>
     expect(screen.getByRole('button', { name: /save/i })).toBeDisabled()
   );
 
   // Click on edit, should replace it with generate command
-  await userEvent.click(screen.getByRole('button', { name: /edit/i }));
+  userEvent.click(screen.getByRole('button', { name: /edit/i }));
   await waitFor(() =>
     expect(
       screen.getByRole('button', { name: /generate command/i })
@@ -122,7 +120,7 @@ test('render warning on save when leaving s3 fields empty', async () => {
 
   // Initial state.
   expect(screen.queryByTestId('scriptbox')).not.toBeInTheDocument();
-  expect(screen.queryByLabelText(/I ran the command/i)).not.toBeInTheDocument();
+  expect(screen.queryByTestId('checkbox')).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
   expect(
     screen.queryByRole('button', { name: /generate command/i })
@@ -138,34 +136,32 @@ test('render warning on save when leaving s3 fields empty', async () => {
     ).toBeEnabled()
   );
 
-  expect(screen.queryByLabelText(/I ran the command/i)).not.toBeInTheDocument();
+  expect(screen.queryByTestId('checkbox')).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
 
-  await userEvent.click(
-    screen.getByRole('button', { name: /generate command/i })
-  );
+  userEvent.click(screen.getByRole('button', { name: /generate command/i }));
   await screen.findByRole('button', { name: /edit/i });
   expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
 
-  await userEvent.click(screen.getByLabelText(/I ran the command/i));
+  userEvent.click(screen.getByTestId('checkbox'));
   await waitFor(() =>
     expect(screen.getByRole('button', { name: /save/i })).toBeEnabled()
   );
 
   // Clicking on save without defining s3 fields, should render
   // a warning.
-  await userEvent.click(screen.getByRole('button', { name: /save/i }));
+  userEvent.click(screen.getByRole('button', { name: /save/i }));
   await screen.findByText(/recommended to use an S3 bucket/i);
   expect(edit).not.toHaveBeenCalled();
 
   // Canceling and saving should re-render the warning.
-  await userEvent.click(screen.getByRole('button', { name: /cancel/i }));
+  userEvent.click(screen.getByRole('button', { name: /cancel/i }));
   await screen.findByRole('button', { name: /save/i });
 
-  await userEvent.click(screen.getByRole('button', { name: /save/i }));
+  userEvent.click(screen.getByRole('button', { name: /save/i }));
   await screen.findByText(/recommended to use an S3 bucket/i);
 
-  await userEvent.click(screen.getByRole('button', { name: /continue/i }));
+  userEvent.click(screen.getByRole('button', { name: /continue/i }));
   await waitFor(() => expect(edit).toHaveBeenCalledTimes(1));
 });
 
@@ -206,29 +202,27 @@ test('render warning on save when deleting existing s3 fields', async () => {
     ).toBeEnabled()
   );
 
-  expect(screen.queryByLabelText(/I ran the command/i)).not.toBeInTheDocument();
+  expect(screen.queryByTestId('checkbox')).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
 
-  await userEvent.click(
-    screen.getByRole('button', { name: /generate command/i })
-  );
+  userEvent.click(screen.getByRole('button', { name: /generate command/i }));
   await screen.findByRole('button', { name: /edit/i });
   expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
 
-  await userEvent.click(screen.getByLabelText(/I ran the command/i));
+  userEvent.click(screen.getByTestId('checkbox'));
   await waitFor(() =>
     expect(screen.getByRole('button', { name: /save/i })).toBeEnabled()
   );
 
   // Test for warning render.
-  await userEvent.click(screen.getByRole('button', { name: /save/i }));
+  userEvent.click(screen.getByRole('button', { name: /save/i }));
   await screen.findByText(/recommended to use an S3 bucket/i);
   expect(edit).not.toHaveBeenCalled();
   expect(
     screen.getByText(/recommended to use an S3 bucket/i)
   ).toBeInTheDocument();
 
-  await userEvent.click(screen.getByRole('button', { name: /continue/i }));
+  userEvent.click(screen.getByRole('button', { name: /continue/i }));
   await waitFor(() => expect(edit).toHaveBeenCalledTimes(1));
 });
 
@@ -254,9 +248,7 @@ test('edit invalid fields', async () => {
     ).toBeEnabled()
   );
 
-  await userEvent.click(
-    screen.getByRole('button', { name: /generate command/i })
-  );
+  userEvent.click(screen.getByRole('button', { name: /generate command/i }));
   await screen.findByText(/invalid role ARN format/i);
 });
 
@@ -291,16 +283,14 @@ test('edit submit called with proper fields', async () => {
     ).toBeEnabled()
   );
 
-  await userEvent.click(
-    screen.getByRole('button', { name: /generate command/i })
-  );
+  userEvent.click(screen.getByRole('button', { name: /generate command/i }));
   await screen.findByRole('button', { name: /edit/i });
 
-  await userEvent.click(screen.getByLabelText(/I ran the command/i));
+  userEvent.click(screen.getByTestId('checkbox'));
   await waitFor(() =>
     expect(screen.getByRole('button', { name: /save/i })).toBeEnabled()
   );
-  await userEvent.click(screen.getByRole('button', { name: /save/i }));
+  userEvent.click(screen.getByRole('button', { name: /save/i }));
   await waitFor(() => expect(mockEditFn).toHaveBeenCalledTimes(1));
 
   expect(mockEditFn).toHaveBeenCalledWith({

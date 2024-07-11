@@ -19,10 +19,10 @@
 package dynamodb
 
 import (
-	"log/slog"
 	"net/http"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/gravitational/teleport/api/types"
@@ -126,7 +126,7 @@ func TestResolveEndpoint(t *testing.T) {
 			}
 			engine := &Engine{
 				EngineConfig: common.EngineConfig{
-					Log: slog.Default(),
+					Log: logrus.StandardLogger(),
 				},
 				sessionCtx: &common.Session{
 					Database: db,

@@ -82,21 +82,14 @@ func (s *Store) AddKey(key *Key) error {
 	return nil
 }
 
-var (
-	// ErrNoCredentials is returned by the client store when a specific key is not found.
-	// This error can be used to determine whether a client should retrieve new credentials,
-	// like how it is used with lib/client.RetryWithRelogin.
-	ErrNoCredentials = &trace.NotFoundError{Message: "no credentials"}
+// ErrNoCredentials is returned by the client store when a specific key is not found.
+// This error can be used to determine whether a client should retrieve new credentials,
+// like how it is used with lib/client.RetryWithRelogin.
+var ErrNoCredentials = trace.NotFound("no credentials")
 
-	// ErrNoProfile is returned by the client store when a specific profile is not found.
-	// This error can be used to determine whether a client should retrieve new credentials,
-	// like how it is used with lib/client.RetryWithRelogin.
-	ErrNoProfile = &trace.NotFoundError{Message: "no profile"}
-)
-
-// IsNoCredentialsError returns whether the given error implies that the user should retrieve new credentials.
+// IsNoCredentialsError returns whether the given error is an ErrNoCredentials error.
 func IsNoCredentialsError(err error) bool {
-	return errors.Is(err, ErrNoCredentials) || errors.Is(err, ErrNoProfile)
+	return errors.Is(err, ErrNoCredentials)
 }
 
 // GetKey gets the requested key with trusted the requested certificates. The key's
@@ -168,9 +161,6 @@ func (s *Store) ReadProfileStatus(profileName string) (*ProfileStatus, error) {
 
 	profile, err := s.GetProfile(profileName)
 	if err != nil {
-		if trace.IsNotFound(err) {
-			return nil, trace.Wrap(ErrNoProfile, err.Error())
-		}
 		return nil, trace.Wrap(err)
 	}
 	idx := KeyIndex{
@@ -275,8 +265,8 @@ func LoadKeysToKubeFromStore(profile *profile.Profile, dirPath, teleportCluster,
 		return nil, nil, trace.Wrap(err)
 	}
 
-	if err := keys.AssertSoftwarePrivateKey(privKey); err != nil {
-		return nil, nil, trace.Wrap(err, "unsupported private key type")
+	if ok := keys.IsRSAPrivateKey(privKey); !ok {
+		return nil, nil, trace.BadParameter("unsupported private key type")
 	}
 	return kubeCert, privKey, nil
 }

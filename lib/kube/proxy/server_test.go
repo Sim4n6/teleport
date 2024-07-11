@@ -23,9 +23,11 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"net"
@@ -40,11 +42,11 @@ import (
 
 	"github.com/gravitational/teleport/api/client/proto"
 	"github.com/gravitational/teleport/api/types"
-	"github.com/gravitational/teleport/api/utils/keys"
 	"github.com/gravitational/teleport/lib/auth/authclient"
 	testingkubemock "github.com/gravitational/teleport/lib/kube/proxy/testing/kube_server"
 	"github.com/gravitational/teleport/lib/reversetunnel"
 	"github.com/gravitational/teleport/lib/tlsca"
+	"github.com/gravitational/teleport/lib/utils"
 )
 
 func TestServeConfigureError(t *testing.T) {
@@ -64,13 +66,13 @@ func TestMTLSClientCAs(t *testing.T) {
 		cas: make(map[string]types.CertAuthority),
 	}
 	// Reuse the same CA private key for performance.
-	caKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	caKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	require.NoError(t, err)
 
 	addCA := func(t *testing.T, name string) (key, cert []byte) {
 		cert, err := tlsca.GenerateSelfSignedCAWithSigner(caKey, pkix.Name{CommonName: name}, nil, time.Minute)
 		require.NoError(t, err)
-		key, err = keys.MarshalPrivateKey(caKey)
+		_, key, err = utils.MarshalPrivateKey(caKey)
 		require.NoError(t, err)
 		ca, err := types.NewCertAuthority(types.CertAuthoritySpecV2{
 			Type:        types.HostCA,
@@ -103,8 +105,9 @@ func TestMTLSClientCAs(t *testing.T) {
 			DNSNames:  sans,
 		})
 		require.NoError(t, err)
-		keyPEM, err := keys.MarshalPrivateKey(userHostKey)
+		keyRaw, err := x509.MarshalECPrivateKey(userHostKey)
 		require.NoError(t, err)
+		keyPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: keyRaw})
 		cert, err := tls.X509KeyPair(certRaw, keyPEM)
 		require.NoError(t, err)
 		return cert

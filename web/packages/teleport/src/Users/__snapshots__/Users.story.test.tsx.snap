@@ -34,8 +34,7 @@ exports[`success state 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -44,50 +43,30 @@ exports[`success state 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: transparent;
-  color: #9F85FF;
-  border-color: #9F85FF;
-  border-width: 1.5px;
-  padding: 0 30.5px;
+  color: #000000;
+  background: #9F85FF;
   min-height: 32px;
   font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
+  padding: 0px 24px;
   margin-left: auto;
   width: 240px;
 }
 
-.c8:focus-visible,
-.teleport-button__force-focus-visible .c8 {
-  background-color: #9F85FF;
-  color: #000000;
-  border-color: #000000;
-  border-radius: 2px;
-  outline: 2px solid #9F85FF;
-}
-
 .c8:hover,
-.teleport-button__force-hover .c8 {
-  background-color: #B29DFF;
-  border-color: transparent;
-  color: #000000;
-  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.20), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12);
+.c8:focus {
+  background: #B29DFF;
 }
 
-.c8:active,
-.teleport-button__force-active .c8 {
-  background-color: #C5B6FF;
-  border-color: transparent;
-  color: #000000;
+.c8:active {
+  background: #C5B6FF;
 }
 
 .c8:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -98,8 +77,7 @@ exports[`success state 1`] = `
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: transparent;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -108,48 +86,30 @@ exports[`success state 1`] = `
   position: relative;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.1s,border-color 0.1s,outline-color 0.1s,box-shadow 0.1s;
+  text-transform: uppercase;
+  transition: all 0.3s;
   -webkit-font-smoothing: antialiased;
-  background-color: transparent;
-  color: rgba(255,255,255,0.54);
-  border-color: rgba(255,255,255,0.54);
-  border-width: 1.5px;
-  padding: 0 6.5px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0);
+  border: 1px solid rgba(255,255,255,0.36);
+  font-size: 10px;
   min-height: 24px;
-  font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.15px;
-}
-
-.c27:focus-visible,
-.teleport-button__force-focus-visible .c27 {
-  background-color: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.72);
-  border-color: rgba(255,255,255,0.72);
-  border-radius: 4px;
-  outline: none;
+  padding: 0px 16px;
+  height: 24px;
 }
 
 .c27:hover,
-.teleport-button__force-hover .c27 {
-  background-color: rgba(255,255,255,0.13);
-  border-color: transparent;
-  color: #FFFFFF;
-  box-shadow: none;
+.c27:focus {
+  background: rgba(255,255,255,0.07);
 }
 
-.c27:active,
-.teleport-button__force-active .c27 {
-  background-color: rgba(255,255,255,0.18);
-  border-color: transparent;
-  color: #FFFFFF;
+.c27:active {
+  background: rgba(255,255,255,0.13);
 }
 
 .c27:disabled {
-  background-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.3);
-  border-color: transparent;
-  box-shadow: none;
   cursor: auto;
 }
 
@@ -236,6 +196,7 @@ exports[`success state 1`] = `
   justify-content: center;
   color: rgba(255,255,255,0.72);
   margin-left: 8px;
+  margin-right: -8px;
 }
 
 .c6 {
@@ -492,7 +453,7 @@ exports[`success state 1`] = `
       </div>
       <button
         class="c8"
-        fill="border"
+        kind="primary"
         width="240px"
       >
         Create New User
@@ -712,9 +673,10 @@ exports[`success state 1`] = `
           >
             <button
               class="c27"
-              fill="border"
+              height="24px"
+              kind="border"
             >
-              Options
+              OPTIONS
               <span
                 class="c28 icon icon-chevrondown"
                 color="text.slightlyMuted"
@@ -786,9 +748,10 @@ exports[`success state 1`] = `
           >
             <button
               class="c27"
-              fill="border"
+              height="24px"
+              kind="border"
             >
-              Options
+              OPTIONS
               <span
                 class="c28 icon icon-chevrondown"
                 color="text.slightlyMuted"
@@ -841,9 +804,10 @@ exports[`success state 1`] = `
           >
             <button
               class="c27"
-              fill="border"
+              height="24px"
+              kind="border"
             >
-              Options
+              OPTIONS
               <span
                 class="c28 icon icon-chevrondown"
                 color="text.slightlyMuted"

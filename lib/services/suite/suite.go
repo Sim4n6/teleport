@@ -350,22 +350,22 @@ func (s *ServicesTestSuite) CertAuthCRUD(t *testing.T) {
 
 	out, err := s.TrustS.GetCertAuthority(ctx, ca.GetID(), true)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(out, ca, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(out, ca, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	cas, err := s.TrustS.GetCertAuthorities(ctx, types.UserCA, false)
 	require.NoError(t, err)
 	ca2 := ca.Clone().(*types.CertAuthorityV2)
 	ca2.Spec.ActiveKeys.SSH[0].PrivateKey = nil
 	ca2.Spec.ActiveKeys.TLS[0].Key = nil
-	require.Empty(t, cmp.Diff(cas[0], ca2, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(cas[0], ca2, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	cas, err = s.TrustS.GetCertAuthorities(ctx, types.UserCA, true)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(cas[0], ca, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(cas[0], ca, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	cas, err = s.TrustS.GetCertAuthorities(ctx, types.UserCA, true)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(cas[0], ca, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(cas[0], ca, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	err = s.TrustS.DeleteCertAuthority(ctx, *ca.ID())
 	require.NoError(t, err)
@@ -389,7 +389,7 @@ func (s *ServicesTestSuite) CertAuthCRUD(t *testing.T) {
 
 	out, err = s.TrustS.GetCertAuthority(ctx, ca.GetID(), true)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(&newCA, out, cmpopts.EquateApproxTime(time.Second), cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(&newCA, out, cmpopts.EquateApproxTime(time.Second), cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	// test conditional update
 	ca = NewTestCA(types.UserCA, "update.example.com")
@@ -416,7 +416,7 @@ func (s *ServicesTestSuite) CertAuthCRUD(t *testing.T) {
 
 	out, err = s.TrustS.GetCertAuthority(ctx, ca.GetID(), true)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(&newCA, out, cmpopts.EquateApproxTime(time.Second), cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(&newCA, out, cmpopts.EquateApproxTime(time.Second), cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	// verify 'bulk' ca operations
 
@@ -440,7 +440,7 @@ func (s *ServicesTestSuite) CertAuthCRUD(t *testing.T) {
 		ca, err := s.TrustS.GetCertAuthority(ctx, original.GetID(), true)
 		require.NoError(t, err)
 		require.Equal(t, rev, ca.GetRevision())
-		require.Empty(t, cmp.Diff(original, ca, cmpopts.EquateApproxTime(time.Second), cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+		require.Empty(t, cmp.Diff(original, ca, cmpopts.EquateApproxTime(time.Second), cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 	}
 
 	// set up bulk delete
@@ -487,12 +487,12 @@ func (s *ServicesTestSuite) ServerCRUD(t *testing.T) {
 
 	node, err := s.PresenceS.GetNode(ctx, srv.Metadata.Namespace, srv.GetName())
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(node, srv, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(node, srv, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	out, err = s.PresenceS.GetNodes(ctx, srv.Metadata.Namespace)
 	require.NoError(t, err)
 	require.Len(t, out, 1)
-	require.Empty(t, cmp.Diff(out, []types.Server{srv}, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(out, []types.Server{srv}, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	err = s.PresenceS.DeleteNode(ctx, srv.Metadata.Namespace, srv.GetName())
 	require.NoError(t, err)
@@ -512,7 +512,7 @@ func (s *ServicesTestSuite) ServerCRUD(t *testing.T) {
 	out, err = s.PresenceS.GetProxies()
 	require.NoError(t, err)
 	require.Len(t, out, 1)
-	require.Empty(t, cmp.Diff(out, []types.Server{proxy}, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(out, []types.Server{proxy}, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	err = s.PresenceS.DeleteProxy(ctx, proxy.GetName())
 	require.NoError(t, err)
@@ -532,7 +532,7 @@ func (s *ServicesTestSuite) ServerCRUD(t *testing.T) {
 	out, err = s.PresenceS.GetAuthServers()
 	require.NoError(t, err)
 	require.Len(t, out, 1)
-	require.Empty(t, cmp.Diff(out, []types.Server{auth}, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(out, []types.Server{auth}, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 }
 
 // AppServerCRUD tests CRUD functionality for services.Server.
@@ -566,7 +566,7 @@ func (s *ServicesTestSuite) AppServerCRUD(t *testing.T) {
 	out, err = s.PresenceS.GetApplicationServers(ctx, server.GetNamespace())
 	require.NoError(t, err)
 	require.Len(t, out, 1)
-	require.Empty(t, cmp.Diff([]types.AppServer{server}, out, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff([]types.AppServer{server}, out, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	// Remove the application.
 	err = s.PresenceS.DeleteApplicationServer(ctx, server.Metadata.Namespace, server.GetHostID(), server.GetName())
@@ -604,7 +604,7 @@ func (s *ServicesTestSuite) ReverseTunnelsCRUD(t *testing.T) {
 	out, err = s.PresenceS.GetReverseTunnels(context.Background())
 	require.NoError(t, err)
 	require.Len(t, out, 1)
-	require.Empty(t, cmp.Diff(out, []types.ReverseTunnel{tunnel}, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(out, []types.ReverseTunnel{tunnel}, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	err = s.PresenceS.DeleteReverseTunnel(tunnel.Spec.ClusterName)
 	require.NoError(t, err)
@@ -671,7 +671,7 @@ func (s *ServicesTestSuite) WebSessionCRUD(t *testing.T) {
 
 	out, err := s.WebS.WebSessions().Get(ctx, req)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(out, ws, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(out, ws, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	ws1, err := types.NewWebSession("sid1", types.KindWebSession,
 		types.WebSessionSpecV2{
@@ -687,7 +687,7 @@ func (s *ServicesTestSuite) WebSessionCRUD(t *testing.T) {
 
 	out2, err := s.WebS.WebSessions().Get(ctx, req)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(out2, ws1, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(out2, ws1, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	require.NoError(t, s.WebS.WebSessions().Delete(ctx, types.DeleteWebSessionRequest{
 		User:      req.User,
@@ -806,14 +806,14 @@ func (s *ServicesTestSuite) RolesCRUD(t *testing.T) {
 	require.NoError(t, err)
 	rout, err := s.Access.GetRole(ctx, role.Metadata.Name)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(upserted, rout, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(upserted, rout, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	role.Spec.Allow.Logins = []string{"bob"}
 	upserted, err = s.Access.UpsertRole(ctx, &role)
 	require.NoError(t, err)
 	rout, err = s.Access.GetRole(ctx, role.Metadata.Name)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(upserted, rout, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(upserted, rout, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	err = s.Access.DeleteRole(ctx, role.Metadata.Name)
 	require.NoError(t, err)
@@ -878,21 +878,21 @@ func (s *ServicesTestSuite) SAMLCRUD(t *testing.T) {
 	require.NoError(t, err)
 	upserted, err := s.WebS.UpsertSAMLConnector(ctx, connector)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(upserted, connector, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(upserted, connector, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	connectors, err := s.WebS.GetSAMLConnectors(ctx, true)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff([]types.SAMLConnector{connector}, connectors, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff([]types.SAMLConnector{connector}, connectors, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	out2, err := s.WebS.GetSAMLConnector(ctx, connector.GetName(), false)
 	require.NoError(t, err)
 	connectorNoSecrets := *connector
 	connectorNoSecrets.Spec.SigningKeyPair.PrivateKey = ""
-	require.Empty(t, cmp.Diff(out2, &connectorNoSecrets, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(out2, &connectorNoSecrets, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	connectorsNoSecrets, err := s.WebS.GetSAMLConnectors(ctx, false)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff([]types.SAMLConnector{&connectorNoSecrets}, connectorsNoSecrets, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff([]types.SAMLConnector{&connectorNoSecrets}, connectorsNoSecrets, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	err = s.WebS.DeleteSAMLConnector(ctx, connector.GetName())
 	require.NoError(t, err)
@@ -905,7 +905,7 @@ func (s *ServicesTestSuite) SAMLCRUD(t *testing.T) {
 
 	created, err := s.WebS.CreateSAMLConnector(ctx, connector)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(connector, created, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(connector, created, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 	require.NotEmpty(t, created.GetRevision())
 
 	connector = utils.CloneProtoMsg(connector)
@@ -919,7 +919,7 @@ func (s *ServicesTestSuite) SAMLCRUD(t *testing.T) {
 	connector.SetRevision(created.GetRevision())
 	updated, err = s.WebS.UpdateSAMLConnector(ctx, connector)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(connector, updated, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(connector, updated, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 	require.NotEmpty(t, updated.GetRevision())
 	require.NotEqual(t, created.GetRevision(), updated.GetRevision())
 	require.NotEqual(t, created.GetDisplay(), updated.GetDisplay())
@@ -930,7 +930,7 @@ func (s *ServicesTestSuite) SAMLCRUD(t *testing.T) {
 
 	upserted, err = s.WebS.UpsertSAMLConnector(ctx, connector)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(connector, upserted, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(connector, upserted, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 	require.NotEmpty(t, upserted.GetRevision())
 	require.NotEqual(t, updated.GetRevision(), upserted.GetRevision())
 	require.NotEqual(t, updated.GetDisplay(), upserted.GetDisplay())
@@ -963,21 +963,21 @@ func (s *ServicesTestSuite) OIDCCRUD(t *testing.T) {
 
 	upserted, err := s.WebS.UpsertOIDCConnector(ctx, connector)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(upserted, connector, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(upserted, connector, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	connectors, err := s.WebS.GetOIDCConnectors(ctx, true)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff([]types.OIDCConnector{connector}, connectors, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff([]types.OIDCConnector{connector}, connectors, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	out2, err := s.WebS.GetOIDCConnector(ctx, connector.GetName(), false)
 	require.NoError(t, err)
 	connectorNoSecrets := *connector
 	connectorNoSecrets.Spec.ClientSecret = ""
-	require.Empty(t, cmp.Diff(out2, &connectorNoSecrets, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(out2, &connectorNoSecrets, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	connectorsNoSecrets, err := s.WebS.GetOIDCConnectors(ctx, false)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff([]types.OIDCConnector{&connectorNoSecrets}, connectorsNoSecrets, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff([]types.OIDCConnector{&connectorNoSecrets}, connectorsNoSecrets, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	err = s.WebS.DeleteOIDCConnector(ctx, connector.GetName())
 	require.NoError(t, err)
@@ -990,7 +990,7 @@ func (s *ServicesTestSuite) OIDCCRUD(t *testing.T) {
 
 	created, err := s.WebS.CreateOIDCConnector(ctx, connector)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(connector, created, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(connector, created, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 	require.NotEmpty(t, created.GetRevision())
 
 	connector = utils.CloneProtoMsg(connector)
@@ -1004,7 +1004,7 @@ func (s *ServicesTestSuite) OIDCCRUD(t *testing.T) {
 	connector.SetRevision(created.GetRevision())
 	updated, err = s.WebS.UpdateOIDCConnector(ctx, connector)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(connector, updated, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(connector, updated, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 	require.NotEmpty(t, updated.GetRevision())
 	require.NotEqual(t, created.GetRevision(), updated.GetRevision())
 	require.NotEqual(t, created.GetDisplay(), updated.GetDisplay())
@@ -1015,7 +1015,7 @@ func (s *ServicesTestSuite) OIDCCRUD(t *testing.T) {
 
 	upserted, err = s.WebS.UpsertOIDCConnector(ctx, connector)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(connector, upserted, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(connector, upserted, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 	require.NotEmpty(t, upserted.GetRevision())
 	require.NotEqual(t, updated.GetRevision(), upserted.GetRevision())
 	require.NotEqual(t, updated.GetDisplay(), upserted.GetDisplay())
@@ -1041,12 +1041,12 @@ func (s *ServicesTestSuite) TunnelConnectionsCRUD(t *testing.T) {
 	out, err = s.TrustS.GetTunnelConnections(clusterName)
 	require.NoError(t, err)
 	require.Len(t, out, 1)
-	require.Empty(t, cmp.Diff(out[0], conn, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(out[0], conn, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	out, err = s.TrustS.GetAllTunnelConnections()
 	require.NoError(t, err)
 	require.Len(t, out, 1)
-	require.Empty(t, cmp.Diff(out[0], conn, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(out[0], conn, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	dt = dt.Add(time.Hour)
 	conn.SetLastHeartbeat(dt)
@@ -1057,7 +1057,7 @@ func (s *ServicesTestSuite) TunnelConnectionsCRUD(t *testing.T) {
 	out, err = s.TrustS.GetTunnelConnections(clusterName)
 	require.NoError(t, err)
 	require.Len(t, out, 1)
-	require.Empty(t, cmp.Diff(out[0], conn, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(out[0], conn, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	err = s.TrustS.DeleteAllTunnelConnections()
 	require.NoError(t, err)
@@ -1076,7 +1076,7 @@ func (s *ServicesTestSuite) TunnelConnectionsCRUD(t *testing.T) {
 	out, err = s.TrustS.GetTunnelConnections(clusterName)
 	require.NoError(t, err)
 	require.Len(t, out, 1)
-	require.Empty(t, cmp.Diff(out[0], conn, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(out[0], conn, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	err = s.TrustS.DeleteTunnelConnection(clusterName, conn.GetName())
 	require.NoError(t, err)
@@ -1113,21 +1113,21 @@ func (s *ServicesTestSuite) GithubConnectorCRUD(t *testing.T) {
 	require.NoError(t, err)
 	upserted, err := s.WebS.UpsertGithubConnector(ctx, connector)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(upserted, connector, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(upserted, connector, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	connectors, err := s.WebS.GetGithubConnectors(ctx, true)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff([]types.GithubConnector{connector}, connectors, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff([]types.GithubConnector{connector}, connectors, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	out2, err := s.WebS.GetGithubConnector(ctx, connector.GetName(), false)
 	require.NoError(t, err)
 	connectorNoSecrets := *connector
 	connectorNoSecrets.Spec.ClientSecret = ""
-	require.Empty(t, cmp.Diff(out2, &connectorNoSecrets, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(out2, &connectorNoSecrets, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	connectorsNoSecrets, err := s.WebS.GetGithubConnectors(ctx, false)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff([]types.GithubConnector{&connectorNoSecrets}, connectorsNoSecrets, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff([]types.GithubConnector{&connectorNoSecrets}, connectorsNoSecrets, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	err = s.WebS.DeleteGithubConnector(ctx, connector.GetName())
 	require.NoError(t, err)
@@ -1140,7 +1140,7 @@ func (s *ServicesTestSuite) GithubConnectorCRUD(t *testing.T) {
 
 	created, err := s.WebS.CreateGithubConnector(ctx, connector)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(connector, created, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(connector, created, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 	require.NotEmpty(t, created.GetRevision())
 
 	connector = utils.CloneProtoMsg(connector)
@@ -1154,7 +1154,7 @@ func (s *ServicesTestSuite) GithubConnectorCRUD(t *testing.T) {
 	connector.SetRevision(created.GetRevision())
 	updated, err = s.WebS.UpdateGithubConnector(ctx, connector)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(connector, updated, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(connector, updated, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 	require.NotEmpty(t, updated.GetRevision())
 	require.NotEqual(t, created.GetRevision(), updated.GetRevision())
 	require.NotEqual(t, created.GetDisplay(), updated.GetDisplay())
@@ -1165,10 +1165,56 @@ func (s *ServicesTestSuite) GithubConnectorCRUD(t *testing.T) {
 
 	upserted, err = s.WebS.UpsertGithubConnector(ctx, connector)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(connector, upserted, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(connector, upserted, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 	require.NotEmpty(t, upserted.GetRevision())
 	require.NotEqual(t, updated.GetRevision(), upserted.GetRevision())
 	require.NotEqual(t, updated.GetDisplay(), upserted.GetDisplay())
+}
+
+func (s *ServicesTestSuite) RemoteClustersCRUD(t *testing.T) {
+	ctx := context.Background()
+	clusterName := "example.com"
+	out, err := s.TrustS.GetRemoteClusters()
+	require.NoError(t, err)
+	require.Empty(t, out)
+
+	rc, err := types.NewRemoteCluster(clusterName)
+	require.NoError(t, err)
+
+	rc.SetConnectionStatus(teleport.RemoteClusterStatusOffline)
+
+	err = s.TrustS.CreateRemoteCluster(rc)
+	require.NoError(t, err)
+
+	err = s.TrustS.CreateRemoteCluster(rc)
+	require.True(t, trace.IsAlreadyExists(err))
+
+	out, err = s.TrustS.GetRemoteClusters()
+	require.NoError(t, err)
+	require.Len(t, out, 1)
+	require.Empty(t, cmp.Diff(out[0], rc, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
+
+	err = s.TrustS.DeleteAllRemoteClusters()
+	require.NoError(t, err)
+
+	out, err = s.TrustS.GetRemoteClusters()
+	require.NoError(t, err)
+	require.Empty(t, out)
+
+	// test delete individual connection
+	err = s.TrustS.CreateRemoteCluster(rc)
+	require.NoError(t, err)
+
+	out, err = s.TrustS.GetRemoteClusters()
+	require.NoError(t, err)
+	require.Len(t, out, 1)
+	require.Empty(t, cmp.Diff(out[0], rc, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
+
+	err = s.TrustS.DeleteRemoteCluster(ctx, clusterName)
+	require.NoError(t, err)
+
+	err = s.TrustS.DeleteRemoteCluster(ctx, clusterName)
+	require.True(t, trace.IsNotFound(err))
 }
 
 // AuthPreference tests authentication preference service
@@ -1189,17 +1235,22 @@ func (s *ServicesTestSuite) AuthPreference(t *testing.T) {
 	// Validate the created preference matches the retrieve preference.
 	gotAP, err := s.ConfigS.GetAuthPreference(ctx)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(ap, gotAP), cmpopts.IgnoreFields(types.Metadata{}, "Revision"))
+	require.Empty(t, cmp.Diff(ap, gotAP), cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision"))
 
 	// Validate that update only works if the revision matches.
 	gotAP.SetRevision("123")
 	_, err = s.ConfigS.UpdateAuthPreference(ctx, gotAP)
 	require.True(t, trace.IsCompareFailed(err))
 
+	created.SetSecondFactor(constants.SecondFactorOff)
+	updated, err := s.ConfigS.UpdateAuthPreference(ctx, created)
+	require.NoError(t, err)
+	require.Equal(t, constants.SecondFactorOff, updated.GetSecondFactor())
+
 	// Validate that upserting overwrites the value regardless of the revision.
 	upserted, err := s.ConfigS.UpsertAuthPreference(ctx, gotAP)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(upserted, gotAP), cmpopts.IgnoreFields(types.Metadata{}, "Revision"))
+	require.Empty(t, cmp.Diff(upserted, gotAP), cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision"))
 }
 
 // SessionRecordingConfig tests session recording configuration.
@@ -1222,7 +1273,7 @@ func (s *ServicesTestSuite) SessionRecordingConfig(t *testing.T) {
 	// Validate the created config matches the retrieve config.
 	gotRecConfig, err := s.ConfigS.GetSessionRecordingConfig(ctx)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(recConfig, gotRecConfig, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(recConfig, gotRecConfig, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	// Validate that update only works if the revision matches.
 	gotRecConfig.SetRevision("123")
@@ -1238,7 +1289,7 @@ func (s *ServicesTestSuite) SessionRecordingConfig(t *testing.T) {
 	// Validate that upserting overwrites the value regardless of the revision.
 	upserted, err := s.ConfigS.UpsertSessionRecordingConfig(ctx, gotRecConfig)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(upserted, gotRecConfig, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(upserted, gotRecConfig, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 }
 
@@ -1260,7 +1311,7 @@ func (s *ServicesTestSuite) StaticTokens(t *testing.T) {
 
 	out, err := s.ConfigS.GetStaticTokens()
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(staticTokens, out, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(staticTokens, out, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	err = s.ConfigS.DeleteStaticTokens()
 	require.NoError(t, err)
@@ -1306,7 +1357,7 @@ func (s *ServicesTestSuite) ClusterName(t *testing.T, opts ...Option) {
 
 	gotName, err := s.ConfigS.GetClusterName()
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(clusterName, gotName, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(clusterName, gotName, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	err = s.ConfigS.DeleteClusterName()
 	require.NoError(t, err)
@@ -1319,7 +1370,7 @@ func (s *ServicesTestSuite) ClusterName(t *testing.T, opts ...Option) {
 
 	gotName, err = s.ConfigS.GetClusterName()
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(clusterName, gotName, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(clusterName, gotName, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 }
 
 // ClusterNetworkingConfig tests cluster networking configuration.
@@ -1343,7 +1394,7 @@ func (s *ServicesTestSuite) ClusterNetworkingConfig(t *testing.T) {
 	// Validate the created config matches the retrieve config.
 	gotNetConfig, err := s.ConfigS.GetClusterNetworkingConfig(ctx)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(netConfig, gotNetConfig, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(netConfig, gotNetConfig, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	// Validate that update only works if the revision matches.
 	gotNetConfig.SetRevision("123")
@@ -1359,7 +1410,7 @@ func (s *ServicesTestSuite) ClusterNetworkingConfig(t *testing.T) {
 	// Validate that upserting overwrites the value regardless of the revision.
 	upserted, err := s.ConfigS.UpsertClusterNetworkingConfig(ctx, gotNetConfig)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(upserted, gotNetConfig, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(upserted, gotNetConfig, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 }
 
 // ClusterAuditConfig tests cluster audit configuration.
@@ -1383,7 +1434,7 @@ func (s *ServicesTestSuite) ClusterAuditConfig(t *testing.T) {
 	// Validate the created config matches the retrieve config.
 	gotAuditConfig, err := s.ConfigS.GetClusterAuditConfig(ctx)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(auditConfig, gotAuditConfig, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(auditConfig, gotAuditConfig, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 
 	// Validate that update only works if the revision matches.
 	gotAuditConfig.SetRevision("123")
@@ -1399,7 +1450,7 @@ func (s *ServicesTestSuite) ClusterAuditConfig(t *testing.T) {
 	// Validate that upserting overwrites the value regardless of the revision.
 	upserted, err := s.ConfigS.UpsertClusterAuditConfig(ctx, gotAuditConfig)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(upserted, gotAuditConfig, cmpopts.IgnoreFields(types.Metadata{}, "Revision")))
+	require.Empty(t, cmp.Diff(upserted, gotAuditConfig, cmpopts.IgnoreFields(types.Metadata{}, "ID", "Revision")))
 }
 
 // sem wrapper is a helper for overriding the keepalive
@@ -1864,10 +1915,10 @@ func (s *ServicesTestSuite) Events(t *testing.T) {
 				rc, err := types.NewRemoteCluster("example.com")
 				rc.SetConnectionStatus(teleport.RemoteClusterStatusOffline)
 				require.NoError(t, err)
-				_, err = s.TrustS.CreateRemoteCluster(ctx, rc)
+				err = s.TrustS.CreateRemoteCluster(rc)
 				require.NoError(t, err)
 
-				out, err := s.TrustS.GetRemoteClusters(ctx)
+				out, err := s.TrustS.GetRemoteClusters()
 				require.NoError(t, err)
 
 				err = s.TrustS.DeleteRemoteCluster(ctx, rc.GetName())
@@ -2121,6 +2172,8 @@ skiploop:
 				Namespace: meta.Namespace,
 			},
 		}
+		// delete events don't have IDs yet
+		header.SetResourceID(0)
 		ExpectDeleteResource(t, w, 3*time.Second, header)
 	}
 }

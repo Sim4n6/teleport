@@ -113,7 +113,7 @@ export function DocumentsRenderer(props: {
   );
 }
 
-const DocumentsContainer = styled.div<{ isVisible?: boolean }>`
+const DocumentsContainer = styled.div`
   display: ${props => (props.isVisible ? 'contents' : 'none')};
 `;
 

@@ -18,43 +18,6 @@ issues:
     - linters:
       - unused
       path: 'integrations/operator/controllers/resources/(.+)_controller_test\.go'
-    # TODO(codingllama): Remove once we move to grpc.NewClient.
-    - linters: [staticcheck]
-      text: "grpc.Dial is deprecated"
-    - linters: [staticcheck]
-      text: "grpc.DialContext is deprecated"
-    # Deprecated gRPC dial options. Related to grpc.NewClient.
-    - path: (client/client.go|client/proxy/client_test.go) # api/
-      linters: [staticcheck]
-      # grpc.FailOnNonTempDialError
-      # grpc.WithReturnConnectionError
-      text: "this DialOption is not supported by NewClient"
-    - path: lib/kube/grpc/grpc_test.go
-      linters: [staticcheck]
-      text: "grpc.WithBlock is deprecated"
-    - path: lib/observability/tracing/client.go
-      linters: [staticcheck]
-      text: "grpc.WithBlock is deprecated"
-    - path: integrations/lib/config.go
-      linters: [staticcheck]
-      text: "grpc.WithReturnConnectionError is deprecated"
-    - path: lib/service/service_test.go
-      linters: [staticcheck]
-      # grpc.WithReturnConnectionError
-      # grpc.FailOnNonTempDialError
-      text: "this DialOption is not supported by NewClient"
-    - path: integration/client_test.go
-      linters: [staticcheck]
-      text: "grpc.WithReturnConnectionError is deprecated"
-    - path: integration/integration_test.go
-      linters: [staticcheck]
-      text: "grpc.WithBlock is deprecated"
-    - path: lib/multiplexer/multiplexer_test.go
-      linters: [staticcheck]
-      text: "grpc.WithBlock is deprecated"
-    - path: provider/provider.go # integrations/terraform
-      linters: [staticcheck]
-      text: "grpc.WithReturnConnectionError is deprecated"
   exclude-use-default: true
   max-same-issues: 0
   max-issues-per-linter: 0
@@ -64,7 +27,6 @@ linters:
   enable:
     - bodyclose
     - depguard
-    - errorlint
     - gci
     - goimports
     - gosimple
@@ -106,14 +68,6 @@ linters-settings:
             desc: 'use "slices" instead'
           - pkg: github.com/hashicorp/go-version
             desc: 'use "golang.org/x/mod/semver" or "coreos/go-semver/semver" instead'
-      # Prevent logrus from being imported by api. Once everything in teleport has been converted
-      # to use log/slog this should be moved into the main block above.
-      logrus:
-        files:
-          - '**/api/**'
-        deny:
-          - pkg: github.com/sirupsen/logrus
-            desc: 'use "log/slog" instead'
       # Prevent importing internal packages in client tools or packages containing
       # common interfaces consumed by them that are known to bloat binaries or break builds
       # because they only support a single platform.
@@ -152,7 +106,6 @@ linters-settings:
       - standard # Standard section: captures all standard packages.
       - default # Default section: contains all imports that could not be matched to another section type.
       - prefix(github.com/gravitational/teleport) # Custom section: groups all imports with the specified Prefix.
-      - prefix(github.com/gravitational/teleport/integrations/terraform,github.com/gravitational/teleport/integrations/event-handler)
     skip-generated: true # Skip generated files.
     custom-order: true # Required for "sections" to take effect.
   misspell:
@@ -169,11 +122,6 @@ linters-settings:
     context: all
     key-naming-case: snake
     static-msg: true
-    forbidden-keys:
-      - level
-      - msg
-      - source
-      - time
   testifylint:
     disable-all: true
     enable:
@@ -192,6 +140,6 @@ output:
   uniq-by-line: false
 
 run:
-  go: '1.22'
+  go: '1.21'
   build-tags: []
   timeout: 15m

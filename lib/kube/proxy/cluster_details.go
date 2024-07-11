@@ -32,12 +32,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/gravitational/teleport/api/types"
-	"github.com/gravitational/teleport/api/utils/retryutils"
 	"github.com/gravitational/teleport/lib/cloud"
 	"github.com/gravitational/teleport/lib/cloud/azure"
 	"github.com/gravitational/teleport/lib/cloud/gcp"
@@ -54,8 +52,6 @@ type kubeDetails struct {
 	dynamicLabels *labels.Dynamic
 	// kubeCluster is the dynamic kube_cluster or a static generated from kubeconfig and that only has the name populated.
 	kubeCluster types.KubeCluster
-	// kubeClusterVersion is the version of the kube_cluster's related Kubernetes server.
-	kubeClusterVersion *version.Info
 
 	// rwMu is the mutex to protect the kubeCodecs, gvkSupportedResources, and rbacSupportedTypes.
 	rwMu sync.RWMutex
@@ -103,9 +99,6 @@ type clusterDetailsConfig struct {
 	component KubeServiceType
 }
 
-const defaultRefreshPeriod = 5 * time.Minute
-const backoffRefreshStep = 10 * time.Second
-
 // newClusterDetails creates a proxied kubeDetails structure given a dynamic cluster.
 func newClusterDetails(ctx context.Context, cfg clusterDetailsConfig) (_ *kubeDetails, err error) {
 	creds := cfg.kubeCreds
@@ -130,12 +123,9 @@ func newClusterDetails(ctx context.Context, cfg clusterDetailsConfig) (_ *kubeDe
 		dynLabels.Sync()
 		go dynLabels.Start()
 	}
-
-	kubeClient := creds.getKubeClient()
-
 	var isClusterOffline bool
 	// Create the codec factory and the list of supported types for RBAC.
-	codecFactory, rbacSupportedTypes, gvkSupportedRes, err := newClusterSchemaBuilder(cfg.log, kubeClient)
+	codecFactory, rbacSupportedTypes, gvkSupportedRes, err := newClusterSchemaBuilder(cfg.log, creds.getKubeClient())
 	if err != nil {
 		cfg.log.WithError(err).Warn("Failed to create cluster schema. Possibly the cluster is offline.")
 		// If the cluster is offline, we will not be able to create the codec factory
@@ -145,17 +135,11 @@ func newClusterDetails(ctx context.Context, cfg clusterDetailsConfig) (_ *kubeDe
 		isClusterOffline = true
 	}
 
-	kubeVersion, err := kubeClient.Discovery().ServerVersion()
-	if err != nil {
-		cfg.log.WithError(err).Warn("Failed to get Kubernetes cluster version. Possibly the cluster is offline.")
-	}
-
 	ctx, cancel := context.WithCancel(ctx)
 	k := &kubeDetails{
 		kubeCreds:             creds,
 		dynamicLabels:         dynLabels,
 		kubeCluster:           cfg.cluster,
-		kubeClusterVersion:    kubeVersion,
 		kubeCodecs:            codecFactory,
 		rbacSupportedTypes:    rbacSupportedTypes,
 		cancelFunc:            cancel,
@@ -163,61 +147,28 @@ func newClusterDetails(ctx context.Context, cfg clusterDetailsConfig) (_ *kubeDe
 		gvkSupportedResources: gvkSupportedRes,
 	}
 
-	// If cluster is online and there's no errors, we refresh details seldom (every 5 minutes),
-	// but if the cluster is offline, we try to refresh details more often to catch it getting back online earlier.
-	firstPeriod := defaultRefreshPeriod
-	if isClusterOffline {
-		firstPeriod = backoffRefreshStep
-	}
-	refreshDelay, err := retryutils.NewLinear(retryutils.LinearConfig{
-		First:  firstPeriod,
-		Step:   backoffRefreshStep,
-		Max:    defaultRefreshPeriod,
-		Jitter: retryutils.NewSeventhJitter(),
-		Clock:  cfg.clock,
-	})
-	if err != nil {
-		k.Close()
-		return nil, trace.Wrap(err)
-	}
-
 	k.wg.Add(1)
 	// Start the periodic update of the codec factory and the list of supported types for RBAC.
 	go func() {
 		defer k.wg.Done()
-
+		ticker := cfg.clock.NewTicker(5 * time.Minute)
+		defer ticker.Stop()
 		for {
 			select {
 			case <-ctx.Done():
 				return
-			case <-refreshDelay.After():
+			case <-ticker.Chan():
 				codecFactory, rbacSupportedTypes, gvkSupportedResources, err := newClusterSchemaBuilder(cfg.log, creds.getKubeClient())
 				if err != nil {
-					// If this is first time we get an error, we reset retry mechanism so it will start trying to refresh details quicker, with linear backoff.
-					if refreshDelay.First == defaultRefreshPeriod {
-						refreshDelay.First = backoffRefreshStep
-						refreshDelay.Reset()
-					} else {
-						refreshDelay.Inc()
-					}
 					cfg.log.WithError(err).Error("Failed to update cluster schema")
 					continue
 				}
-
-				kubeVersion, err := kubeClient.Discovery().ServerVersion()
-				if err != nil {
-					cfg.log.WithError(err).Warn("Failed to get Kubernetes cluster version. Possibly the cluster is offline.")
-				}
-
-				// Restore details refresh delay to the default value, in case previously cluster was offline.
-				refreshDelay.First = defaultRefreshPeriod
 
 				k.rwMu.Lock()
 				k.kubeCodecs = codecFactory
 				k.rbacSupportedTypes = rbacSupportedTypes
 				k.gvkSupportedResources = gvkSupportedResources
 				k.isClusterOffline = false
-				k.kubeClusterVersion = kubeVersion
 				k.rwMu.Unlock()
 			}
 		}
